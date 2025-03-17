@@ -1,0 +1,27 @@
+.professions-container {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.Pro{
+    margin-top:500px;
+}
+
+.professions-grid {
+    justify-content: center;
+    gap: 30px;
+    margin-top: 0px;
+}
+
+.profession {
+    text-align: center;
+    margin-top: 80px;
+}
+
+.profession-icon {
+    font-size: 4rem;
+    color: #6a9174;
+    background: #f0f0f0;
+    padding: 20px;
+    border-radius: 50%;
+}
