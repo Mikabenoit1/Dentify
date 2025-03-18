@@ -1,1 +1,301 @@
 
+CREATE DATABASE dentify;
+USE dentify;
+
+CREATE TABLE Utilisateur (
+    id_utilisateur NUMERIC(16, 0) PRIMARY KEY,
+    nom VARCHAR(25) NOT NULL,
+    prenom VARCHAR(25) NOT NULL,
+    telephone VARCHAR (20),
+    adresse VARCHAR(50),
+    ville VARCHAR(50),
+    province VARCHAR(25),
+    code_postal VARCHAR(10),
+    courriel VARCHAR(50) UNIQUE,
+    mot_de_passe VARCHAR(25) NOT NULL,
+    type_utilisateur VARCHAR(25),
+    photo_profil VARCHAR(100),
+    derniere_connexion TIMESTAMP,
+    compte_verifie CHAR(1),
+    date_inscription DATE,
+    accepte_notifications CHAR(1),
+    est_actif CHAR(1)
+);
+
+CREATE TABLE ProfessionnelDentaire (
+    id_professionnel NUMERIC(16, 0) PRIMARY KEY,
+    numero_permis VARCHAR(10) NOT NULL,
+    type_profession VARCHAR(20) NOT NULL,
+    annees_experience NUMERIC(3, 0),
+    tarif_horaire NUMERIC(6, 2),
+    rayon_deplacement_km NUMERIC(5, 0),
+    disponibilite_immediate CHAR(1),
+    site_web VARCHAR(100),
+    id_utilisateur NUMERIC(16, 0),
+    FOREIGN KEY (id_utilisateur) REFERENCES Utilisateur(id_utilisateur)
+);
+
+CREATE TABLE CliniqueDentaire (
+    id_clinique NUMERIC(16, 0) PRIMARY KEY,
+    nom_clinique VARCHAR(100) NOT NULL,
+    numero_entreprise VARCHAR(10) NOT NULL,
+    adresse_complete VARCHAR(255),
+    latitude NUMERIC(10, 6),
+    longitude NUMERIC(10, 6),
+    horaire_ouverture VARCHAR(500),
+    site_web VARCHAR(100),
+    id_utilisateur NUMERIC(16, 0),
+    logiciels_utilises VARCHAR(255),
+    type_dossier VARCHAR(20),
+    type_radiographie VARCHAR(30),
+    compte_verifie CHAR(1),
+    FOREIGN KEY (id_utilisateur) REFERENCES Utilisateur(id_utilisateur)
+);
+
+CREATE TABLE Administrateur (
+    id_admin NUMERIC(16, 0) PRIMARY KEY,
+    id_utilisateur NUMERIC(16, 0),
+    niveau_acces VARCHAR(20) NOT NULL,
+    departement VARCHAR(50),
+    FOREIGN KEY (id_utilisateur) REFERENCES Utilisateur(id_utilisateur)
+);
+
+CREATE TABLE Equipement (
+  id_equipement NUMERIC (16,0)  PRIMARY KEY AUTO_INCREMENT,
+  nom VARCHAR(50) NOT NULL UNIQUE,
+  descript VARCHAR(500),
+  categorie VARCHAR(30)
+);
+
+CREATE TABLE Specialite (
+    id_specialite NUMERIC(16, 0) PRIMARY KEY AUTO_INCREMENT,
+    nom VARCHAR(50),
+    descript VARCHAR(500)
+);
+
+CREATE TABLE Competence (
+  id_competence NUMERIC(16, 0) PRIMARY KEY AUTO_INCREMENT,
+  nom VARCHAR(50) NOT NULL UNIQUE,
+  descript VARCHAR(500),
+  categorie VARCHAR(30)
+);
+
+CREATE TABLE Offre (
+  id_offre NUMERIC(16, 0) PRIMARY KEY AUTO_INCREMENT,
+  id_clinique NUMERIC(16, 0) NOT NULL,
+  titre VARCHAR(100) NOT NULL,
+  descript VARCHAR(500) NOT NULL,
+  type_professionnel VARCHAR(20) NOT NULL,
+  date_publication DATE NOT NULL,
+  date_mission DATE NOT NULL,
+  heure_debut TIME,
+  heure_fin TIME,
+  duree_heures DECIMAL(5, 2),
+  remuneration DECIMAL(10, 2) NOT NULL,
+  est_urgent CHAR(1) DEFAULT 'N',
+  statut VARCHAR(20) DEFAULT 'active',
+  competences_requises varchar(500),
+  latitude NUMERIC(10, 6),
+  longitude NUMERIC(10, 6),
+  adresse_complete VARCHAR(255),
+  date_modification DATE,
+  FOREIGN KEY (id_clinique) REFERENCES CliniqueDentaire(id_clinique)
+);
+
+CREATE TABLE Message (
+    id_message NUMERIC(16, 0) PRIMARY KEY,
+    expediteur_id NUMERIC(16, 0) NOT NULL,
+    destinataire_id NUMERIC(16, 0) NOT NULL,
+    contenu VARCHAR(1000) NOT NULL,
+    fichier_joint VARCHAR(255),
+    date_envoi TIMESTAMP NOT NULL,
+    date_lecture TIMESTAMP,
+    est_lu CHAR(1) DEFAULT 'N',
+    FOREIGN KEY (expediteur_id) REFERENCES Utilisateur(id_utilisateur),
+    FOREIGN KEY (destinataire_id) REFERENCES Utilisateur(id_utilisateur)
+);
+
+CREATE TABLE Message_Archive (
+    id_message NUMERIC(16, 0) PRIMARY KEY,
+    expediteur_id NUMERIC(16, 0),
+    destinataire_id NUMERIC(16, 0),
+    contenu VARCHAR(1000),
+    fichier_joint VARCHAR(255),
+    date_envoi TIMESTAMP,
+    date_lecture TIMESTAMP,
+    est_lu CHAR(1)
+);
+
+CREATE TABLE Evaluation (
+  id_evaluation NUMERIC(16, 0) PRIMARY KEY AUTO_INCREMENT,
+  evaluateur_id NUMERIC(16, 0) NOT NULL,
+  evalue_id NUMERIC(16, 0) NOT NULL,
+  id_offre NUMERIC(16, 0) NOT NULL,
+  note NUMERIC(1,0) NOT NULL,
+  commentaire VARCHAR(1000),
+  date_evaluation DATE NOT NULL,
+  est_approuve CHAR(1) DEFAULT 'N',
+  date_approbation DATE,
+  FOREIGN KEY (evaluateur_id) REFERENCES Utilisateur(id_utilisateur) ON DELETE CASCADE,
+  FOREIGN KEY (evalue_id) REFERENCES Utilisateur(id_utilisateur) ON DELETE CASCADE,
+  FOREIGN KEY (id_offre) REFERENCES Offre(id_offre) ON DELETE CASCADE,
+  CHECK (note BETWEEN 1 AND 5)
+);
+
+
+CREATE TABLE Certification (
+    id_certification NUMERIC(16, 0) PRIMARY KEY AUTO_INCREMENT,
+    id_professionnel NUMERIC(16, 0) NOT NULL,
+    id_administrateur_verificateur NUMERIC(16, 0) NOT NULL,
+    type_certification VARCHAR(50) NOT NULL,
+    titre VARCHAR(100) NOT NULL,
+    organisme_emetteur VARCHAR(100) NOT NULL,
+    date_obtention DATE NOT NULL,
+    date_expiration DATE,
+    fichier VARCHAR(255),
+    est_verifiee CHAR(1) DEFAULT 'N',
+    date_verification DATE,
+    FOREIGN KEY (id_professionnel) REFERENCES ProfessionnelDentaire(id_professionnel) ON DELETE CASCADE,
+    FOREIGN KEY (id_administrateur_verificateur) REFERENCES Administrateur(id_admin) ON DELETE SET NULL
+);
+
+CREATE TABLE Candidature (
+  id_candidature NUMERIC (16,0) PRIMARY KEY AUTO_INCREMENT,
+  id_offre NUMERIC (16,0) NOT NULL,
+  id_professionnel NUMERIC (16,0) NOT NULL,
+  id_administrateur_verificateur NUMERIC (16,0) NOT NULL,
+  date_candidature DATE NOT NULL,
+  message_personnalise VARCHAR(1000),
+  statut VARCHAR(20) DEFAULT 'en_attente',
+  date_reponse DATE,
+  message_reponse VARCHAR(1000),
+  est_confirmee CHAR(1) DEFAULT 'N',
+  FOREIGN KEY (id_offre) REFERENCES Offre(id_offre) ON DELETE CASCADE,
+  FOREIGN KEY (id_professionnel) REFERENCES ProfessionnelDentaire(id_professionnel) ON DELETE CASCADE,
+  FOREIGN KEY (id_administrateur_verificateur) REFERENCES Administrateur(id_admin) ON DELETE CASCADE
+) ;
+
+CREATE TABLE Disponibilite (
+  id_disponibilite NUMERIC (16,0) PRIMARY KEY AUTO_INCREMENT,
+  id_professionnel NUMERIC (16,0) NOT NULL,
+  jour_semaine VARCHAR(10),
+  date_specifique DATE,
+  heure_debut TIME NOT NULL,
+  heure_fin TIME NOT NULL,
+  est_recurrente CHAR(1) DEFAULT 'N',
+  frequence_recurrence VARCHAR(20),
+  FOREIGN KEY (id_professionnel) REFERENCES ProfessionnelDentaire(id_professionnel) ON DELETE CASCADE,
+  CHECK (heure_debut < heure_fin)
+);
+
+CREATE TABLE Notification (
+    id_notification NUMERIC (16,0) PRIMARY KEY AUTO_INCREMENT,
+    id_destinataire  NUMERIC (16,0) NOT NULL,
+    type_notification VARCHAR(20) NOT NULL,
+    contenu VARCHAR(500) NOT NULL,
+    date_creation DATETIME NOT NULL,
+    est_lue CHAR(1) DEFAULT 'N',
+    date_lecture TIMESTAMP,
+    lien_action VARCHAR(255),
+    FOREIGN KEY (id_destinataire) REFERENCES Utilisateur(id_utilisateur) ON DELETE CASCADE
+);
+
+CREATE TABLE Document (
+  id_document NUMERIC(16, 0) PRIMARY KEY AUTO_INCREMENT,
+  id_utilisateur NUMERIC(16, 0) NOT NULL,
+  type_document VARCHAR(30) NOT NULL,
+  nom_fichier VARCHAR(100) NOT NULL,
+  chemin_fichier VARCHAR(255) NOT NULL,
+  date_telechargement DATE NOT NULL,
+  est_verifie CHAR(1) DEFAULT 'N',
+  date_verification DATE,
+  FOREIGN KEY (id_utilisateur) REFERENCES Utilisateur(id_utilisateur) ON DELETE CASCADE
+);
+
+CREATE TABLE OffreRecommandee (
+    id_recommendation NUMERIC(16, 0) PRIMARY KEY AUTO_INCREMENT,
+    id_offre NUMERIC(16, 0) NOT NULL,
+    id_professionnel NUMERIC(16, 0) NOT NULL,
+    score_matching DECIMAL(5, 2) NOT NULL,
+    date_recommandation DATETIME NOT NULL,
+    est_notifiee CHAR(1) DEFAULT 'N',
+    FOREIGN KEY (id_offre) REFERENCES Offre(id_offre) ON DELETE CASCADE,
+    FOREIGN KEY (id_professionnel) REFERENCES ProfessionnelDentaire(id_professionnel) ON DELETE CASCADE
+);
+
+CREATE TABLE ProfessionnelCompetence (
+    id_professionnel NUMERIC(16, 0) NOT NULL,
+    id_competence NUMERIC(16, 0) NOT NULL,
+    PRIMARY KEY (id_professionnel, id_competence),
+    FOREIGN KEY (id_professionnel) REFERENCES ProfessionnelDentaire(id_professionnel) ON DELETE CASCADE,
+    FOREIGN KEY (id_competence) REFERENCES Competence(id_competence) ON DELETE CASCADE
+);
+
+CREATE TABLE ProfessionnelSpecialite (
+    id_professionnel NUMERIC(16, 0) NOT NULL,
+    id_specialite NUMERIC(16, 0) NOT NULL,
+    PRIMARY KEY (id_professionnel, id_specialite),
+    FOREIGN KEY (id_professionnel) REFERENCES ProfessionnelDentaire(id_professionnel) ON DELETE CASCADE,
+    FOREIGN KEY (id_specialite) REFERENCES Specialite(id_specialite) ON DELETE CASCADE
+);
+
+CREATE TABLE SpecialiteClinique (
+    id_clinique NUMERIC(16, 0) NOT NULL,
+    id_specialite NUMERIC(16, 0) NOT NULL,
+    PRIMARY KEY (id_clinique, id_specialite),
+    FOREIGN KEY (id_clinique) REFERENCES CliniqueDentaire(id_clinique) ON DELETE CASCADE,
+    FOREIGN KEY (id_specialite) REFERENCES Specialite(id_specialite) ON DELETE CASCADE
+);
+
+CREATE TABLE CliniqueEquipement (
+    id_clinique NUMERIC(16, 0) NOT NULL,
+    id_equipement NUMERIC(16, 0) NOT NULL,
+    PRIMARY KEY (id_clinique, id_equipement),
+    FOREIGN KEY (id_clinique) REFERENCES CliniqueDentaire(id_clinique) ON DELETE CASCADE,
+    FOREIGN KEY (id_equipement) REFERENCES Equipement(id_equipement) ON DELETE CASCADE
+);
+
+
+-- ////////////////////////////////////////////////////////////////// --
+
+DELIMITER $$
+
+CREATE TRIGGER Archive_Messages
+AFTER INSERT ON Message
+FOR EACH ROW
+BEGIN
+    -- Vérifie si la date d'envoi est antérieure à 6 mois
+    IF NEW.date_envoi < NOW() - INTERVAL 6 MONTH THEN
+        -- Archive le message
+        INSERT INTO Message_Archive
+        SELECT * FROM Message WHERE id_message = NEW.id_message;
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- ////////////////////////////////////////////////////////////////// --
+
+DELIMITER $$
+
+CREATE PROCEDURE Get_Creneaux_Disponibles(IN professionnel_id NUMERIC(16, 0), IN target_date DATE)
+BEGIN
+    SELECT heure_debut, heure_fin
+    FROM Disponibilite
+    WHERE id_professionnel = professionnel_id
+      AND jour_semaine = DAYNAME(target_date);
+END$$
+
+DELIMITER ;
+
+-- ////////////////////////////////////////////////////////////////// --
+
+CREATE TABLE Exceptions_Disponibilites (
+    id_exception NUMERIC(16, 0) PRIMARY KEY,
+    id_disponibilite NUMERIC(16, 0),
+    date_exception DATE,
+    motif VARCHAR(255),
+    FOREIGN KEY (id_disponibilite) REFERENCES Disponibilite(id_disponibilite)
+    );
+
+
