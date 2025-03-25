@@ -10,8 +10,8 @@ export default function Contact() {
         <SafeAreaView style={styles.container}>
             {/* ScrollView pour permettre le défilement */}
             <ScrollView
-                contentContainerStyle={styles.scrollContainer} // Permet au contenu de s'étendre
-                style={styles.scrollView} // Prend toute la hauteur disponible
+                contentContainerStyle={styles.scrollContainer} 
+                style={styles.scrollView} 
             >
                 {/* Header avec fond vert */}
                 <View style={styles.header}>
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fbf2e8',
     },
     header: {
-        width: '100%', // Prend toute la largeur de l'écran
+        width: '100%', 
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     content: {
         width: '90%',
         marginTop: 20,
-        alignSelf: 'center', // Centre le contenu horizontalement
+        alignSelf: 'center', 
     },
     section: {
         marginBottom: 20,
@@ -167,12 +167,12 @@ const styles = StyleSheet.create({
         justifyContent: 'space-around',
         width: '50%',
         marginBottom: 20,
-        alignSelf: 'center', // Centre les icônes des réseaux sociaux
+        alignSelf: 'center', 
     },
     image: {
         width: '70%',
         height: 200,
         marginTop: 10,
-        alignSelf: 'center', // Centre l'image horizontalement
+        alignSelf: 'center', 
     },
 });
