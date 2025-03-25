@@ -11,8 +11,8 @@ export default function aPropos() {
    <SafeAreaView style={styles.container}>
          {/* ScrollView pour permettre le défilement */}
          <ScrollView
-           contentContainerStyle={styles.scrollContainer} // Permet au contenu de s'étendre
-           style={styles.scrollView} // Prend toute la hauteur disponible
+           contentContainerStyle={styles.scrollContainer} 
+           style={styles.scrollView} 
          >
            {/* Header avec fond vert */}
            <View style={styles.header}>
