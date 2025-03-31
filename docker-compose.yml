@@ -26,8 +26,8 @@ services:
     restart: always
     environment:
       DB_HOST: mysql
-      DB_USER: dentify_user
-      DB_PASSWORD: dentify_pass
+      DB_USER: root
+      DB_PASSWORD: rootpassword
       DB_NAME: dentify
     depends_on:
       mysql:
