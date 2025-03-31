@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert, Moda
 import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Link, useNavigation } from '@react-navigation/native';
-import OffreStore from "../utils/OffreStore"; 
+import OffreStore from "../components/OffreStore"; 
 import { ScrollView } from "react-native-gesture-handler";
 
 // Types pour les routes et navigation
