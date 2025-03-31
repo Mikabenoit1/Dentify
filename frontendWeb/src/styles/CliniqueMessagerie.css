@@ -1,0 +1,1615 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #34607d;
+  --primary-light: #e3f1f8;
+  --accent-color: #34a9d7;
+  --text-dark: #333333;
+  --text-medium: #555555;
+  --text-light: #777777;
+  --border-color: #e0e0e0;
+  --background-light: #f8f9fa;
+  --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
+  --transition: all 0.2s ease;
+}
+
+.clinique-messagerie-container {
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  height: calc(100vh - 80px);
+  max-width: 1200px;
+  margin: 80px auto 0;
+  margin-top:300px;
+  margin-bottom: 2px;
+  background-color: #ffffff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+/* Panneau de gauche - liste des conversations */
+.conversations-panel {
+  width: 320px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  background-color: #ffffff;
+}
+
+.conversations-header {
+  padding: 20px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.conversations-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.new-message-button {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-color);
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+.new-message-button:hover {
+  background-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.search-bar {
+  padding: 12px 16px;
+  position: relative;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background-color: var(--background-light);
+  font-size: 0.875rem;
+  transition: var(--transition);
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(52, 169, 215, 0.2);
+}
+
+.search-icon {
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: 0.875rem;
+}
+
+.conversations-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  margin: 2px 8px;
+  transition: var(--transition);
+}
+
+.conversation-item:hover {
+  background-color: var(--background-light);
+}
+
+.conversation-item.active {
+  background-color: var(--primary-light);
+}
+
+.conversation-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-full);
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  background-color: var(--primary-color);
+  color: white;
+  flex-shrink: 0;
+}
+
+.conversation-avatar.dentiste {
+  background-color: #34607d;
+}
+
+.conversation-avatar.assistant {
+  background-color: #4e78c4;
+}
+
+.conversation-avatar.hygieniste {
+  background-color: #d776b6;
+}
+
+.conversation-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.conversation-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.conversation-name {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conversation-time {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.conversation-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  max-height: 40px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.conversation-item.unread .conversation-name {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.conversation-item.unread .conversation-preview {
+  color: var(--text-medium);
+  font-weight: 500;
+}
+
+.unread-badge {
+  margin-left: 6px;
+  min-width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+/* Panneau de droite - conversation actuelle */
+.messages-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.messages-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.messages-header-info {
+  display: flex;
+  align-items: center;
+}
+
+.contact-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-full);
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.contact-avatar.dentiste {
+  background-color: #34607d;
+}
+
+.contact-avatar.assistant {
+  background-color: #4e78c4;
+}
+
+.contact-avatar.hygieniste {
+  background-color: #d776b6;
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-name {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 1rem;
+}
+
+.contact-status {
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+.messages-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.schedule-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.schedule-button:hover {
+  background-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.header-action-button {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  color: var(--text-medium);
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+.header-action-button:hover {
+  background-color: var(--background-light);
+  color: var(--primary-color);
+}
+
+.messages-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: var(--background-light);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.message {
+  display: flex;
+  max-width: 70%;
+  margin: 2px 0;
+}
+
+.message.received {
+  align-self: flex-start;
+}
+
+.message.sent {
+  align-self: flex-end;
+}
+
+.message-bubble {
+  padding: 12px 16px;
+  border-radius: 18px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  position: relative;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  box-shadow: var(--shadow-sm);
+}
+
+.message.received .message-bubble {
+  background-color: white;
+  color: var(--text-dark);
+  border-bottom-left-radius: 4px;
+}
+
+.message.sent .message-bubble {
+  background-color: var(--primary-color);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message-time {
+  font-size: 0.7rem;
+  margin-top: 4px;
+  text-align: right;
+  opacity: 0.8;
+}
+
+.message.sent .message-time {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message.received .message-time {
+  color: var(--text-light);
+}
+
+.message-input-container {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: white;
+}
+
+.message-input-wrapper {
+  flex: 1;
+  background-color: var(--background-light);
+  border-radius: var(--radius-full);
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.message-input-wrapper:focus-within {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(52, 169, 215, 0.1);
+}
+
+.message-input {
+  width: 100%;
+  border: none;
+  background: none;
+  font-size: 0.95rem;
+  padding: 10px;
+  min-height: 20px;
+  max-height: 80px;
+  resize: none;
+  outline: none;
+}
+
+.input-action-button {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  color: var(--text-medium);
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+.input-action-button:hover {
+  background-color: var(--background-light);
+  color: var(--primary-color);
+}
+
+.send-button {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-color);
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 0.95rem;
+  transition: var(--transition);
+}
+
+.send-button:hover:not(:disabled) {
+  background-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.send-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.no-conversation-selected {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background-light);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px;
+  color: var(--text-light);
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  color: var(--primary-color);
+  opacity: 0.7;
+}
+
+.empty-state-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-dark);
+}
+
+.empty-state-subtitle {
+  font-size: 1rem;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .clinique-messagerie-container {
+    flex-direction: column;
+    height: calc(100vh - 60px);
+    max-width: 100%;
+    margin: 60px 0 0;
+    border-radius: 0;
+  }
+
+  .conversations-panel {
+    width: 100%;
+    min-width: 0;
+    height: 40%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .messages-panel {
+    height: 60%;
+  }
+
+  .message {
+    max-width: 85%;
+  }
+  
+  .messages-header-actions {
+    gap: 4px;
+  }
+  
+  .schedule-button span {
+    display: none;
+  }
+  
+  .schedule-button {
+    padding: 8px;
+  }
+}
+
+/* Styles clairs et directs pour l'en-tête de conversation */
+.messages-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background-color: white;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Conteneur pour l'avatar et le nom */
+.contact-display {
+  display: flex;
+  align-items: center;
+}
+
+/* Style de l'avatar */
+.contact-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  background-color: var(--primary-color);
+  color: white;
+  margin-right: 12px;
+}
+
+.contact-avatar.dentiste {
+  background-color: #34607d;
+}
+
+.contact-avatar.assistant {
+  background-color: #4e78c4;
+}
+
+.contact-avatar.hygieniste {
+  background-color: #d776b6;
+}
+
+/* Style pour le nom du contact */
+.contact-display-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+/* Barre d'info pour le titre de l'offre */
+.offer-info-bar {
+  padding: 8px 20px;
+  background-color: var(--background-light);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.offer-title {
+  font-size: 0.85rem;
+  color: var(--text-medium);
+}
+
+/* Styles pour la partie droite */
+.messages-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Styles des boutons */
+.schedule-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.schedule-button:hover {
+  background-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.header-action-button {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  color: var(--text-medium);
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+.header-action-button:hover {
+  background-color: var(--background-light);
+  color: var(--primary-color);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .messages-header-actions {
+    gap: 5px;
+  }
+  
+  .schedule-button span {
+    display: none;
+  }
+  
+  .schedule-button {
+    padding: 8px;
+  }
+  
+  .contact-display-name {
+    font-size: 1rem;
+  }
+}
+
+.contact-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.contact-name-header {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.offer-title-bar {
+  padding: 6px 16px;
+  background-color: #f5f7fa;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  color: var(--text-medium);
+}
+
+/* Animation pour les nouveaux messages */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message:last-child {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+/* Style pour le scrollbar */
+.conversations-list::-webkit-scrollbar,
+.messages-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.conversations-list::-webkit-scrollbar-track,
+.messages-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.conversations-list::-webkit-scrollbar-thumb,
+.messages-content::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+}
+
+.conversations-list::-webkit-scrollbar-thumb:hover,
+.messages-content::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Modifications pour réduire la taille de la barre de messages */
+
+.message-input-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 8px;
+  gap: 8px;
+  border-top: 1px solid #e0e0e0;
+  background-color: white;
+  height: 50px;
+}
+
+.attachment-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.message-input {
+  flex: 1;
+  height: 34px;
+  border-radius: 17px;
+  border: 1px solid #e0e0e0;
+  padding: 0 12px;
+  font-size: 14px;
+  background-color: #f8f9fa;
+}
+
+.send-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #34607d;
+  border: none;
+  cursor: pointer;
+  color: white;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background-color 0.3s ease;
+}
+
+.send-button i {
+  font-size: 16px; /* Ajuste la taille de l'icône */
+}
+
+/* Effet au survol */
+.send-button:hover {
+  background-color: #27495e;
+}
+
+.send-button:disabled {
+  background-color: #ccc;
+}
+
+/* Styles améliorés pour la modal de planification de rendez-vous */
+.schedule-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.schedule-modal-wide {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: modalFadeIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.schedule-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--primary-color);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.schedule-modal-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* Style pour le bouton de fermeture circulaire */
+.schedule-modal-header .close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+  margin: 0;
+}
+
+.schedule-modal-header .close-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.schedule-modal-header .close-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+/* Assurez-vous que l'icône est bien centrée */
+.schedule-modal-header .close-button i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.schedule-modal-content {
+  padding: 24px;
+}
+
+/* Layout en grille pour le formulaire */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  margin-bottom: 0;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.icon-label {
+  margin-right: 8px;
+  color: var(--primary-color);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--text-medium);
+  font-size: 0.9rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(52, 169, 215, 0.15);
+}
+
+/* Styles pour les options de type de rencontre avec icône en haut et texte en bas */
+.meeting-type-options {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.meeting-type-option {
+  flex: 1;
+  background-color: var(--background-light);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  min-height: 100px;
+}
+
+.meeting-type-option.selected {
+  background-color: rgba(52, 169, 215, 0.1);
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.meeting-type-icon {
+  font-size: 2rem;
+  color: var(--primary-color);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: rgba(52, 169, 215, 0.1);
+  margin-bottom: 4px;
+}
+
+.meeting-type-option.selected .meeting-type-icon {
+  color: var(--accent-color);
+  background-color: rgba(52, 169, 215, 0.2);
+  transform: scale(1.1);
+}
+
+.meeting-type-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-medium);
+  transition: all 0.2s ease;
+}
+
+.meeting-type-option.selected .meeting-type-text {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.meeting-type-option:hover:not(.selected) {
+  background-color: rgba(52, 169, 215, 0.05);
+  border-color: rgba(52, 169, 215, 0.3);
+}
+
+/* Animation légère au survol */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.meeting-type-option:hover .meeting-type-icon {
+  animation: pulse 0.5s ease;
+}
+
+@media (max-width: 768px) {
+  .meeting-type-options {
+    flex-direction: column;
+  }
+  
+  .meeting-type-option {
+    flex-direction: row;
+    min-height: auto;
+    padding: 12px;
+  }
+  
+  .meeting-type-icon {
+    margin-bottom: 0;
+    margin-right: 12px;
+  }
+}
+
+.meeting-type-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Textarea pour les notes */
+.notes-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-input {
+  resize: none;
+  flex: 1;
+  min-height: 100px;
+}
+
+/* Section participant */
+.participant-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background-color: var(--background-light);
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.participant-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.4rem;
+}
+
+.participant-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.participant-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text-dark);
+}
+
+.participant-profession {
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+/* Boutons d'action */
+.form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.cancel-button {
+  padding: 12px 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: white;
+  color: var(--text-medium);
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cancel-button:hover {
+  background-color: var(--background-light);
+}
+
+.confirm-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.confirm-button:hover {
+  background-color: var(--accent-color);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(52, 169, 215, 0.2);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .meeting-type-options {
+    flex-direction: column;
+  }
+}
+
+/* Correction agressive pour les notifications */
+.notification {
+  position: fixed !important;
+  bottom: 30px !important;
+  right: 30px !important;
+  left: auto !important; /* Empêche le positionnement à gauche */
+  width: auto !important; /* Force la largeur automatique */
+  max-width: 350px !important; /* Limite strictement la largeur maximale */
+  padding: 15px 20px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  font-size: 1rem !important;
+  z-index: 2000 !important;
+  animation: slideIn 0.3s forwards !important;
+  margin: 0 !important; /* Réinitialise les marges */
+}
+
+/* Style pour le texte à l'intérieur de la notification */
+.notification span, 
+.notification p {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 280px !important; /* Laisse de la place pour l'icône */
+  margin: 0 !important;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification.success {
+  background-color: #d4edda !important;
+  color: #155724 !important;
+  border-left: 4px solid #28a745 !important;
+}
+
+.notification.warning {
+  background-color: #fff3cd !important;
+  color: #856404 !important;
+  border-left: 4px solid #ffc107 !important;
+}
+
+.notification i {
+  font-size: 1.2rem !important;
+  flex-shrink: 0 !important; /* Empêche l'icône de rétrécir */
+}
+
+@keyframes notificationFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Pour faire apparaître les rendez-vous dans les événements du calendrier */
+.event.meeting {
+  background-color: #34a9d7 !important;
+}
+
+.event-type-icon {
+  margin-right: 5px;
+}
+
+/* Responsive design */
+@media (max-width: 576px) {
+  .form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+
+/* Styles pour les messages de rendez-vous */
+.meeting-message .message-bubble {
+  background-color: rgba(52, 169, 215, 0.1) !important;
+  border-left: 3px solid #34a9d7;
+  padding-left: 15px !important;
+  white-space: pre-line;
+}
+
+.sent.meeting-message .message-bubble {
+  background-color: rgba(52, 169, 215, 0.2) !important;
+  color: var(--text-dark) !important;
+}
+
+.cancellation-message .message-bubble {
+  background-color: rgba(255, 76, 76, 0.1) !important;
+  border-left: 3px solid #ff4c4c;
+  padding-left: 15px !important;
+}
+
+.sent.cancellation-message .message-bubble {
+  background-color: rgba(255, 76, 76, 0.2) !important;
+  color: var(--text-dark) !important;
+}
+
+.meeting-message-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cancel-meeting-button {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  border: 1px solid #ff4c4c;
+  color: #ff4c4c;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.cancel-meeting-button:hover {
+  background-color: #ff4c4c;
+  color: white;
+}
+
+.notification.warning {
+  background-color: #ff9800;
+}
+
+/* Styles pour le bouton d'annulation de rendez-vous dans le calendrier */
+.event-modal-buttons .cancel-meeting-button {
+  background-color: #f8f8f8;
+  border: 1px solid #ff4c4c;
+  color: #ff4c4c;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  flex: 1;
+}
+
+.event-modal-buttons .cancel-meeting-button:hover {
+  background-color: #ff4c4c;
+  color: white;
+}
+
+/* Responsive fixes */
+@media (max-width: 768px) {
+  .event-modal-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+/* Styles pour les avatars de participants avec couleurs par profession */
+.participant-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.4rem;
+  transition: all 0.3s ease;
+}
+
+.participant-avatar.dentiste {
+  background-color: #34607d;
+}
+
+.participant-avatar.assistant {
+  background-color: #4e78c4;
+}
+
+.participant-avatar.hygieniste {
+  background-color: #d776b6;
+}
+
+.participant-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.participant-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text-dark);
+}
+
+.participant-profession {
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+/* Animation pour l'avatar */
+@keyframes avatarPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 96, 125, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(52, 96, 125, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 96, 125, 0);
+  }
+}
+
+.participant-info:hover .participant-avatar {
+  animation: avatarPulse 1.5s infinite;
+}
+
+/* Variantes d'animation par profession */
+.participant-info:hover .participant-avatar.dentiste {
+  animation: avatarPulse 1.5s infinite;
+  animation-name: avatarPulseDentiste;
+}
+
+.participant-info:hover .participant-avatar.assistant {
+  animation: avatarPulse 1.5s infinite;
+  animation-name: avatarPulseAssistant;
+}
+
+.participant-info:hover .participant-avatar.hygieniste {
+  animation: avatarPulse 1.5s infinite;
+  animation-name: avatarPulseHygieniste;
+}
+
+@keyframes avatarPulseDentiste {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 96, 125, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(52, 96, 125, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 96, 125, 0);
+  }
+}
+
+@keyframes avatarPulseAssistant {
+  0% {
+    box-shadow: 0 0 0 0 rgba(78, 120, 196, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(78, 120, 196, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(78, 120, 196, 0);
+  }
+}
+
+@keyframes avatarPulseHygieniste {
+  0% {
+    box-shadow: 0 0 0 0 rgba(215, 118, 182, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(215, 118, 182, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(215, 118, 182, 0);
+  }
+}
+
+/* Style pour le bouton d'options des messages */
+.message-options-button {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  background: transparent;
+  border: none;
+  color: #8f8f8f;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  padding: 5px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message.sent:hover .message-options-button {
+  opacity: 1;
+}
+
+/* Style pour le menu d'actions */
+.message-actions-menu {
+  position: absolute;
+  right: 30px;
+  top: 5px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  overflow: hidden;
+  min-width: 120px;
+}
+
+.message-actions-menu button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: background-color 0.2s;
+}
+
+.message-actions-menu button:hover {
+  background-color: #f5f5f5;
+}
+
+.message-actions-menu button i {
+  margin-right: 8px;
+  width: 16px;
+}
+
+/* Style pour l'indicateur de message modifié */
+.message-edited {
+  font-size: 11px;
+  color: #8f8f8f;
+  margin-left: 5px;
+  font-style: italic;
+}
+
+/* Style pour l'indicateur d'édition en cours */
+.editing-indicator {
+  position: absolute;
+  left: 10px;
+  top: -22px;
+  background-color: #f0f7ff;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 12px;
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+}
+
+.editing-indicator span {
+  margin-right: 8px;
+}
+
+.cancel-edit-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+}
+
+.cancel-edit-button:hover {
+  color: #2563eb;
+}
+
+/* Style pour que la bulle du message contienne correctement le bouton d'options */
+.message-bubble {
+  position: relative;
+  padding-right: 30px; /* Espace pour le bouton d'options */
+}
+
+/* Ajustements pour les notifications */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  animation: slideIn 0.3s ease-out;
+  z-index: 1000;
+}
+
+.notification.success {
+  border-left: 4px solid #10b981;
+  color: #065f46;
+}
+
+.notification.warning {
+  border-left: 4px solid #f59e0b;
+  color: #92400e;
+}
+
+.notification i {
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Style responsive pour mobile */
+@media (max-width: 768px) {
+  .message-options-button {
+    opacity: 1; /* Toujours visible sur mobile */
+  }
+  
+  .message-actions-menu {
+    right: 10px;
+    top: 30px;
+  }
+  
+  .editing-indicator {
+    position: static;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    width: 100%;
+    justify-content: space-between;
+  }
+}

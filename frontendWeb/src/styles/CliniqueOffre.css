@@ -1,0 +1,496 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+
+.clinique-offre-container {
+  max-width: 1200px;
+  margin: 30px auto;
+  margin-top: 100px;
+  padding: 20px;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 100px); /* Hauteur de la fenêtre moins marge */
+  max-height: 800px; /* Hauteur maximale */
+  overflow: hidden; /* Empêche le débordement */
+}
+
+.dashboard-header {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e1e1e1;
+  flex-shrink: 0; /* Empêche l'en-tête de rétrécir */
+}
+
+.dashboard-header h1 {
+  color: #6a9174;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-shrink: 0; /* Empêche les contrôles de rétrécir */
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-controls label {
+  font-weight: 500;
+  color: #555;
+}
+
+.filter-controls select {
+  padding: 8px 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 0.9rem;
+}
+
+/* Conteneur de défilement pour les offres */
+.offers-section {
+  flex-grow: 1;
+  overflow-y: auto; /* Défilement vertical automatique */
+  padding-right: 10px; /* Espace pour la barre de défilement */
+}
+
+.offers-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.offer-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  border-left: 5px solid #6a9174;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.offer-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.offer-card.expired {
+  border-left-color: #888;
+  opacity: 0.7;
+}
+
+.offer-card.pending {
+  border-left-color: #f0ad4e;
+}
+
+.offer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.offer-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-badge.active {
+  background-color: #dff0d8;
+  color: #3c763d;
+}
+
+.status-badge.pending {
+  background-color: #fcf8e3;
+  color: #8a6d3b;
+}
+
+.status-badge.expired {
+  background-color: #f2f2f2;
+  color: #777;
+}
+
+.offer-details {
+  margin-bottom: 15px;
+}
+
+.offer-details p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.offer-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.offer-actions button {
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.view-button {
+  color: #333;
+  background: none;
+  border: 1px solid #ddd;
+}
+
+.view-button:hover {
+  background-color: #f8f8f8;
+}
+
+/* Style pour le bouton d'édition */
+.edit-button {
+  background-color: white !important;
+  color: #2196F3 !important;
+  border: 1px solid #2196F3 !important;
+  transition: all 0.2s ease;
+}
+
+.edit-button:hover {
+  background-color: #1976D2 !important;
+  color: white !important;
+  border-color: #1976D2 !important;
+}
+
+.delete-button {
+  background-color: white;
+  color: #d9534f;
+  border: 1px solid #d9534f;
+}
+
+.delete-button:hover {
+  background-color: #d9534f;
+  color: white;
+}
+
+.applications-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.applications-info p {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+.applications-button {
+  background-color: #6a9174;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.applications-button:hover {
+  background-color: #5a7b62;
+}
+
+.no-offers {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 30px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  color: #777;
+}
+
+/* Personnaliser la barre de défilement */
+.offers-section::-webkit-scrollbar {
+  width: 8px;
+}
+
+.offers-section::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.offers-section::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.offers-section::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .offers-list {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .clinique-offre-container {
+    padding: 15px;
+    margin: 15px auto;
+    height: calc(100vh - 60px);
+  }
+  
+  .offers-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .filter-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .filter-controls select {
+    width: 100%;
+  }
+  
+  .offer-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* Styles pour la page de détail d'une offre */
+/* Note: Pour la page de détail, nous appliquons la même approche de défilement */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 8px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: none;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .back-button:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .offer-detail-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    margin-bottom: 30px;
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+  
+  .offer-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .offer-detail-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 1.5rem;
+  }
+  
+  .offer-detail-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .offer-detail-section:last-child {
+    border-bottom: none;
+  }
+  
+  .offer-detail-section h3 {
+    color: #6a9174;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+  }
+  
+  .detail-row {
+    margin-bottom: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  .detail-item {
+    flex: 1;
+    min-width: 250px;
+  }
+  
+  .detail-label {
+    font-weight: 500;
+    color: #666;
+    margin-right: 8px;
+  }
+  
+  .detail-value {
+    color: #333;
+  }
+  
+  .offer-detail-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  
+  .offer-detail-actions button {
+    padding: 10px 18px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Style pour le bouton d'édition dans les détails de l'offre */
+  .offer-detail-actions .edit-button {
+    background-color: white !important;
+    color: #2196F3 !important;
+    border: 1px solid #2196F3 !important;
+  }
+  
+  .offer-detail-actions .edit-button:hover {
+    background-color: #1976D2 !important;
+    color: white !important;
+    border-color: #1976D2 !important;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .offer-detail-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .offer-detail-header .status-badge {
+      margin-top: 10px;
+    }
+    
+    .detail-item {
+      flex: 100%;
+    }
+    
+    .offer-detail-actions {
+      flex-direction: column;
+    }
+    
+    .offer-detail-actions button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+/* Ajustements pour le bouton "Nouvelle offre" */
+.create-button {
+    background-color: #6a9174;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: auto; /* Permet au bouton de s'adapter à son contenu */
+    min-width: 140px; /* Définit une largeur minimale */
+    margin-right: 20px; /* Espace à droite du bouton */
+  }
+  
+  .create-button:hover {
+    background-color: #5a7b62;
+  }
+  
+  /* Ajustement pour le conteneur des contrôles */
+  .controls {
+    display: flex;
+    justify-content: space-between; /* Espacement entre les éléments */
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 10px; /* Padding horizontal */
+    gap: 50px; /* Ajoute un espace significatif entre les filtres et le bouton */
+  }
+  
+  /* Ajustement pour l'espace entre le filtre et le bouton */
+  .filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0; /* Empêche le filtre de se rétrécir */
+  }
+  
+  /* Pour les écrans mobiles */
+  @media (max-width: 768px) {
+    .controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 15px;
+    }
+    
+    .create-button {
+      min-width: auto; /* Permet au bouton de s'adapter à son contenu sur mobile */
+      margin-right: 0; /* Réinitialise la marge sur mobile */
+    }
+    
+    .filter-controls {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+/* Styles uniformes pour le bouton d'édition dans le modal */
+.event-modal-buttons .edit-button {
+  background-color: white !important;
+  color: #2196F3 !important;
+  border: 1px solid #2196F3 !important;
+}
+
+.event-modal-buttons .edit-button:hover {
+  background-color: #1976D2 !important;
+  color: white !important;
+  border-color: #1976D2 !important;
+}

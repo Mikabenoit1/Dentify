@@ -1,0 +1,106 @@
+/* Sidebar Menu */
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: -250px; /* Initially hidden */
+    width: 250px;
+    height: 100%;
+    background: url('/assets/img/Sidebar.png') no-repeat center center; /* Ajout du fond */
+    background-size: cover; /* Pour que l'image couvre toute la largeur et hauteur */
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3);
+    transition: right 0.3s ease-in-out;
+    padding-top: 60px;
+    z-index: 100;
+}
+
+
+/* Close Button */
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    color: white;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* Sidebar Open State */
+.sidebar.open {
+    right: 0;
+}
+
+html, body {
+    padding: 0;
+    margin: 0;
+    font-family: 'Raleway', sans-serif;
+    color: white;
+    height: 100%;
+}
+
+body {
+    background: white;
+}
+
+.container {
+    max-width: 200px;
+    margin: 40px auto;
+    padding: 10px 0px 20px 0px;
+    background: transparent !important;
+    border: none;
+    box-shadow: none !important;
+}
+
+.link {
+    font-size: 16px;
+    font-weight: 300;
+    text-align: center;
+    position: relative;
+    height: 40px;
+    background: transparent !important;
+    box-shadow: none !important;
+    line-height: 40px;
+    margin-top: 10px;
+    overflow: hidden;
+    width: 90%;
+    margin-left: 5%;
+    cursor: pointer;
+    font-weight: bold;
+
+}
+
+.link:after {
+    content: '';
+    position: absolute;
+    width: 80%;
+    border-bottom: 1px solid white;
+    bottom: 50%;
+    left: -100%;
+    transition: all 0.5s;
+    font-weight: bold;
+
+}
+
+.link:hover:after,
+.link.hover:after {
+    left: 100%;
+}
+
+.link .text {
+    text-shadow: 0px -40px 0px white;
+    transition: all 0.75s;
+    transform: translateY(100%) translateZ(0);
+    transition-delay: 0.25s;
+    font-weight: bold;
+
+}
+
+.link:hover .text,
+.link.hover .text {
+    text-shadow: 0px -40px 0px white;
+    transform: translateY(0%) translateZ(0) scale(1.1);
+    font-weight: 600;
+    font-weight: bold;
+
+}
