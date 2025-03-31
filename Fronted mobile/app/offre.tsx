@@ -40,11 +40,13 @@ const Offre = () => {
       <ScrollView style={styles.scrollView}>
         {/* Header dans le ScrollView pour qu'il défile */}
         <View style={styles.header}>
+          <Link href = '/'></Link>
           <Image 
             source={require('../assets/images/dentify_logo_noir.png')} 
             style={styles.logo}
             resizeMode="contain"
           />
+          </Link>
           
           <View style={styles.rightIcons}>
             <TextInput 
