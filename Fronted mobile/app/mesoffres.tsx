@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, StyleSheet } from "react-native";
 import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Link } from '@react-navigation/native';
-import OffreStore from "../utils/OffreStore";
+import OffreStore from "../components/OffreStore"; 
 
 // Types pour les routes et navigation
 interface RouteParams {
