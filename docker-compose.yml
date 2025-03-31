@@ -1,0 +1,48 @@
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: dentify-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: dentify
+      MYSQL_USER: dentify_user
+      MYSQL_PASSWORD: dentify_pass
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./baseDeDonnees/DB_DENTIFY.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: dentify-backend
+    restart: always
+    environment:
+      DB_HOST: mysql
+      DB_USER: dentify_user
+      DB_PASSWORD: dentify_pass
+      DB_NAME: dentify
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build: ./frontendWeb
+    container_name: dentify-frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
