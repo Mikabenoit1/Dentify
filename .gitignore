@@ -20,3 +20,5 @@
 # Ignorer les fichiers spécifiques à l'OS
 .DS_Store  # macOS
 Thumbs.db  # Windows
+
+frontendMobile/.expo/

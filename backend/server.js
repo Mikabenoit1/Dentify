@@ -10,7 +10,11 @@ const app = express();
 
 // 🧠 Middlewares
 app.use(express.json());
-app.use(cors()); // Autoriser les requêtes du frontend (utile si backend = 4000, frontend = 5173)
+app.use(require('cookie-parser')()); // ← pour les tokens envoyés via cookie si besoin
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+})); // Autoriser les requêtes du frontend (utile si backend = 4000, frontend = 5173)
 
 // 📦 Routes
 const userRoutes = require('./src/routes/userRoutes');
@@ -36,4 +40,3 @@ app.listen(PORT, async () => {
   console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
   await connectDB();
 });
-

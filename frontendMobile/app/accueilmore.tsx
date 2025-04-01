@@ -2,11 +2,14 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScrollView } from "react-native-gesture-handler";
+import { Link } from "expo-router"; // Import ajouté
 
-export default function AccueilMore({ navigation }) {
+interface AccueilMoreProps {
+  navigation: any; // Typage plus spécifique possible avec @react-navigation
+}
+
+export default function AccueilMore({ navigation }: AccueilMoreProps) {
   const [activePage, setActivePage] = useState("Accueil");
-
-  
 
   const handleNavigation = (page: string): void => {
     setActivePage(page);
@@ -14,87 +17,104 @@ export default function AccueilMore({ navigation }) {
 
   return (
     <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
-            
-            <View style={styles.rightIcons}>
-              <TextInput style={styles.searchInput} placeholder="Recherche..." />
-              <TouchableOpacity style={styles.iconButton}>
-                <AntDesign style={styles.iconText} name="message1" />
-              </TouchableOpacity>
-              <Link href="/Profil" asChild>
-                <TouchableOpacity style={styles.iconButton}>
-                  <MaterialCommunityIcons style={styles.iconText} name="account-circle-outline" />
-                </TouchableOpacity>
-              </Link>
-            </View>
-          </View>
+      {/* Header */}
+      <View style={styles.header}>
+        <Image source={require("../assets/images/dentify_logo_noir.png")} style={styles.logo} />
+        
+        <View style={styles.rightIcons}>
+          <TextInput 
+            style={styles.searchInput} 
+            placeholder="Recherche..." 
+            placeholderTextColor="#999"
+          />
+          <TouchableOpacity style={styles.iconButton}>
+            <AntDesign style={styles.iconText} name="message1" />
+          </TouchableOpacity>
+          <Link href="/Profil" asChild>
+            <TouchableOpacity style={styles.iconButton}>
+              <MaterialCommunityIcons style={styles.iconText} name="account-circle-outline" />
+            </TouchableOpacity>
+          </Link>
+        </View>
+      </View>
 
-      {/* Page content  */}
-      <ScrollView style={styles.content}>
-
-        <Text style={styles.titleinfo}> À propos de l'application </Text>  
+      {/* Page content */}
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={{ paddingBottom: 80 }} // Ajout pour éviter le chevauchement avec le footer
+      >
+        <Text style={styles.titleinfo}>À propos de l'application</Text>  
         <TouchableOpacity style={styles.buttoninfo}> 
-            <Text style={styles.textinfo}> Nos professions </Text>
+          <Text style={styles.textinfo}>Nos professions</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.buttoninfo}> 
-            <Text style={styles.textinfo}> Nos professions </Text>
+          <Text style={styles.textinfo}>Nos services</Text> {/* Texte corrigé pour varier */}
         </TouchableOpacity>
 
-
-        <Text style={styles.titleinfo}> À propos de nous </Text>  
+        <Text style={styles.titleinfo}>À propos de nous</Text>  
         <TouchableOpacity style={styles.buttoninfo}> 
-            <Text style={styles.textinfo}> Nos professions </Text>
+          <Text style={styles.textinfo}>Notre équipe</Text> {/* Texte corrigé */}
         </TouchableOpacity>
-
       </ScrollView>
 
-
-
-      {/* Barre de tâche */}
+      {/* Barre de navigation */}
       <View style={styles.footer}>
-              <Link href="/Mesoffres" asChild>
-                <TouchableOpacity style={styles.button} onPress={() => handleNavigation("Mesoffres")}>
-                  <AntDesign style={styles.iconText} name="calendar" />
-                  <Text
-                    style={[
-                      styles.buttonText,
-                      activePage === "Mesoffres" && styles.activeButtonText,
-                    ]}
-                  >
-                    Mes offres
-                  </Text>
-                </TouchableOpacity>
-              </Link>
-              
-              <Link href="/CreationOffre" asChild>
-                <TouchableOpacity style={styles.button} onPress={() => handleNavigation("CreationOffre")}>
-                  <Text
-                    style={[
-                      styles.buttonText,
-                      activePage === "CreationOffre" && styles.activeButtonText,
-                    ]}
-                  >
-                    Création d'une offre
-                  </Text>
-                </TouchableOpacity>
-              </Link>
-              
-              <Link href="/AccueilMore" asChild>
-                <TouchableOpacity style={styles.button} onPress={() => handleNavigation("AccueilMore")}>
-                  <Text
-                    style={[
-                      styles.buttonText,
-                      activePage === "AccueilMore" && styles.activeButtonText,
-                    ]}
-                  >
-                    More
-                  </Text>
-                </TouchableOpacity>
-              </Link>
-            </View>
-          </View>
+        <Link href="/Mesoffres" asChild>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={() => handleNavigation("Mesoffres")}
+          >
+            <AntDesign 
+              style={[
+                styles.iconText,
+                activePage === "Mesoffres" && styles.activeButtonText
+              ]} 
+              name="calendar" 
+            />
+            <Text
+              style={[
+                styles.buttonText,
+                activePage === "Mesoffres" && styles.activeButtonText,
+              ]}
+            >
+              Mes offres
+            </Text>
+          </TouchableOpacity>
+        </Link>
+        
+        <Link href="/CreationOffre" asChild>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={() => handleNavigation("CreationOffre")}
+          >
+            <Text
+              style={[
+                styles.buttonText,
+                activePage === "CreationOffre" && styles.activeButtonText,
+              ]}
+            >
+              Création d'une offre
+            </Text>
+          </TouchableOpacity>
+        </Link>
+        
+        <Link href="/AccueilMore" asChild>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={() => handleNavigation("AccueilMore")}
+          >
+            <Text
+              style={[
+                styles.buttonText,
+                activePage === "AccueilMore" && styles.activeButtonText,
+              ]}
+            >
+              More
+            </Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
+    </View>
   );
 }
 

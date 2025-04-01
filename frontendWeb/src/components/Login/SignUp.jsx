@@ -14,7 +14,8 @@ function SignUp({ type }) {
     adresse: "",
     ville: "",
     province: "",
-    code_postal: ""
+    code_postal: "",
+    nom_clinique: "" // Ajout du champ spécifique pour la clinique
   });
 
   const [error, setError] = useState("");
@@ -37,10 +38,21 @@ function SignUp({ type }) {
     setIsLoading(true);
     setError("");
 
+    // Préparation des données selon le type
+    const requestData = type === "clinique" 
+      ? {
+          ...formData,
+          nom: undefined // On retire le champ nom pour les cliniques
+        }
+      : {
+          ...formData,
+          nom_clinique: undefined // On retire le champ nom_clinique pour les pros
+        };
+
     try {
       const response = await apiFetch("/users/register", {
         method: "POST",
-        body: formData
+        body: requestData
       });
 
       console.log("Inscription réussie :", response);
@@ -96,9 +108,9 @@ function SignUp({ type }) {
         {type === "clinique" && (
           <input
             type="text"
-            name="nom"
+            name="nom_clinique" // Changé de "nom" à "nom_clinique"
             placeholder="Nom de la clinique"
-            value={formData.nom}
+            value={formData.nom_clinique}
             onChange={handleChange}
             required
           />
