@@ -5,6 +5,7 @@ const Offre = require('./Offre');
 const Candidature = require('./Candidature');
 const CliniqueDentaire = require('./CliniqueDentaire');
 const ProfessionnelDentaire = require('./ProfessionnelDentaire');
+const Message = require('./Message');
 
 // 🔗 Utilisateur → CliniqueDentaire (1:1)
 User.hasOne(CliniqueDentaire, {
@@ -51,11 +52,35 @@ Candidature.belongsTo(ProfessionnelDentaire, {
   foreignKey: 'id_professionnel'
 });
 
+// 🔗 Utilisateur → Messages envoyés
+User.hasMany(Message, {
+  foreignKey: 'id_expediteur',
+  as: 'messages_envoyes',
+  onDelete: 'CASCADE'
+});
+Message.belongsTo(User, {
+  foreignKey: 'id_expediteur',
+  as: 'expediteur'
+});
+
+// 🔗 Utilisateur → Messages reçus
+User.hasMany(Message, {
+  foreignKey: 'id_destinataire',
+  as: 'messages_recus',
+  onDelete: 'CASCADE'
+});
+Message.belongsTo(User, {
+  foreignKey: 'id_destinataire',
+  as: 'destinataire'
+});
+
+
 module.exports = {
   sequelize,
   User,
   Offre,
   Candidature,
   CliniqueDentaire,
-  ProfessionnelDentaire
+  ProfessionnelDentaire,
+  Message
 };

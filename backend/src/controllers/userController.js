@@ -25,7 +25,7 @@ const registerUser = async (req, res) => {
       const { nom_clinique } = req.body;
       if (!nom_clinique) return res.status(400).json({ message: "Nom de la clinique requis" });
 
-      newUser = await Utilisateur.create({
+      newUser = await User.create({
         nom: nom_clinique,
         prenom: '',
         courriel,
@@ -40,7 +40,7 @@ const registerUser = async (req, res) => {
       await CliniqueDentaire.create({
         id_utilisateur: newUser.id_utilisateur,
         nom_clinique,
-        numero_entreprise: '' // sera complété plus tard
+        numero_entreprise: ''
       });
 
     } else if (type_utilisateur === 'professionnel') {
@@ -81,7 +81,7 @@ const registerUser = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const id = req.user.id_utilisateur;
-    const user = await Utilisateur.findByPk(id);
+    const user = await User.findByPk(id);
     if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
 
     const {
@@ -94,7 +94,6 @@ const updateProfile = async (req, res) => {
       logiciels_utilises, type_dossier, type_radiographie
     } = req.body;
 
-    // 🔁 Mise à jour des champs Utilisateur
     user.nom = nom ?? user.nom;
     user.prenom = prenom ?? user.prenom;
     user.adresse = adresse ?? user.adresse;
@@ -105,7 +104,6 @@ const updateProfile = async (req, res) => {
     user.accepte_notifications = req.body.accepte_notifications ?? user.accepte_notifications;
     await user.save();
 
-    // 🦷 Professionnel
     if (user.type_utilisateur === 'professionnel') {
       const pro = await ProfessionnelDentaire.findOne({ where: { id_utilisateur: id } });
       if (pro) {
@@ -118,8 +116,6 @@ const updateProfile = async (req, res) => {
         pro.site_web = site_web ?? pro.site_web;
         await pro.save();
       }
-
-    // 🏥 Clinique
     } else if (user.type_utilisateur === 'clinique') {
       const clinique = await CliniqueDentaire.findOne({ where: { id_utilisateur: id } });
       if (clinique) {
@@ -149,7 +145,7 @@ const updateProfile = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { courriel, mot_de_passe } = req.body;
-    const user = await Utilisateur.findOne({ where: { courriel } });
+    const user = await User.findOne({ where: { courriel } });
 
     if (!user || !(await bcrypt.compare(mot_de_passe, user.mot_de_passe))) {
       return res.status(401).json({ message: "Identifiants incorrects" });
@@ -172,13 +168,39 @@ const loginUser = async (req, res) => {
 // ✅ PROFIL UTILISATEUR
 const getProfile = async (req, res) => {
   try {
-    const user = await Utilisateur.findByPk(req.user.id_utilisateur, {
+    const user = await User.findByPk(req.user.id_utilisateur, {
       attributes: { exclude: ["mot_de_passe"] }
     });
 
     if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
 
-    res.json(user);
+    const pro = await ProfessionnelDentaire.findOne({ where: { id_utilisateur: user.id_utilisateur } });
+    const clinique = await CliniqueDentaire.findOne({ where: { id_utilisateur: user.id_utilisateur } });
+
+    let profil_complet = false;
+
+    if (user.type_utilisateur === 'professionnel') {
+      profil_complet = pro &&
+        pro.numero_permis &&
+        pro.type_profession &&
+        user.nom &&
+        user.prenom &&
+        user.adresse &&
+        user.ville &&
+        user.code_postal;
+    } else if (user.type_utilisateur === 'clinique') {
+      profil_complet = clinique &&
+        clinique.nom_clinique &&
+        clinique.numero_entreprise &&
+        clinique.adresse_complete &&
+        user.nom &&
+        user.adresse &&
+        user.ville &&
+        user.code_postal;
+    }
+    
+    profil_complet = !!profil_complet;
+    res.json({ ...user.toJSON(), profil_complet });
 
   } catch (error) {
     console.error("❌ Erreur lors de la récupération du profil :", error);
