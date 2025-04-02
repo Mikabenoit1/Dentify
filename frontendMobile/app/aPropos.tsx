@@ -41,15 +41,13 @@ export default function aPropos() {
 
       {/* Texte d'information sur nous */}
       <View style={styles.textContainer}>
-        <Text style={styles.title}>About Us</Text>
+        <Text style={styles.title}>À propos</Text>
         <Text style={styles.description}>
-          Blablabalblablablalbalblablablallablalablablalbalblablablablablalbalbalblablalbalba
-          Blablabalblablablalbalblablablallablalablablalbalblablablablablalbalbalblablalbalbablablabla
-          blablalbalbalblabalbalbalba
+          Text
         </Text>
         <Text style={styles.description}>
-          balabalablabalanlanalbanbalabalabalbablbablalbablablalbalbablblalbaalblbalbalbabakabklblabka
-          blkablalbalbalbalbalbalbalbalbalba
+        Écrire ici : Texte nous décrivant et ce qui
+         nous a poussé a choisir ce projet comme application
         </Text>
       </View>
       </View>
@@ -74,6 +72,7 @@ const styles = StyleSheet.create({
       body: {
 
         backgroundColor: "#fbf2e8",
+        flex: 1,
       },
     scrollView: {
         flex: 1, 
