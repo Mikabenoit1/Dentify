@@ -27,7 +27,7 @@ const connectDB = async () => {
     require('../models');
 
     // 🔄 Synchroniser les modèles avec la base (modifie sans supprimer)
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
 
     console.log('✅ Base de données synchronisée avec Sequelize');
   } catch (error) {
