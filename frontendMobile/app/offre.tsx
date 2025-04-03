@@ -40,11 +40,13 @@ const Offre = () => {
       <ScrollView style={styles.scrollView}>
         {/* Header dans le ScrollView pour qu'il défile */}
         <View style={styles.header}>
+          <Link href="/" asChild> 
           <Image 
             source={require('../assets/images/dentify_logo_noir.png')} 
             style={styles.logo}
             resizeMode="contain"
           />
+          </Link>
           
           <View style={styles.rightIcons}>
             <TextInput 
@@ -101,27 +103,34 @@ const Offre = () => {
       </ScrollView>
 
       {/* Footer fixe */}
-      <View style={styles.footer}>
-        <Link href="/horaire" asChild>
-          <TouchableOpacity style={styles.footerButton}>
-            <AntDesign name="calendar" size={24} color="white" />
-            <Text style={styles.footerText}>Mon horaire</Text>
-          </TouchableOpacity>
-        </Link>
-        
-        <Link href="/offre" asChild>
-          <TouchableOpacity style={styles.footerButton}>
-            <MaterialIcons name="work-outline" size={24} color="black" />
-            <Text style={styles.footerTextClick}>Mes Offres</Text>
-          </TouchableOpacity>
-        </Link>
-        
-        <Link href="/plus" asChild>
-          <TouchableOpacity style={styles.footerButton}>
-            <MaterialIcons name="more-horiz" size={24} color="white" />
-            <Text style={styles.footerText}>Plus</Text>
-          </TouchableOpacity>
-        </Link>
+<View style={styles.footer}>
+          <Link href="/horaire" asChild>
+            <TouchableOpacity style={styles.footerButton}>
+              <AntDesign name="profile" size={24}  color={"white"}/>
+              <Text style={styles.footerText}>Mon horaire</Text>
+            </TouchableOpacity>
+          </Link>
+              
+          <Link href="/offre" asChild>
+            <TouchableOpacity style={styles.footerButton}>
+              <MaterialIcons name="work-outline" size={24} color={"black"}/>
+              <Text style={styles.footerTextClick}>Mes Offres</Text>
+            </TouchableOpacity>
+          </Link>
+      
+          <Link href="/calendrier" asChild>
+            <TouchableOpacity style={styles.footerButton}>
+              <AntDesign name="calendar" size={24} color={"white"} />
+              <Text style={styles.footerText}>Calendrier</Text>
+            </TouchableOpacity>
+          </Link>
+              
+          <Link href="/plus" asChild>
+            <TouchableOpacity style={styles.footerButton}>
+              <MaterialIcons name="more-horiz" size={24} color={"white"} />
+              <Text style={styles.footerText}>Plus</Text>
+            </TouchableOpacity>
+          </Link>
       </View>
     </SafeAreaView>
   );
