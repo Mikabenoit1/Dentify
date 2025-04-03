@@ -21,12 +21,14 @@ const userRoutes = require('./src/routes/userRoutes');
 const offreRoutes = require('./src/routes/offreRoutes');
 const candidatureRoutes = require('./src/routes/candidatureRoutes');
 const cliniqueRoutes = require('./src/routes/cliniqueRoutes');
+const messageRoutes = require('./src/routes/messageRoutes');
 
 // 🔗 Utilisation des routes
 app.use('/api/users', userRoutes);
 app.use('/api/offres', offreRoutes);
 app.use('/api/candidatures', candidatureRoutes);
 app.use('/api/cliniques', cliniqueRoutes);
+app.use('/api/messages', messageRoutes);
 
 // ✅ Route de test
 app.get('/test', (req, res) => {

@@ -28,6 +28,25 @@ router.post('/', protect, async (req, res) => {
       est_confirmee: 'N'
     });
 
+    // Envoyer un message initial si un contenu est fourni
+
+    const { Offre, CliniqueDentaire, Message } = require('../models');
+
+    const offre = await Offre.findByPk(id_offre, {
+      include: [{ model: CliniqueDentaire }]
+    });
+
+    const id_destinataire = offre?.CliniqueDentaire?.id_utilisateur;
+
+  
+if (message_personnalise && id_destinataire) {
+  await Message.create({
+    expediteur_id: utilisateurId,
+    destinataire_id: id_destinataire,
+    contenu: message_personnalise
+  });
+}
+
     res.status(201).json(nouvelleCandidature);
   } catch (error) {
     console.error('❌ Erreur lors de la création de la candidature :', error);
