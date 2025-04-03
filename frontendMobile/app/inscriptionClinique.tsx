@@ -56,7 +56,7 @@ export default function InscriptionCli() {
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       {/* Bouton pour s'inscrire */}
-      <Link href="/accueil" asChild>
+      <Link href="/loginClinique" asChild>
       <TouchableOpacity style={styles.button}>
         <Text style={styles.buttonText}>S'inscrire</Text>
       </TouchableOpacity>
