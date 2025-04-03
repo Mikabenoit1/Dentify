@@ -52,7 +52,7 @@ const Accueil = () => {
       <View style={styles.footer}>
         <Link href="/horaire" asChild>
           <TouchableOpacity style={styles.footerButton}>
-            <AntDesign name="calendar" style={styles.footerIcon} />
+            <AntDesign name="profile" style={styles.footerIcon} />
             <Text style={styles.footerText}>Mon horaire</Text>
           </TouchableOpacity>
         </Link>
@@ -61,6 +61,13 @@ const Accueil = () => {
           <TouchableOpacity style={styles.footerButton}>
             <MaterialIcons name="work-outline" style={styles.footerIcon} />
             <Text style={styles.footerText}>Mes Offres</Text>
+          </TouchableOpacity>
+        </Link>
+
+        <Link href="/calendrier" asChild>
+          <TouchableOpacity style={styles.footerButton}>
+            <AntDesign name="calendar" style={styles.footerIcon} />
+            <Text style={styles.footerText}>Calendrier</Text>
           </TouchableOpacity>
         </Link>
         
