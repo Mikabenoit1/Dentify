@@ -91,28 +91,35 @@ const Horaire = () => {
         </View>
       </ScrollView>
 
-      {/* Footer fixe */}
-      <View style={styles.footer}>
-        <Link href="/horaire" asChild>
-          <TouchableOpacity style={styles.footerButton}>
-            <AntDesign name="calendar" size={24} color="black" />
-            <Text style={styles.footerTextClick}>Mon horaire</Text>
-          </TouchableOpacity>
-        </Link>
-        
-        <Link href="/offre" asChild>
-          <TouchableOpacity style={styles.footerButton}>
-            <MaterialIcons name="work-outline" size={24} color="white" />
-            <Text style={styles.footerText}>Mes Offres</Text>
-          </TouchableOpacity>
-        </Link>
-        
-        <Link href="/plus" asChild>
-          <TouchableOpacity style={styles.footerButton}>
-            <MaterialIcons name="more-horiz" size={24} color="white" />
-            <Text style={styles.footerText}>Plus</Text>
-          </TouchableOpacity>
-        </Link>
+      {/* Footer - Identique à l'original */}
+        <View style={styles.footer}>
+          <Link href="/horaire" asChild>
+            <TouchableOpacity style={styles.footerButton}>
+              <AntDesign name="profile" size={24}  color={"black"}/>
+              <Text style={styles.footerTextClick}>Mon horaire</Text>
+            </TouchableOpacity>
+          </Link>
+              
+          <Link href="/offre" asChild>
+            <TouchableOpacity style={styles.footerButton}>
+              <MaterialIcons name="work-outline" size={24} color={"white"}/>
+              <Text style={styles.footerText}>Mes Offres</Text>
+            </TouchableOpacity>
+          </Link>
+      
+          <Link href="/calendrier" asChild>
+            <TouchableOpacity style={styles.footerButton}>
+              <AntDesign name="calendar" size={24} color={"white"} />
+              <Text style={styles.footerText}>Calendrier</Text>
+            </TouchableOpacity>
+          </Link>
+              
+          <Link href="/plus" asChild>
+            <TouchableOpacity style={styles.footerButton}>
+              <MaterialIcons name="more-horiz" size={24} color={"white"} />
+              <Text style={styles.footerText}>Plus</Text>
+            </TouchableOpacity>
+          </Link>
       </View>
     </SafeAreaView>
   );
