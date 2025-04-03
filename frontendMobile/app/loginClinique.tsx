@@ -44,7 +44,7 @@ export default function ConnexionCli() {
         onChangeText={setPassword}
         value={password}
       />
-    <Link href ='/accueil' asChild>
+    <Link href ='/accueilClinique' asChild>
       <TouchableOpacity style={styles.button}>
         <Text style={styles.buttonText}>Se connecter</Text>
       </TouchableOpacity>
