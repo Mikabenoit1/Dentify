@@ -1,19 +1,11 @@
 import React, { useState, useRef } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert, Modal } from "react-native";
-import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
+import { AntDesign, MaterialCommunityIcons, Ionicons,MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Link, useNavigation } from '@react-navigation/native';
-import OffreStore from "../components/OffreStore"; 
+import { Link } from "expo-router";
+import OffreStore from "../utils/OffreStore"; 
 import { ScrollView } from "react-native-gesture-handler";
-
-// Types pour les routes et navigation
-interface RouteProps {
-  params?: any;
-}
-
-interface CreationOffreProps {
-  route: RouteProps;
-}
+import DropDownPicker from 'react-native-dropdown-picker';
 
 // Type pour les événements du DateTimePicker
 type DateTimePickerEvent = {
@@ -22,12 +14,18 @@ type DateTimePickerEvent = {
     timestamp: number;
   };
 };
-
-export default function CreationOffre({ route }: CreationOffreProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default function CreationOffre() {
   const [activePage, setActivePage] = useState<string>("CreationOffre");
   const [titre, setTitre] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [profession, setProfession] = useState<string>("");
+  const [open, setOpen] = useState<boolean>(false);
+  const [professions, setProfessions] = useState([
+    { label: "Dentiste", value: "Dentiste" },
+    { label: "Assistant dentaire", value: "Assistant dentaire" },
+    { label: "Hygiéniste dentaire", value: "Hygiéniste dentaire" }
+  ]);
   const [date, setDate] = useState<Date>(new Date());
   const [showModal, setShowModal] = useState<boolean>(false);
   const [heureDebut, setHeureDebut] = useState<string>("");
@@ -57,7 +55,8 @@ export default function CreationOffre({ route }: CreationOffreProps) {
         heureDebut, 
         heureFin, 
         exigences, 
-        remuneration 
+        remuneration,
+        id: Date.now().toString() // ID unique
       };
       
       // ajout au store
@@ -98,6 +97,7 @@ export default function CreationOffre({ route }: CreationOffreProps) {
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date): void => {
     if (selectedDate) {
       setDate(selectedDate);
+      setShowModal(false); // Fermer le modal après sélection
     }
   };
 
@@ -105,7 +105,7 @@ export default function CreationOffre({ route }: CreationOffreProps) {
   if (redirectToMesOffres) {
     return (
       <View style={{position: 'absolute'}}>
-        <Link href={{pathname: "/Mesoffres", params: { newOffre: { id: newOffreId } }}} asChild>
+        <Link href={{pathname: "/mesoffres", params: { newOffreId }}} asChild>
           <TouchableOpacity>
             <Text>Redirection...</Text>
           </TouchableOpacity>
@@ -118,16 +118,26 @@ export default function CreationOffre({ route }: CreationOffreProps) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
+        <Image 
+          source={require('../assets/images/dentify_logo_noir.png')} 
+          style={styles.logo}
+          resizeMode="contain"
+        />
         
         <View style={styles.rightIcons}>
-          <TextInput style={styles.searchInput} placeholder="Recherche..." />
-          <TouchableOpacity style={styles.iconButton}>
-            <AntDesign style={styles.iconText} name="message1" />
-          </TouchableOpacity>
-          <Link href="/Profil" asChild>
+          <TextInput 
+            style={styles.searchInput} 
+            placeholder="Recherche..." 
+            placeholderTextColor="#999"
+          />
+          <Link href="/messages" asChild>
             <TouchableOpacity style={styles.iconButton}>
-              <MaterialCommunityIcons style={styles.iconText} name="account-circle-outline" />
+              <AntDesign name="message1" style={styles.iconText} />
+            </TouchableOpacity>
+          </Link>
+          <Link href="../profilClinique" asChild>
+            <TouchableOpacity style={styles.iconButton}>
+              <MaterialCommunityIcons name="account-circle-outline" style={styles.iconText} />
             </TouchableOpacity>
           </Link>
         </View>
@@ -147,11 +157,15 @@ export default function CreationOffre({ route }: CreationOffreProps) {
 
         {/* Liste déroulante */}
         <Text style={styles.label}>Choisir une profession :</Text>
-        <TextInput 
-          style={styles.input} 
-          placeholder="Choisir profession" 
-          value={profession} 
-          onChangeText={setProfession} 
+        <DropDownPicker
+          style={styles.input}
+          open={open}
+          value={profession}
+          items={professions}
+          setOpen={setOpen}
+          setValue={setProfession}
+          setItems={setProfessions}
+          placeholder="Sélectionner une profession"
         />
       
         <Text style={styles.label}>Sélectionner une date :</Text>
@@ -174,19 +188,22 @@ export default function CreationOffre({ route }: CreationOffreProps) {
           visible={showModal} 
           onRequestClose={() => setShowModal(false)}
         >
-          <TouchableOpacity style={styles.modalBackground} onPress={() => setShowModal(false)}>
+          <View style={styles.modalBackground}>
             <View style={styles.modalContent}>
               <DateTimePicker
+                testID="dateTimePicker"
                 value={date}
                 mode="date"
                 display="spinner"
                 onChange={handleDateChange}
+                themeVariant="light"
+                textColor="#000000"
               />
               <TouchableOpacity style={styles.confirmButton} onPress={() => setShowModal(false)}>
                 <Text style={styles.confirmText}>Confirmer</Text>
               </TouchableOpacity>
             </View>
-          </TouchableOpacity>
+          </View>
         </Modal>
 
         {/* Heure début et fin */}
@@ -239,43 +256,24 @@ export default function CreationOffre({ route }: CreationOffreProps) {
 
       {/* Barre de tâche */}
       <View style={styles.footer}>
-        <Link href="/Mesoffres" asChild>
-          <TouchableOpacity style={styles.button} onPress={() => handleNavigation("Mesoffres")}>
-            <AntDesign style={styles.iconText} name="calendar" />
-            <Text
-              style={[
-                styles.buttonText,
-                activePage === "Mesoffres" && styles.activeButtonText,
-              ]}
-            >
-              Mes offres
-            </Text>
+        <Link href="/mesoffres" asChild>
+          <TouchableOpacity style={styles.footerButton}>
+            <AntDesign name="calendar" size={24} color="white" />
+            <Text style={styles.footerText}>Offres publiés</Text>
           </TouchableOpacity>
         </Link>
         
-        <Link href="/CreationOffre" asChild>
-          <TouchableOpacity style={styles.button} onPress={() => handleNavigation("CreationOffre")}>
-            <Text
-              style={[
-                styles.buttonText,
-                activePage === "CreationOffre" && styles.activeButtonText,
-              ]}
-            >
-              Création d'une offre
-            </Text>
+        <Link href="/creation-offre" asChild>
+          <TouchableOpacity style={styles.footerButton}>
+          <Ionicons name="create-outline" size={24} color="black" />
+          <Text style={styles.footerTextClick}>Création d'une offre</Text>
           </TouchableOpacity>
         </Link>
         
         <Link href="/AccueilMore" asChild>
-          <TouchableOpacity style={styles.button} onPress={() => handleNavigation("AccueilMore")}>
-            <Text
-              style={[
-                styles.buttonText,
-                activePage === "AccueilMore" && styles.activeButtonText,
-              ]}
-            >
-              More
-            </Text>
+          <TouchableOpacity style={styles.footerButton}>
+            <MaterialIcons name="more-horiz" size={24} color="white" />
+            <Text style={styles.footerText}>Plus</Text>
           </TouchableOpacity>
         </Link>
       </View>
@@ -290,40 +288,36 @@ const styles = StyleSheet.create({
     backgroundColor: "#fbf2e8",
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-    backgroundColor: "#6a9174",
+    backgroundColor: '#6a9174',
   },
   logo: {
     width: 100,
     height: 50,
   },
-  searchInput: {
-    flex: 0.5,
-    marginHorizontal: 1,
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingLeft: 10,
-    paddingVertical: 5,
-    fontSize: 10,
-    backgroundColor: "white",
-  },
   rightIcons: {
-    flexDirection: "row",
-    alignItems: "center",
-    position: "absolute",
-    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchInput: {
+    width: 120,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    padding: 8,
+    backgroundColor: 'white',
+    fontSize: 14,
+    marginRight: 10,
   },
   iconButton: {
     marginLeft: 10,
   },
   iconText: {
-    fontSize: 30,
-    color: "#ffffff",
+    fontSize: 24,
+    color: 'white',
   },
   title: {
     fontSize: 24,
@@ -331,13 +325,26 @@ const styles = StyleSheet.create({
     marginTop: 200,
   },
   footer: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    backgroundColor: "#6a9174",
-    paddingVertical: 30,
-    borderTopWidth: 3,
-    alignItems: "center",
-    borderTopColor: "#ccc",
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 15,
+    backgroundColor: '#6a9174',
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
+  },
+  footerButton: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  footerText: {
+    fontSize: 12,
+    color: 'white',
+    marginTop: 5,
+  },
+  footerTextClick: {
+    fontSize: 12,
+    color: 'black',
+    marginTop: 5,
   },
   button: {
     paddingVertical: 5,
@@ -366,7 +373,7 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "black",
     borderRadius: 10,
     padding: 15,
     marginBottom: 15,
@@ -397,7 +404,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "black",
     borderRadius: 10,
     padding: 15,
     backgroundColor: "white",
@@ -418,6 +425,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "white",
+    width: "80%",
     padding: 20,
     borderRadius: 10,
     alignItems: "center",
@@ -427,6 +435,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#6a9174",
     padding: 10,
     borderRadius: 5,
+    width: "50%",
+    alignItems: "center",
   },
   confirmText: { 
     color: "white", 
