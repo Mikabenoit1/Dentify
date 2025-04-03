@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, StyleSheet } from "react-native";
-import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Link } from '@react-navigation/native';
-import OffreStore from "../components/OffreStore"; 
+import { AntDesign, Ionicons, MaterialCommunityIcons,MaterialIcons } from '@expo/vector-icons';
+import { Link } from "expo-router";
+import OffreStore from "../utils/OffreStore";
 
 // Types pour les routes et navigation
 interface RouteParams {
@@ -16,7 +16,7 @@ interface MesoffresProps {
 }
 
 // Type pour les offres
-interface Offre {
+export interface Offre {
   id: string;
   titre: string;
   profession: string;
@@ -70,16 +70,26 @@ export default function Mesoffres({ route }: MesoffresProps) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
+        <Image 
+          source={require('../assets/images/dentify_logo_noir.png')} 
+          style={styles.logo}
+          resizeMode="contain"
+        />
         
         <View style={styles.rightIcons}>
-          <TextInput style={styles.searchInput} placeholder="Recherche..." />
-          <TouchableOpacity style={styles.iconButton}>
-            <AntDesign style={styles.iconText} name="message1" />
-          </TouchableOpacity>
-          <Link href="/Profil" asChild>
+          <TextInput 
+            style={styles.searchInput} 
+            placeholder="Recherche..." 
+            placeholderTextColor="#999"
+          />
+          <Link href="/messages" asChild>
             <TouchableOpacity style={styles.iconButton}>
-              <MaterialCommunityIcons style={styles.iconText} name="account-circle-outline" />
+              <AntDesign name="message1" style={styles.iconText} />
+            </TouchableOpacity>
+          </Link>
+          <Link href="../profilClinique" asChild>
+            <TouchableOpacity style={styles.iconButton}>
+              <MaterialCommunityIcons name="account-circle-outline" style={styles.iconText} />
             </TouchableOpacity>
           </Link>
         </View>
@@ -111,7 +121,7 @@ export default function Mesoffres({ route }: MesoffresProps) {
           ListEmptyComponent={<Text style={styles.emptyText}>Aucune offre pour le moment.</Text>}
         />
 
-        <Link href="/CreationOffre" asChild>
+        <Link href="/creation-offre" asChild>
           <TouchableOpacity style={styles.addButton}>
             <AntDesign name="plus" size={24} color="white" />
             <Text style={styles.addButtonText}>Ajouter une offre</Text>
@@ -121,45 +131,24 @@ export default function Mesoffres({ route }: MesoffresProps) {
 
       {/* Barre de tâche */}
       <View style={styles.footer}>
-        <Link href="/Mesoffres" asChild>
-          <TouchableOpacity style={styles.button} onPress={() => handleNavigation("Mesoffres")}>
-            <AntDesign style={styles.iconText} name="calendar" />
-            <Text
-              style={[
-                styles.buttonText,
-                activePage === "Mesoffres" && styles.activeButtonText,
-              ]}
-            >
-              Mes offres
-            </Text>
+        <Link href="/mesoffres" asChild>
+          <TouchableOpacity style={styles.footerButton}>
+            <AntDesign name="calendar" size={24} color="black"   />
+            <Text style={styles.footerTextClick}>Offres publiés</Text>
           </TouchableOpacity>
         </Link>
         
-        <Link href="/CreationOffre" asChild>
-          <TouchableOpacity style={styles.button} onPress={() => handleNavigation("CreationOffre")}>
-            <Ionicons style={styles.iconText} name="create-outline" />
-            <Text
-              style={[
-                styles.buttonText,
-                activePage === "CreationOffre" && styles.activeButtonText,
-              ]}
-            >
-              Création d'une offre
-            </Text>
+        <Link href="/creation-offre" asChild>
+          <TouchableOpacity style={styles.footerButton}>
+          <Ionicons name="create-outline"  size={24} color="white" /> 
+           <Text style={styles.footerText}> Création d'une offre</Text>
           </TouchableOpacity>
         </Link>
         
         <Link href="/AccueilMore" asChild>
-          <TouchableOpacity style={styles.button} onPress={() => handleNavigation("AccueilMore")}>
-            <AntDesign style={styles.iconText} name="ellipsis1" />
-            <Text
-              style={[
-                styles.buttonText,
-                activePage === "AccueilMore" && styles.activeButtonText,
-              ]}
-            >
-              More
-            </Text>
+          <TouchableOpacity style={styles.footerButton}>
+            <MaterialIcons name="more-horiz" style={styles.footerIcon} />
+            <Text style={styles.footerText}>Plus</Text>
           </TouchableOpacity>
         </Link>
       </View>
@@ -174,40 +163,36 @@ const styles = StyleSheet.create({
     backgroundColor: "#fbf2e8",
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-    backgroundColor: "#6a9174",
+    backgroundColor: '#6a9174',
   },
   logo: {
     width: 100,
     height: 50,
   },
-  searchInput: {
-    flex: 0.5,
-    marginHorizontal: 1,
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingLeft: 10,
-    paddingVertical: 5,
-    fontSize: 10,
-    backgroundColor: "white",
-  },
   rightIcons: {
-    flexDirection: "row",
-    alignItems: "center",
-    position: "absolute",
-    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchInput: {
+    width: 120,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    padding: 8,
+    backgroundColor: 'white',
+    fontSize: 14,
+    marginRight: 10,
   },
   iconButton: {
     marginLeft: 10,
   },
   iconText: {
-    fontSize: 30,
-    color: "#ffffff",
+    fontSize: 24,
+    color: 'white',
   },
   title: {
     fontSize: 24,
@@ -215,13 +200,30 @@ const styles = StyleSheet.create({
     marginTop: 200,
   },
   footer: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    backgroundColor: "#6a9174",
-    paddingVertical: 30,
-    borderTopWidth: 3,
-    alignItems: "center",
-    borderTopColor: "#ccc",
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 15,
+    backgroundColor: '#6a9174',
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
+  },
+  footerButton: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  footerIcon: {
+    fontSize: 24,
+    color: 'white',
+  },
+  footerText: {
+    fontSize: 12,
+    color: 'white',
+    marginTop: 5,
+  },
+  footerTextClick: {
+    fontSize: 12,
+    color: 'black',
+    marginTop: 5,
   },
   button: {
     paddingVertical: 5,
