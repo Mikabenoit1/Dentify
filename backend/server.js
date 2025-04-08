@@ -23,6 +23,8 @@ const candidatureRoutes = require('./src/routes/candidatureRoutes');
 const cliniqueRoutes = require('./src/routes/cliniqueRoutes');
 const messageRoutes = require('./src/routes/messageRoutes');
 const resetRoutes = require('./src/routes/resetRoutes');
+const notificationRoutes = require('./src/routes/notificationRoutes');
+const documentRoutes = require('./src/routes/documentRoutes');
 
 // 🔗 Utilisation des routes
 app.use('/api/users', userRoutes);
@@ -31,7 +33,9 @@ app.use('/api/candidatures', candidatureRoutes);
 app.use('/api/cliniques', cliniqueRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/reset', resetRoutes);
-
+app.use('/api/notifications', notificationRoutes);
+app.use("/api/documents", documentRoutes);
+app.use("/uploads", express.static("uploads"));
 // ✅ Route de test
 app.get('/test', (req, res) => {
   res.send('✅ Serveur opérationnel même sans MySQL');

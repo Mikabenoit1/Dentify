@@ -3,6 +3,7 @@ const router = express.Router();
 const { Message, User } = require('../models');
 const protect = require('../middlewares/authMiddleware');
 const { Op } = require('sequelize');
+const { creerNotification } = require('../controllers/notificationController');
 
 // ✅ Envoyer un message
 router.post('/', protect, async (req, res) => {
@@ -17,6 +18,17 @@ router.post('/', protect, async (req, res) => {
       id_offre,
       fichier_joint
     });
+
+    // 📬 Créer une notification uniquement pour les messages "normaux"
+    if ((type_message || 'normal') === 'normal') {
+      const expediteur = await User.findByPk(req.user.id_utilisateur);
+
+      await creerNotification({
+        id_destinataire : destinataire_id,
+        type_notification: 'message',
+        contenu: `Nouveau message de ${expediteur.prenom} ${expediteur.nom}`
+      });
+    }
 
     res.status(201).json(nouveauMessage);
   } catch (error) {
@@ -119,21 +131,48 @@ router.get('/par-offre', protect, async (req, res) => {
   }
 });
 
-// ✅ Obtenir tous les messages avec un utilisateur donné
+// ✅ Obtenir tous les messages avec un utilisateur donné (avec pagination et tri)
 router.get('/:id_utilisateur', protect, async (req, res) => {
   try {
+    const monId = req.user.id_utilisateur;
+    const autreId = parseInt(req.params.id_utilisateur);
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    const sortBy = req.query.sortBy || 'date_envoi';
+    const order = req.query.order === 'asc' ? 'ASC' : 'DESC';
+
+    const total = await Message.count({
+      where: {
+        [Op.or]: [
+          { expediteur_id: monId, destinataire_id: autreId },
+          { expediteur_id: autreId, destinataire_id: monId }
+        ]
+      }
+    });
+
     const messages = await Message.findAll({
       where: {
         [Op.or]: [
-          { expediteur_id: req.user.id_utilisateur, destinataire_id: req.params.id_utilisateur },
-          { expediteur_id: req.params.id_utilisateur, destinataire_id: req.user.id_utilisateur }
+          { expediteur_id: monId, destinataire_id: autreId },
+          { expediteur_id: autreId, destinataire_id: monId }
         ]
       },
+      order: [[sortBy, order]],
+      limit,
+      offset
     });
 
-    res.json(messages);
+    res.json({
+      page,
+      totalPages: Math.ceil(total / limit),
+      total,
+      messages
+    });
   } catch (error) {
-    console.error('Erreur lors de la récupération des messages :', error);
+    console.error('Erreur lors de la récupération des messages paginés :', error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
@@ -179,7 +218,6 @@ router.put('/lu/:id', protect, async (req, res) => {
     const message = await Message.findByPk(req.params.id);
     if (!message) return res.status(404).json({ message: 'Message introuvable' });
 
-    // Seul le destinataire peut marquer comme lu
     if (message.destinataire_id !== req.user.id_utilisateur) {
       return res.status(403).json({ message: 'Non autorisé à marquer ce message comme lu' });
     }

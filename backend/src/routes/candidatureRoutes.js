@@ -8,6 +8,7 @@ const {
   Offre
 } = require('../models');
 const protect = require('../middlewares/authMiddleware');
+const { creerNotification } = require('../controllers/notificationController'); // ← Import du contrôleur
 
 // ✅ POST : Créer une candidature (réservé aux professionnels)
 router.post('/', protect, async (req, res) => {
@@ -35,18 +36,25 @@ router.post('/', protect, async (req, res) => {
       est_confirmee: 'N'
     });
 
-    // 💬 Créer un message automatique dans la messagerie
+    // 💬 Créer un message automatique + notification
     const offre = await Offre.findByPk(id_offre);
     if (offre) {
-      // Trouver le compte utilisateur de la clinique liée à l'offre
       const clinique = await CliniqueDentaire.findByPk(offre.id_clinique);
       if (clinique && clinique.id_utilisateur) {
+        // Message
         await Message.create({
           expediteur_id: utilisateurId,
           destinataire_id: clinique.id_utilisateur,
           contenu: message_personnalise || "📩 Nouvelle candidature envoyée",
           id_offre,
           type_message: "systeme"
+        });
+
+        // Notification
+        await creerNotification({
+          id_destinataire: clinique.id_utilisateur,
+          type: "candidature",
+          contenu: `Vous avez reçu une nouvelle candidature pour l’offre "${offre.titre}"`
         });
       }
     }

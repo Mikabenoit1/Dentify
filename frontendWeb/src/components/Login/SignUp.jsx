@@ -1,7 +1,7 @@
 import { FaFacebookF, FaGooglePlusG, FaLinkedinIn } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiFetch } from "../../lib/apiFetch";
+import { registerUser } from "../../lib/api";
 
 function SignUp({ type }) {
   const navigate = useNavigate();
@@ -49,26 +49,27 @@ function SignUp({ type }) {
           nom_clinique: undefined // On retire le champ nom_clinique pour les pros
         };
 
-    try {
-      const response = await apiFetch("/users/register", {
-        method: "POST",
-        body: requestData
-      });
-
-      console.log("Inscription réussie :", response);
-
-      if (formData.type_utilisateur === "clinique") {
-        navigate("/pages/Connecte/PrincipaleClinique");
-      } else {
-        navigate("/pages/Connecte/Principale");
-      }
-
-    } catch (error) {
-      console.error("Erreur d'inscription :", error);
-      setError(error.message || "Erreur lors de l'inscription");
-    } finally {
-      setIsLoading(false);
-    }
+        try {
+          const response = await registerUser(requestData);
+        
+          // 👉 Vérifie si un token est retourné (comme dans le login)
+          if (response.token) {
+            localStorage.setItem("token", response.token);
+          }
+        
+          console.log("Inscription réussie :", response);
+        
+          if (formData.type_utilisateur === "clinique") {
+            navigate("/pages/Connecte/PrincipaleClinique");
+          } else {
+            navigate("/pages/Connecte/Principale");
+          }
+        
+        } catch (error) {
+          console.error("Erreur d'inscription :", error);
+          setError(error.message || "Erreur lors de l'inscription");
+        }
+        
   };
 
   return (

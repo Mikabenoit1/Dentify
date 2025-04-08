@@ -1,127 +1,98 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/MonCompte.css';
+import { fetchUserProfile, updateUserProfile, uploadUserDocument, downloadUserDocument } from "../lib/api";
 
 const MonCompte = () => {
-  // Référence pour faire défiler vers les notifications
-  const notificationRef = useRef(null);
-  const addressInputRef = useRef(null);
+
+// 📌 Références
+const notificationRef = useRef(null);
+const addressInputRef = useRef(null);
+
+// ✅ État général
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState(null);
+
+// ✅ Notifications (succès / erreur visuelle)
+const [notification, setNotification] = useState({
+  show: false,
+  message: '',
+  type: 'success'
+});
+
+// ✅ Profil utilisateur
+const [profile, setProfile] = useState(null);           // Données actuelles (venant du backend)
+const [editedProfile, setEditedProfile] = useState(null); // Données modifiables en édition
+const [editMode, setEditMode] = useState(false);         // Mode édition activé ou non
+const [profilIncomplet, setProfilIncomplet] = useState(false); // Pour forcer à compléter le profil
+
+// 📝 Champs individuels de type texte ajoutable
+const [newSpecialite, setNewSpecialite] = useState("");
+const [newCompetence, setNewCompetence] = useState("");
+const [newLangue, setNewLangue] = useState("");
+const [newRegion, setNewRegion] = useState("");
+
+// 📚 Nouvelle éducation temporaire
+const [newEducation, setNewEducation] = useState({
+  diplome: "",
+  etablissement: "",
+  annee: ""
+});
+
+// 🧰 Nouvelle expérience temporaire
+const [newExperience, setNewExperience] = useState({
+  poste: "",
+  etablissement: "",
+  lieu: "",
+  debut: "",
+  fin: "",
+  description: ""
+});
   
-  // État pour la notification
-  const [notification, setNotification] = useState({
-    show: false,
-    message: '',
-    type: 'success'
-  });
+  // Charger les données du profil depuis le backend
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchUserProfile();// 🆕 appel au backend
+        setProfile(data);
   
-  // État pour le mode édition
-  const [editMode, setEditMode] = useState(false);
+        // ✅ Vérifie si le profil pro est incomplet
+        if (data.type_utilisateur === "professionnel") {
+          const champsRequis = [
+            "numero_permis",
+            "tarif_horaire",
+            "rayon_deplacement_km"
+          ];
+          const incomplet = champsRequis.some(champ => !data[champ]);
   
-  // État pour les informations du profil
-  const [profile, setProfile] = useState({
-    nom: "Dr. Martin Dupont",
-    profession: "dentiste",
-    email: "martin.dupont@email.com",
-    telephone: "06 12 34 56 78",
-    description: "Dentiste généraliste avec 8 ans d'expérience. Spécialisé en dentisterie restauratrice et esthétique.",
-    experience: {
-      annees: 8,
-      specialites: ["Dentisterie générale", "Restauratrice", "Esthétique"],
-    },
-    disponibilite: {
-      debut: "2023-07-01",
-      fin: "2023-08-31",
-      jours: ["lundi", "mardi", "mercredi", "jeudi", "vendredi"],
-      disponibleImmediatement: true
-    },
-    tarifJournalier: "450",
-    mobilite: {
-      rayon: 50,
-      vehicule: true,
-      regions: ["Île-de-France", "Normandie"],
-      adressePrincipale: "15 Rue du Docteur Roux, 75015 Paris",
-      coordinates: {
-        lat: 48.8417,
-        lng: 2.3093
+          if (incomplet) {
+            setProfilIncomplet(true);
+          }
+        }
+  
+      } catch (err) {
+        setError("Impossible de charger les données du profil. Veuillez réessayer plus tard.");
+        console.error("Erreur lors du chargement du profil:", err);
+      } finally {
+        setLoading(false);
       }
-    },
-    competences: ["Implantologie", "Prothèses", "Endodontie", "Pédodontie"],
-    langues: ["Français", "Anglais", "Espagnol"],
-    educations: [
-      {
-        diplome: "Doctorat en Chirurgie Dentaire",
-        etablissement: "Université Paris Descartes",
-        annee: "2015"
-      },
-      {
-        diplome: "DU d'Implantologie",
-        etablissement: "Université Paris Diderot",
-        annee: "2017"
-      }
-    ],
-    experiences: [
-      {
-        poste: "Dentiste",
-        etablissement: "Cabinet Dentaire Central",
-        lieu: "Paris, France",
-        debut: "2018-09",
-        fin: "Present",
-        description: "Dentisterie générale et implantologie."
-      },
-      {
-        poste: "Dentiste assistant",
-        etablissement: "Clinique Dentaire Moderne",
-        lieu: "Lyon, France",
-        debut: "2015-10",
-        fin: "2018-08",
-        description: "Dentisterie esthétique et pédiatrique."
-      }
-    ],
-    documents: {
-      cv: "cv_martin_dupont.pdf",
-      diplome: "diplome_chirurgie_dentaire.pdf",
-      inscription: "inscription_ordre_dentistes.pdf"
-    },
-    photo: "/assets/img/profile_placeholder.jpg"
-  });
+    };
   
-  // État pour stocker les modifications en cours
-  const [editedProfile, setEditedProfile] = useState({...profile});
+    loadUserProfile();
+  }, []);
   
-  // États pour les champs de type liste
-  const [newSpecialite, setNewSpecialite] = useState("");
-  const [newCompetence, setNewCompetence] = useState("");
-  const [newLangue, setNewLangue] = useState("");
-  const [newRegion, setNewRegion] = useState("");
-  
-  // États pour les nouvelles expériences et éducations
-  const [newEducation, setNewEducation] = useState({
-    diplome: "",
-    etablissement: "",
-    annee: ""
-  });
-  
-  const [newExperience, setNewExperience] = useState({
-    poste: "",
-    etablissement: "",
-    lieu: "",
-    debut: "",
-    fin: "",
-    description: ""
-  });
 
   // Charger Google Maps API
   useEffect(() => {
-    if (!window.google) {
+    if (!window.google && editMode) {
       const googleMapsScript = document.createElement('script');
-      googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=VOTRE_CLE_API_GOOGLE_MAPS&libraries=places`;
+      googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`;
       googleMapsScript.async = true;
       googleMapsScript.defer = true;
       window.document.body.appendChild(googleMapsScript);
       
       googleMapsScript.onload = () => {
-        if (editMode) {
-          initializeAutocomplete();
-        }
+        initializeAutocomplete();
       };
       
       return () => {
@@ -134,7 +105,7 @@ const MonCompte = () => {
           }
         }
       };
-    } else if (editMode) {
+    } else if (window.google && editMode) {
       initializeAutocomplete();
     }
   }, [editMode]);
@@ -229,12 +200,12 @@ const MonCompte = () => {
   // Fonction pour valider les données du profil
   const validateProfile = () => {
     // Validation des champs obligatoires
-    if (!editedProfile.nom.trim()) {
+    if (!editedProfile.nom?.trim()) {
       showNotification("Veuillez entrer votre nom complet", "error");
       return false;
     }
     
-    if (!editedProfile.email.trim()) {
+    if (!editedProfile.email?.trim()) {
       showNotification("Veuillez entrer votre adresse email", "error");
       return false;
     }
@@ -247,20 +218,15 @@ const MonCompte = () => {
     }
     
     // Validation des dates de disponibilité
-    if (new Date(editedProfile.disponibilite.debut) > new Date(editedProfile.disponibilite.fin)) {
+    if (editedProfile.disponibilite?.debut && editedProfile.disponibilite?.fin &&
+        new Date(editedProfile.disponibilite.debut) > new Date(editedProfile.disponibilite.fin)) {
       showNotification("La date de début doit être antérieure à la date de fin", "error");
       return false;
     }
     
     // Validation du tarif journalier
-    if (parseInt(editedProfile.tarifJournalier) <= 0) {
+    if (editedProfile.tarifJournalier && parseInt(editedProfile.tarifJournalier) <= 0) {
       showNotification("Veuillez entrer un tarif journalier valide", "error");
-      return false;
-    }
-    
-    // Validation de l'adresse et des coordonnées
-    if (!editedProfile.mobilite.adressePrincipale || !editedProfile.mobilite.coordinates) {
-      showNotification("Veuillez sélectionner une adresse valide dans les suggestions", "error");
       return false;
     }
     
@@ -268,40 +234,18 @@ const MonCompte = () => {
   };
   
   // Fonction pour sauvegarder les modifications
-  const handleSave = () => {
-    // Valider les données avant de sauvegarder
-    if (!validateProfile()) {
-      return;
-    }
-    
-    // Dans un environnement réel, on enverrait ici les données au serveur via une API
-    // Simuler un appel API
-    setTimeout(() => {
-      setProfile({...editedProfile});
+  const handleSave = async () => {
+    if (!validateProfile()) return;
+  
+    try {
+      await updateUserProfile(editedProfile);
+      setProfile(editedProfile);
       setEditMode(false);
-      
-      // Réinitialiser les états des nouveaux éléments
-      setNewSpecialite("");
-      setNewCompetence("");
-      setNewLangue("");
-      setNewRegion("");
-      setNewEducation({
-        diplome: "",
-        etablissement: "",
-        annee: ""
-      });
-      setNewExperience({
-        poste: "",
-        etablissement: "",
-        lieu: "",
-        debut: "",
-        fin: "",
-        description: ""
-      });
-      
-      // Afficher une notification de succès
-      showNotification("Profil mis à jour avec succès !", "success");
-    }, 1000);
+      showNotification("Profil mis à jour avec succès !");
+    } catch (err) {
+      console.error("Erreur lors de la sauvegarde :", err);
+      showNotification("Une erreur est survenue lors de la sauvegarde.", "error");
+    }
   };
   
   // Gestion des changements d'input pour les champs simples
@@ -328,7 +272,7 @@ const MonCompte = () => {
   
   // Gestion des changements pour les jours de disponibilité (checkboxes)
   const handleDayToggle = (day) => {
-    const currentDays = [...editedProfile.disponibilite.jours];
+    const currentDays = [...(editedProfile.disponibilite?.jours || [])];
     
     if (currentDays.includes(day)) {
       // Enlever le jour s'il est déjà présent
@@ -384,13 +328,13 @@ const MonCompte = () => {
           ...editedProfile,
           [parent]: {
             ...editedProfile[parent],
-            [child]: [...editedProfile[parent][child], value.trim()]
+            [child]: [...(editedProfile[parent]?.[child] || []), value.trim()]
           }
         });
       } else {
         setEditedProfile({
           ...editedProfile,
-          [field]: [...editedProfile[field], value.trim()]
+          [field]: [...(editedProfile[field] || []), value.trim()]
         });
       }
       resetFunc("");
@@ -402,16 +346,18 @@ const MonCompte = () => {
     // Gérer les champs imbriqués
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
-      const newArray = [...editedProfile[parent][child]];
-      newArray.splice(index, 1);
-      setEditedProfile({
-        ...editedProfile,
-        [parent]: {
-          ...editedProfile[parent],
-          [child]: newArray
-        }
-      });
-    } else {
+      if (editedProfile[parent]?.[child]) {
+        const newArray = [...editedProfile[parent][child]];
+        newArray.splice(index, 1);
+        setEditedProfile({
+          ...editedProfile,
+          [parent]: {
+            ...editedProfile[parent],
+            [child]: newArray
+          }
+        });
+      }
+    } else if (editedProfile[field]) {
       const newArray = [...editedProfile[field]];
       newArray.splice(index, 1);
       setEditedProfile({
@@ -435,7 +381,7 @@ const MonCompte = () => {
     if (newEducation.diplome && newEducation.etablissement && newEducation.annee) {
       setEditedProfile({
         ...editedProfile,
-        educations: [...editedProfile.educations, {...newEducation}]
+        educations: [...(editedProfile.educations || []), {...newEducation}]
       });
       setNewEducation({
         diplome: "",
@@ -447,12 +393,14 @@ const MonCompte = () => {
   
   // Supprimer une éducation
   const handleRemoveEducation = (index) => {
-    const newEducations = [...editedProfile.educations];
-    newEducations.splice(index, 1);
-    setEditedProfile({
-      ...editedProfile,
-      educations: newEducations
-    });
+    if (editedProfile.educations) {
+      const newEducations = [...editedProfile.educations];
+      newEducations.splice(index, 1);
+      setEditedProfile({
+        ...editedProfile,
+        educations: newEducations
+      });
+    }
   };
   
   // Gestion des changements pour les nouvelles expériences
@@ -469,7 +417,7 @@ const MonCompte = () => {
     if (newExperience.poste && newExperience.etablissement && newExperience.debut) {
       setEditedProfile({
         ...editedProfile,
-        experiences: [...editedProfile.experiences, {...newExperience}]
+        experiences: [...(editedProfile.experiences || []), {...newExperience}]
       });
       setNewExperience({
         poste: "",
@@ -484,103 +432,192 @@ const MonCompte = () => {
   
   // Supprimer une expérience
   const handleRemoveExperience = (index) => {
-    const newExperiences = [...editedProfile.experiences];
-    newExperiences.splice(index, 1);
-    setEditedProfile({
-      ...editedProfile,
-      experiences: newExperiences
-    });
+    if (editedProfile.experiences) {
+      const newExperiences = [...editedProfile.experiences];
+      newExperiences.splice(index, 1);
+      setEditedProfile({
+        ...editedProfile,
+        experiences: newExperiences
+      });
+    }
   };
   
   // Gestion du téléchargement de la photo
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Dans un cas réel, ici on uploadrait l'image vers un serveur
-      // Pour notre exemple, on va créer une URL locale
-      const imageUrl = URL.createObjectURL(file);
-      setEditedProfile({
-        ...editedProfile,
-        photo: imageUrl
-      });
+      try {
+        // Créer un objet FormData pour envoyer le fichier
+        const formData = new FormData();
+        formData.append('photo', file);
+        
+        // Dans un cas réel, vous appelleriez une API pour uploader l'image
+        // const response = await uploadUserPhoto(formData);
+        // const imageUrl = response.photoUrl;
+        
+        // Pour l'exemple, on crée une URL locale temporaire
+        const imageUrl = URL.createObjectURL(file);
+        
+        setEditedProfile({
+          ...editedProfile,
+          photo: imageUrl
+        });
+      } catch (err) {
+        showNotification("Erreur lors de l'upload de la photo. Veuillez réessayer.", "error");
+        console.error("Erreur lors de l'upload de la photo:", err);
+      }
     }
   };
   
   // Gestion du téléchargement de documents
-  const handleDocumentUpload = (e, documentType) => {
+  const handleDocumentUpload = async (e, documentType) => {
     const file = e.target.files[0];
-    if (file) {
-      // Vérification de la taille du fichier (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        showNotification("Le fichier est trop volumineux. Taille maximale: 5MB", "error");
-        return;
-      }
-      
-      // Vérification du type de fichier selon le documentType
-      if (documentType === 'cv') {
-        if (!['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type)) {
-          showNotification("Format de CV non valide. Utilisez PDF ou DOC/DOCX", "error");
-          return;
-        }
-      } else {
-        // Pour les autres documents, accepter aussi les images
-        const validTypes = [
-          'application/pdf', 
-          'application/msword', 
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'image/jpeg',
-          'image/png'
-        ];
-        
-        if (!validTypes.includes(file.type)) {
-          showNotification("Format de fichier non valide. Utilisez PDF, DOC/DOCX, JPG ou PNG", "error");
-          return;
-        }
-      }
-      
-      // Pour un cas réel, on uploaderait vers un serveur
-      // Ici on met juste à jour le nom du fichier
-      setEditedProfile({
-        ...editedProfile,
+    if (!file) return;
+  
+    // 🔒 Vérification de la taille max (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification("Le fichier est trop volumineux. Taille maximale: 5MB", "error");
+      return;
+    }
+  
+    // 📁 Vérification du type de fichier
+    const validTypesCV = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ];
+    const validTypesAutres = [
+      ...validTypesCV,
+      "image/jpeg",
+      "image/png"
+    ];
+  
+    const isValid =
+      documentType === "cv"
+        ? validTypesCV.includes(file.type)
+        : validTypesAutres.includes(file.type);
+  
+    if (!isValid) {
+      showNotification("Format de fichier non valide. Utilisez PDF, DOC/DOCX, JPG ou PNG", "error");
+      return;
+    }
+  
+    // 📤 Envoi au backend via API centralisée
+    try {
+      const formData = new FormData();
+      formData.append("document", file);
+      formData.append("type", documentType);
+  
+      const result = await uploadUserDocument(formData); // ✅ appel à ton api.js
+  
+      setEditedProfile((prev) => ({
+        ...prev,
         documents: {
-          ...editedProfile.documents,
-          [documentType]: file.name
+          ...(prev.documents || {}),
+          [documentType]: result.filename // ou result.url selon ta réponse API
         }
-      });
-      
+      }));
+  
       showNotification(`Le document "${file.name}" a été téléchargé avec succès`, "success");
+    } catch (err) {
+      console.error("Erreur d'upload :", err);
+      showNotification("Erreur lors de l'upload du document. Veuillez réessayer.", "error");
     }
   };
   
-  // Fonction pour télécharger un document
-  const handleDocumentDownload = (documentName) => {
-    // Dans un environnement réel, cette fonction téléchargerait le fichier depuis le serveur
-    // Ici, on affiche simplement une notification
-    showNotification(`Téléchargement de "${documentName}" en cours...`, "info");
-    
-    // Simuler un temps de téléchargement
-    setTimeout(() => {
-      showNotification(`Le document "${documentName}" a été téléchargé avec succès`, "success");
-    }, 1500);
+  const handleDocumentDownload = async (documentName, documentType) => {
+    try {
+      const response = await fetch(`http://localhost:4000/api/documents/download/${documentType}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        }
+      });
+  
+      if (!response.ok) throw new Error("Téléchargement échoué");
+  
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = documentName;
+      link.click();
+  
+      showNotification(`Téléchargement de "${documentName}" en cours...`, "info");
+  
+      setTimeout(() => {
+        showNotification(`Le document "${documentName}" a été téléchargé avec succès`, "success");
+      }, 1500);
+    } catch (err) {
+      showNotification("Erreur lors du téléchargement du document. Veuillez réessayer.", "error");
+      console.error("Erreur lors du téléchargement du document:", err);
+    }
   };
   
   // Formatter la date
   const formatDate = (dateString) => {
+    if (!dateString) return "";
     if (dateString === "Present") return "Présent";
     
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    
-    return `${month.toString().padStart(2, '0')}/${year}`;
+    try {
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      
+      return `${month.toString().padStart(2, '0')}/${year}`;
+    } catch (err) {
+      return dateString;
+    }
   };
+  
+  // Afficher un message de chargement
+  if (loading && !profile) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Chargement de votre profil...</p>
+      </div>
+    );
+  }
+  
+  // Afficher un message d'erreur
+  if (error && !profile) {
+    return (
+      <div className="error-container">
+        <div className="error-icon">
+          <i className="fas fa-exclamation-circle"></i>
+        </div>
+        <p>{error}</p>
+        <button 
+          className="retry-button"
+          onClick={() => window.location.reload()}
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+  
+  // Si le profil n'est pas chargé, ne rien afficher
+  if (!profile) {
+    return null;
+  }
   
   return (
     <div className="mon-compte-container">
       <div className="profile-header">
+  
         <div className="profile-title">
           <h1>Mon Profil Professionnel</h1>
         </div>
+  
+        {/* 🔔 Message d'alerte si profil incomplet */}
+        {profilIncomplet && (
+          <div className="alerte" style={{ backgroundColor: '#ffe1e1', border: '1px solid #ff5e5e', color: '#d10000', padding: '10px', marginTop: '1rem', borderRadius: '8px' }}>
+            Votre profil est incomplet. Veuillez compléter vos informations pour accéder aux offres.
+          </div>
+        )}
+  
         {!editMode ? (
           <button className="edit-profile-button" onClick={handleEdit}>
             <i className="fas fa-edit"></i> Modifier le profil
@@ -596,6 +633,7 @@ const MonCompte = () => {
           </div>
         )}
       </div>
+  
 
       <div className="profile-content">
         {/* Section informations personnelles */}
@@ -606,7 +644,7 @@ const MonCompte = () => {
               <div className="info-display">
                 <div className="profile-photo-container">
                   <img 
-                    src={profile.photo} 
+                    src={profile.photo || '/assets/img/profile_placeholder.jpg'} 
                     alt={profile.nom} 
                     className="profile-photo" 
                   />
@@ -630,7 +668,7 @@ const MonCompte = () => {
                 <div className="photo-upload-section">
                   <div className="current-photo">
                     <img 
-                      src={editedProfile.photo} 
+                      src={editedProfile.photo || '/assets/img/profile_placeholder.jpg'} 
                       alt="Photo de profil" 
                       className="photo-preview" 
                     />
@@ -656,7 +694,7 @@ const MonCompte = () => {
                       type="text"
                       id="nom"
                       name="nom"
-                      value={editedProfile.nom}
+                      value={editedProfile.nom || ''}
                       onChange={handleInputChange}
                       className="form-control"
                     />
@@ -667,7 +705,7 @@ const MonCompte = () => {
                     <select
                       id="profession"
                       name="profession"
-                      value={editedProfile.profession}
+                      value={editedProfile.profession || 'dentiste'}
                       onChange={handleInputChange}
                       className="form-control"
                     >
@@ -685,7 +723,7 @@ const MonCompte = () => {
                       type="email"
                       id="email"
                       name="email"
-                      value={editedProfile.email}
+                      value={editedProfile.email || ''}
                       onChange={handleInputChange}
                       className="form-control"
                     />
@@ -697,7 +735,7 @@ const MonCompte = () => {
                       type="text"
                       id="telephone"
                       name="telephone"
-                      value={editedProfile.telephone}
+                      value={editedProfile.telephone || ''}
                       onChange={handleInputChange}
                       className="form-control"
                     />
@@ -709,7 +747,7 @@ const MonCompte = () => {
                   <textarea
                     id="description"
                     name="description"
-                    value={editedProfile.description}
+                    value={editedProfile.description || ''}
                     onChange={handleInputChange}
                     className="form-control"
                     rows="4"
@@ -727,11 +765,11 @@ const MonCompte = () => {
             {!editMode ? (
               <div className="mobility-display">
                 <div className="mobility-info">
-                  <p><strong>Adresse principale:</strong> {profile.mobilite.adressePrincipale}</p>
-                  <p><strong>Rayon de mobilité:</strong> {profile.mobilite.rayon} km</p>
+                  <p><strong>Adresse principale:</strong> {profile.mobilite?.adressePrincipale || 'Non spécifiée'}</p>
+                  <p><strong>Rayon de mobilité:</strong> {profile.mobilite?.rayon || 0} km</p>
                   <p>
                     <strong>Véhicule personnel:</strong> 
-                    {profile.mobilite.vehicule ? (
+                    {profile.mobilite?.vehicule ? (
                       <span className="has-vehicle"><i className="fas fa-check-circle"></i> Oui</span>
                     ) : (
                       <span className="no-vehicle"><i className="fas fa-times-circle"></i> Non</span>
@@ -742,9 +780,13 @@ const MonCompte = () => {
                 <div className="regions-info">
                   <h4>Régions d'intervention</h4>
                   <div className="regions-container">
-                    {profile.mobilite.regions.map((region, index) => (
-                      <span key={index} className="region-chip">{region}</span>
-                    ))}
+                    {profile.mobilite?.regions?.length > 0 ? (
+                      profile.mobilite.regions.map((region, index) => (
+                        <span key={index} className="region-chip">{region}</span>
+                      ))
+                    ) : (
+                      <p>Aucune région spécifiée</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -756,7 +798,7 @@ const MonCompte = () => {
                     type="text"
                     id="mobilite.adressePrincipale"
                     name="mobilite.adressePrincipale"
-                    value={editedProfile.mobilite.adressePrincipale}
+                    value={editedProfile.mobilite?.adressePrincipale || ''}
                     onChange={handleInputChange}
                     className="form-control address-autocomplete"
                     placeholder="Votre adresse principale"
@@ -773,14 +815,14 @@ const MonCompte = () => {
                       type="range"
                       id="mobilite.rayon"
                       name="mobilite.rayon"
-                      value={editedProfile.mobilite.rayon}
+                      value={editedProfile.mobilite?.rayon || 0}
                       onChange={handleInputChange}
                       className="form-control range-input"
                       min="5"
                       max="200"
                       step="5"
                     />
-                    <span className="range-value">{editedProfile.mobilite.rayon} km</span>
+                    <span className="range-value">{editedProfile.mobilite?.rayon || 0} km</span>
                   </div>
                   <small className="help-text">Distance maximale que vous êtes prêt à parcourir pour un remplacement</small>
                 </div>
@@ -790,7 +832,7 @@ const MonCompte = () => {
                     <input
                       type="checkbox"
                       id="vehicule"
-                      checked={editedProfile.mobilite.vehicule}
+                      checked={editedProfile.mobilite?.vehicule || false}
                       onChange={handleVehicule}
                     />
                     <label htmlFor="vehicule">Je dispose d'un véhicule personnel</label>
@@ -800,7 +842,7 @@ const MonCompte = () => {
                 <div className="form-group">
                   <label>Régions d'intervention</label>
                   <div className="tags-container">
-                    {editedProfile.mobilite.regions.map((region, index) => (
+                    {editedProfile.mobilite?.regions?.map((region, index) => (
                       <div key={index} className="tag">
                         <span>{region}</span>
                         <button 
@@ -844,8 +886,12 @@ const MonCompte = () => {
               <div className="availability-display">
                 <div className="availability-period">
                   <h4>Période de disponibilité</h4>
-                  <p>Du {new Date(profile.disponibilite.debut).toLocaleDateString('fr-FR')} au {new Date(profile.disponibilite.fin).toLocaleDateString('fr-FR')}</p>
-                  {profile.disponibilite.disponibleImmediatement && (
+                  {profile.disponibilite?.debut && profile.disponibilite?.fin ? (
+                    <p>Du {new Date(profile.disponibilite.debut).toLocaleDateString('fr-FR')} au {new Date(profile.disponibilite.fin).toLocaleDateString('fr-FR')}</p>
+                  ) : (
+                    <p>Période non spécifiée</p>
+                  )}
+                  {profile.disponibilite?.disponibleImmediatement && (
                     <p className="immediate-availability"><i className="fas fa-check-circle"></i> Disponible immédiatement</p>
                   )}
                 </div>
@@ -856,7 +902,7 @@ const MonCompte = () => {
                     {['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map((day) => (
                       <div 
                         key={day} 
-                        className={`day-chip ${profile.disponibilite.jours.includes(day) ? 'active' : 'inactive'}`}
+                        className={`day-chip ${profile.disponibilite?.jours?.includes(day) ? 'active' : 'inactive'}`}
                       >
                         {day.charAt(0).toUpperCase() + day.slice(1)}
                       </div>
@@ -866,7 +912,7 @@ const MonCompte = () => {
                 
                 <div className="daily-rate">
                   <h4>Tarif journalier</h4>
-                  <p className="rate-amount">{profile.tarifJournalier} €</p>
+                  <p className="rate-amount">{profile.tarifJournalier || 0} €</p>
                 </div>
               </div>
             ) : (
@@ -878,7 +924,7 @@ const MonCompte = () => {
                       type="date"
                       id="disponibilite.debut"
                       name="disponibilite.debut"
-                      value={editedProfile.disponibilite.debut}
+                      value={editedProfile.disponibilite?.debut || ''}
                       onChange={handleInputChange}
                       className="form-control"
                     />
@@ -889,7 +935,7 @@ const MonCompte = () => {
                       type="date"
                       id="disponibilite.fin"
                       name="disponibilite.fin"
-                      value={editedProfile.disponibilite.fin}
+                      value={editedProfile.disponibilite?.fin || ''}
                       onChange={handleInputChange}
                       className="form-control"
                     />
@@ -897,48 +943,48 @@ const MonCompte = () => {
                 </div>
                 
                 <div className="form-group">
-  <label>Jours disponibles</label>
-  <div className="days-selection">
-    {['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map((day) => (
-      <div key={day} className="day-toggle">
-        <input
-          type="checkbox"
-          id={`day-${day}`}
-          checked={editedProfile.disponibilite.jours.includes(day)}
-          onChange={() => handleDayToggle(day)}
-        />
-        <label htmlFor={`day-${day}`}>
-          {day.charAt(0).toUpperCase() + day.slice(1)}
-        </label>
-      </div>
-    ))}
-  </div>
-</div>
+                  <label>Jours disponibles</label>
+                  <div className="days-selection">
+                    {['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map((day) => (
+                      <div key={day} className="day-toggle">
+                        <input
+                          type="checkbox"
+                          id={`day-${day}`}
+                          checked={editedProfile.disponibilite?.jours?.includes(day) || false}
+                          onChange={() => handleDayToggle(day)}
+                        />
+                        <label htmlFor={`day-${day}`}>
+                          {day.charAt(0).toUpperCase() + day.slice(1)}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-<div className="form-group">
-  <div className="checkbox-group">
-    <input
-      type="checkbox"
-      id="disponibiliteImmediate"
-      checked={editedProfile.disponibilite.disponibleImmediatement}
-      onChange={handleDisponibiliteImmediate}
-    />
-    <label htmlFor="disponibiliteImmediate">Disponible immédiatement</label>
-  </div>
-</div>
+                <div className="form-group">
+                  <div className="checkbox-group">
+                    <input
+                      type="checkbox"
+                      id="disponibiliteImmediate"
+                      checked={editedProfile.disponibilite?.disponibleImmediatement || false}
+                      onChange={handleDisponibiliteImmediate}
+                    />
+                    <label htmlFor="disponibiliteImmediate">Disponible immédiatement</label>
+                  </div>
+                </div>
 
-<div className="form-group">
-  <label htmlFor="tarifJournalier">Tarif journalier (€)</label>
-  <input
-    type="number"
-    id="tarifJournalier"
-    name="tarifJournalier"
-    value={editedProfile.tarifJournalier}
-    onChange={handleInputChange}
-    className="form-control"
-    min="0"
-  />
-</div>
+                <div className="form-group">
+                  <label htmlFor="tarifJournalier">Tarif journalier (€)</label>
+                  <input
+                    type="number"
+                    id="tarifJournalier"
+                    name="tarifJournalier"
+                    value={editedProfile.tarifJournalier || ''}
+                    onChange={handleInputChange}
+                    className="form-control"
+                    min="0"
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -951,9 +997,13 @@ const MonCompte = () => {
             {!editMode ? (
               <div className="skills-display">
                 <div className="skills-container">
-                  {profile.competences.map((competence, index) => (
-                    <span key={index} className="skill-chip">{competence}</span>
-                  ))}
+                  {profile.competences?.length > 0 ? (
+                    profile.competences.map((competence, index) => (
+                      <span key={index} className="skill-chip">{competence}</span>
+                    ))
+                  ) : (
+                    <p>Aucune compétence spécifiée</p>
+                  )}
                 </div>
               </div>
             ) : (
@@ -961,7 +1011,7 @@ const MonCompte = () => {
                 <div className="form-group">
                   <label>Compétences professionnelles</label>
                   <div className="tags-container">
-                    {editedProfile.competences.map((competence, index) => (
+                    {editedProfile.competences?.map((competence, index) => (
                       <div key={index} className="tag">
                         <span>{competence}</span>
                         <button 
@@ -1004,9 +1054,13 @@ const MonCompte = () => {
             {!editMode ? (
               <div className="languages-display">
                 <div className="languages-container">
-                  {profile.langues.map((langue, index) => (
-                    <span key={index} className="language-chip">{langue}</span>
-                  ))}
+                  {profile.langues?.length > 0 ? (
+                    profile.langues.map((langue, index) => (
+                      <span key={index} className="language-chip">{langue}</span>
+                    ))
+                  ) : (
+                    <p>Aucune langue spécifiée</p>
+                  )}
                 </div>
               </div>
             ) : (
@@ -1014,7 +1068,7 @@ const MonCompte = () => {
                 <div className="form-group">
                   <label>Langues maîtrisées</label>
                   <div className="tags-container">
-                    {editedProfile.langues.map((langue, index) => (
+                    {editedProfile.langues?.map((langue, index) => (
                       <div key={index} className="tag">
                         <span>{langue}</span>
                         <button 
@@ -1059,37 +1113,43 @@ const MonCompte = () => {
                 <div className="document-item">
                   <i className="fas fa-file-pdf"></i>
                   <span className="document-name">CV</span>
-                  <span className="document-filename">{profile.documents.cv}</span>
-                  <button 
-                    className="document-action"
-                    onClick={() => handleDocumentDownload(profile.documents.cv)}
-                  >
-                    <i className="fas fa-download"></i> Télécharger
-                  </button>
+                  <span className="document-filename">{profile.documents?.cv || 'Non fourni'}</span>
+                  {profile.documents?.cv && (
+                    <button 
+                      className="document-action"
+                      onClick={() => handleDocumentDownload(profile.documents.cv, 'cv')}
+                    >
+                      <i className="fas fa-download"></i> Télécharger
+                    </button>
+                  )}
                 </div>
                 
                 <div className="document-item">
                   <i className="fas fa-file-pdf"></i>
                   <span className="document-name">Diplôme</span>
-                  <span className="document-filename">{profile.documents.diplome}</span>
-                  <button 
-                    className="document-action"
-                    onClick={() => handleDocumentDownload(profile.documents.diplome)}
-                  >
-                    <i className="fas fa-download"></i> Télécharger
-                  </button>
+                  <span className="document-filename">{profile.documents?.diplome || 'Non fourni'}</span>
+                  {profile.documents?.diplome && (
+                    <button 
+                      className="document-action"
+                      onClick={() => handleDocumentDownload(profile.documents.diplome, 'diplome')}
+                    >
+                      <i className="fas fa-download"></i> Télécharger
+                    </button>
+                  )}
                 </div>
                 
                 <div className="document-item">
                   <i className="fas fa-file-pdf"></i>
                   <span className="document-name">Inscription ordre professionnel</span>
-                  <span className="document-filename">{profile.documents.inscription}</span>
-                  <button 
-                    className="document-action"
-                    onClick={() => handleDocumentDownload(profile.documents.inscription)}
-                  >
-                    <i className="fas fa-download"></i> Télécharger
-                  </button>
+                  <span className="document-filename">{profile.documents?.inscription || 'Non fourni'}</span>
+                  {profile.documents?.inscription && (
+                    <button 
+                      className="document-action"
+                      onClick={() => handleDocumentDownload(profile.documents.inscription, 'inscription')}
+                    >
+                      <i className="fas fa-download"></i> Télécharger
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -1097,7 +1157,7 @@ const MonCompte = () => {
                 <div className="document-edit-item">
                   <div className="document-info">
                     <span className="document-label">CV</span>
-                    <span className="document-current">{editedProfile.documents.cv}</span>
+                    <span className="document-current">{editedProfile.documents?.cv || 'Non fourni'}</span>
                   </div>
                   <div className="document-upload">
                     <label htmlFor="cv-upload" className="upload-button">
@@ -1116,7 +1176,7 @@ const MonCompte = () => {
                 <div className="document-edit-item">
                   <div className="document-info">
                     <span className="document-label">Diplôme</span>
-                    <span className="document-current">{editedProfile.documents.diplome}</span>
+                    <span className="document-current">{editedProfile.documents?.diplome || 'Non fourni'}</span>
                   </div>
                   <div className="document-upload">
                     <label htmlFor="diplome-upload" className="upload-button">
@@ -1135,7 +1195,7 @@ const MonCompte = () => {
                 <div className="document-edit-item">
                   <div className="document-info">
                     <span className="document-label">Inscription ordre professionnel</span>
-                    <span className="document-current">{editedProfile.documents.inscription}</span>
+                    <span className="document-current">{editedProfile.documents?.inscription || 'Non fourni'}</span>
                   </div>
                   <div className="document-upload">
                     <label htmlFor="inscription-upload" className="upload-button">
@@ -1174,6 +1234,13 @@ const MonCompte = () => {
           >
             <i className="fas fa-times"></i>
           </button>
+        </div>
+      )}
+      
+      {/* Overlay de chargement pendant les opérations */}
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
         </div>
       )}
     </div>

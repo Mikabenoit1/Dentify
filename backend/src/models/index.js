@@ -7,6 +7,8 @@ const CliniqueDentaire = require('./CliniqueDentaire');
 const ProfessionnelDentaire = require('./ProfessionnelDentaire');
 const Message = require('./Message');
 const ResetToken = require('./ResetToken');
+const Notification = require('./Notification');
+const Document = require('./Document')(sequelize, require('sequelize').DataTypes);
 
 // 🔗 Utilisateur → CliniqueDentaire (1:1)
 User.hasOne(CliniqueDentaire, {
@@ -84,6 +86,24 @@ ResetToken.belongsTo(User, {
   foreignKey: 'id_utilisateur'
 });
 
+User.hasMany(Notification, {
+  foreignKey: 'id_destinataire',
+  onDelete: 'CASCADE'
+});
+Notification.belongsTo(User, {
+  foreignKey: 'id_destinataire'
+});
+
+// 🔗 Utilisateur → Document (1:N)
+User.hasMany(Document, {
+  foreignKey: 'id_utilisateur',
+  onDelete: 'CASCADE'
+});
+Document.belongsTo(User, {
+  foreignKey: 'id_utilisateur'
+});
+
+
 
 module.exports = {
   sequelize,
@@ -93,5 +113,7 @@ module.exports = {
   CliniqueDentaire,
   ProfessionnelDentaire,
   Message,
-  ResetToken
+  ResetToken,
+  Notification,
+  Document
 };

@@ -1,6 +1,7 @@
 import { FaFacebookF, FaGooglePlusG, FaLinkedinIn } from "react-icons/fa";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { loginUser } from "../../lib/api";
 
 function SignIn({ type }) {
   const navigate = useNavigate();
@@ -22,40 +23,24 @@ function SignIn({ type }) {
     console.log("Tentative de connexion avec:", credentials);
 
     try {
-      const response = await fetch("http://localhost:4000/api/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json"
-        },
-        body: JSON.stringify(credentials),
-        credentials: "include"
-      });
-
-      console.log("Réponse du serveur - Status:", response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Échec de la connexion");
-      }
-
-      const data = await response.json();
+      const data = await loginUser(credentials);
+    
       localStorage.setItem("token", data.token);
       console.log("Connexion réussie. Token:", data.token);
-
-      // 🔹 Redirection dynamique selon le type d'utilisateur
+    
       if (credentials.type_utilisateur === "clinique") {
         navigate("/pages/Connecte/PrincipaleClinique");
       } else {
         navigate("/pages/Connecte/Principale");
       }
-
+    
     } catch (error) {
       console.error("Erreur complète:", error);
       setError(error.message || "Identifiants incorrects");
     } finally {
       setIsLoading(false);
     }
+    
   };
 
   const handleChange = (e) => {

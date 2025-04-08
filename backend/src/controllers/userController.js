@@ -1,6 +1,4 @@
-const User = require('../models/User');
-const CliniqueDentaire = require('../models/CliniqueDentaire');
-const ProfessionnelDentaire = require('../models/ProfessionnelDentaire');
+const { User, ProfessionnelDentaire, CliniqueDentaire, Document } = require("../models");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -177,10 +175,30 @@ const getProfile = async (req, res) => {
     const pro = await ProfessionnelDentaire.findOne({ where: { id_utilisateur: user.id_utilisateur } });
     const clinique = await CliniqueDentaire.findOne({ where: { id_utilisateur: user.id_utilisateur } });
 
+    // ✅ Fusion des données utilisateur + pro/clinique
+    const profil = {
+      ...user.toJSON(),
+      ...(pro ? pro.toJSON() : {}),
+      ...(clinique ? clinique.toJSON() : {})
+    };
+
+    // ✅ Ajout des documents
+    const documents = await Document.findAll({
+      where: { id_utilisateur: user.id_utilisateur }
+    });
+
+    const docMap = {};
+    documents.forEach(doc => {
+      docMap[doc.type_document] = doc.nom_fichier;
+    });
+    profil.documents = docMap;
+
+    // ✅ Calcul du profil complet
     let profil_complet = false;
 
     if (user.type_utilisateur === 'professionnel') {
-      profil_complet = pro &&
+      profil_complet =
+        pro &&
         pro.numero_permis &&
         pro.type_profession &&
         user.nom &&
@@ -189,7 +207,8 @@ const getProfile = async (req, res) => {
         user.ville &&
         user.code_postal;
     } else if (user.type_utilisateur === 'clinique') {
-      profil_complet = clinique &&
+      profil_complet =
+        clinique &&
         clinique.nom_clinique &&
         clinique.numero_entreprise &&
         clinique.adresse_complete &&
@@ -198,16 +217,16 @@ const getProfile = async (req, res) => {
         user.ville &&
         user.code_postal;
     }
-    
-    profil_complet = !!profil_complet;
-    res.json({ ...user.toJSON(), profil_complet });
 
+    profil.profil_complet = !!profil_complet;
+
+    res.json(profil);
+    
   } catch (error) {
     console.error("❌ Erreur lors de la récupération du profil :", error);
     res.status(500).json({ message: "Erreur serveur" });
   }
 };
-
 module.exports = {
   registerUser,
   loginUser,

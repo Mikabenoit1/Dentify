@@ -11,8 +11,12 @@ exports.demanderReinitialisation = async (req, res) => {
     const utilisateur = await User.findOne({ where: { courriel } });
     if (!utilisateur) return res.status(404).json({ message: "Utilisateur non trouvé" });
 
+    // Supprimer les anciens tokens
+    await ResetToken.destroy({ where: { id_utilisateur: utilisateur.id_utilisateur } });
+
+    // Générer un nouveau token
     const token = crypto.randomBytes(32).toString('hex');
-    const expiration = new Date(Date.now() + 3600000); // 1h
+    const expiration = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     await ResetToken.create({
       id_utilisateur: utilisateur.id_utilisateur,
@@ -37,7 +41,7 @@ exports.demanderReinitialisation = async (req, res) => {
       html: `<p>Bonjour ${utilisateur.prenom},</p>
              <p>Cliquez sur le lien suivant pour réinitialiser votre mot de passe :</p>
              <a href="${lien}">${lien}</a>
-             <p>Ce lien expirera dans 1 heure.</p>`
+             <p><strong>Ce lien expirera dans 15 minutes.</strong></p>`
     });
 
     res.status(200).json({ message: "Courriel de réinitialisation envoyé." });
