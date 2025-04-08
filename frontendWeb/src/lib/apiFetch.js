@@ -31,3 +31,7 @@ export const apiFetch = async (endpoint, { method = 'GET', body = null, headers 
 // 6. Exemples de méthodes spécifiques (optionnel)
 export const registerUser = (userData) => apiFetch('/users/register', { method: 'POST', body: userData });
 export const loginUser = (credentials) => apiFetch('/users/login', { method: 'POST', body: credentials });
+
+// Fonctions spécifiques pour les cliniques
+export const getClinique = (id) => apiFetch(`/${id}`);
+export const updateClinique = (id, data) => apiFetch(`/${id}`, { method: 'PUT', body: data });

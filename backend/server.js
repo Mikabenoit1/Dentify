@@ -12,9 +12,14 @@ const app = express();
 app.use(express.json());
 app.use(require('cookie-parser')()); // ← pour les tokens envoyés via cookie si besoin
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: [
+    'http://localhost:5173',  // Web
+    'http://localhost:8081',  // Expo Web
+    'exp://192.168.56.1:19000',  // Expo Mobile via IP locale
+    'http://192.168.56.1:4000'  // API via IP locale pour l'appareil physique
+  ],
   credentials: true
-})); // Autoriser les requêtes du frontend (utile si backend = 4000, frontend = 5173)
+}));
 
 // 📦 Routes
 const userRoutes = require('./src/routes/userRoutes');

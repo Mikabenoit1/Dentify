@@ -1,90 +1,125 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/MaClinique.css';
+import { apiFetch } from '../lib/apiFetch';
+import { getClinique, updateClinique } from '../lib/apiFetch';
+
 
 const MaClinique = () => {
-  // État initial avec des données fictives de la clinique
-  const [clinique, setClinique] = useState({
-    nom: "Cabinet Dentaire Saint-Michel",
-    adresse: "15 rue Saint-Michel",
-    codePostal: "75005",
-    ville: "Paris",
-    telephone: "01 45 67 89 10",
-    email: "contact@cabinet-st-michel.fr",
-    siteWeb: "www.cabinet-st-michel.fr",
-    description: "Notre cabinet dentaire situé au cœur de Paris propose des soins de qualité dans un environnement accueillant et moderne. Notre équipe est composée de professionnels qualifiés et expérimentés, dédiés à votre santé bucco-dentaire.",
-    specialites: ["Dentisterie générale", "Implantologie", "Orthodontie"],
-    horaires: {
-      lundi: { ouvert: true, debut: "09:00", fin: "18:00" },
-      mardi: { ouvert: true, debut: "09:00", fin: "18:00" },
-      mercredi: { ouvert: true, debut: "09:00", fin: "18:00" },
-      jeudi: { ouvert: true, debut: "09:00", fin: "18:00" },
-      vendredi: { ouvert: true, debut: "09:00", fin: "17:00" },
-      samedi: { ouvert: true, debut: "09:00", fin: "12:00" },
-      dimanche: { ouvert: false, debut: "", fin: "" }
-    },
-    services: [
-      "Soins conservateurs",
-      "Prothèses dentaires",
-      "Implantologie",
-      "Parodontologie",
-      "Orthodontie",
-      "Pédodontie"
-    ],
-    equipement: [
-      "Salles de soins modernes",
-      "Radiographie panoramique",
-      "Matériel de stérilisation aux normes",
-      "Équipement pour chirurgie implantaire"
-    ],
-    equipe: [
-      { nom: "Dr. Martin", poste: "Dentiste", specialite: "Implantologie" },
-      { nom: "Dr. Dubois", poste: "Dentiste", specialite: "Orthodontie" },
-      { nom: "Sophie Renard", poste: "Assistante dentaire", specialite: "" },
-      { nom: "Julie Lambert", poste: "Secrétaire médicale", specialite: "" }
-    ],
-    langues: ["Français", "Anglais", "Espagnol"],
-    assurances: ["CPAM", "Mutuelle Générale", "Harmonie Mutuelle"],
-    photos: [
-      "/images/reception.jpg",
-      "/images/salle-soins.jpg",
-      "/images/equipement.jpg"
-    ],
-    logo: "/images/logo.png"
-  });
-
-  // État pour le mode édition
+  const [clinique, setClinique] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  // État pour stocker les modifications pendant l'édition
-  const [editedClinique, setEditedClinique] = useState({...clinique});
-  // États pour les champs de type liste
+  const [editedClinique, setEditedClinique] = useState(null);
   const [newService, setNewService] = useState("");
   const [newEquipement, setNewEquipement] = useState("");
   const [newSpecialite, setNewSpecialite] = useState("");
   const [newLangue, setNewLangue] = useState("");
   const [newAssurance, setNewAssurance] = useState("");
-  
-  // État pour les nouvelles photos
-  const [newPhoto, setNewPhoto] = useState("");
-  
-  // État pour le nouvel employé
   const [newEmploye, setNewEmploye] = useState({
     nom: "",
     poste: "",
     specialite: ""
   });
 
+   // Charger les données de la clinique
+    // Dans votre useEffect pour charger les données
   useEffect(() => {
-    // Ici, vous pourriez charger les données depuis une API
-    // Pour l'exemple, nous utilisons des données statiques
+    const loadClinicProfile = async () => {
+      try {
+        setLoading(true);
+        const data = await getClinique('ID_DE_LA_CLINIQUE'); // Remplacez par l'ID réel
+        setClinique(data);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message || "Impossible de charger les données");
+        setLoading(false);
+      }
+    };
+    loadClinicProfile();
   }, []);
+
+  // Sauvegarde des modifications
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      const updatedClinique = await updateClinique('ID_DE_LA_CLINIQUE', editedClinique);
+      setClinique(updatedClinique.clinique || updatedClinique);
+      setEditMode(false);
+      setLoading(false);
+      alert(updatedClinique.message || "Profil mis à jour avec succès");
+    } catch (err) {
+      setLoading(false);
+      alert(err.message || "Erreur lors de la mise à jour");
+    }
+  };
+
+  // Gestion du téléchargement du logo
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        const formData = new FormData();
+        formData.append('logo', file);
+        
+        const response = await apiFetch('/clinique/logo', {
+          method: 'POST',
+          headers: {}, // Laissez Fetch gérer le Content-Type pour FormData
+          body: formData
+        });
+        
+        setEditedClinique({
+          ...editedClinique,
+          logo: response.logoUrl
+        });
+      } catch (err) {
+        alert(err.message || "Erreur lors de l'upload du logo");
+      }
+    }
+  };
+
+  // Gestion du téléchargement des photos
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        const formData = new FormData();
+        formData.append('photo', file);
+        
+        const response = await apiFetch('/clinique/photos', {
+          method: 'POST',
+          body: formData
+        });
+        
+        setEditedClinique({
+          ...editedClinique,
+          photos: [...(editedClinique.photos || []), response.photoUrl]
+        });
+      } catch (err) {
+        alert(err.message || "Erreur lors de l'upload de la photo");
+      }
+    }
+  };
 
   // Gestion des modifications des champs texte
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEditedClinique({
-      ...editedClinique,
-      [name]: value
-    });
+    
+    // Gestion des champs imbriqués (si nécessaire)
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setEditedClinique({
+        ...editedClinique,
+        [parent]: {
+          ...editedClinique[parent],
+          [child]: value
+        }
+      });
+    } else {
+      setEditedClinique({
+        ...editedClinique,
+        [name]: value
+      });
+    }
   };
 
   // Gestion des modifications des horaires
@@ -106,19 +141,21 @@ const MaClinique = () => {
     if (value.trim()) {
       setEditedClinique({
         ...editedClinique,
-        [field]: [...editedClinique[field], value.trim()]
+        [field]: [...(editedClinique[field] || []), value.trim()]
       });
       resetFunc("");
     }
   };
 
   const handleRemoveItem = (field, index) => {
-    const newArray = [...editedClinique[field]];
-    newArray.splice(index, 1);
-    setEditedClinique({
-      ...editedClinique,
-      [field]: newArray
-    });
+    if (editedClinique[field]) {
+      const newArray = [...editedClinique[field]];
+      newArray.splice(index, 1);
+      setEditedClinique({
+        ...editedClinique,
+        [field]: newArray
+      });
+    }
   };
 
   // Gestion de l'équipe
@@ -134,7 +171,7 @@ const MaClinique = () => {
     if (newEmploye.nom.trim() && newEmploye.poste.trim()) {
       setEditedClinique({
         ...editedClinique,
-        equipe: [...editedClinique.equipe, {...newEmploye}]
+        equipe: [...(editedClinique.equipe || []), {...newEmploye}]
       });
       setNewEmploye({
         nom: "",
@@ -145,12 +182,14 @@ const MaClinique = () => {
   };
 
   const handleRemoveEmploye = (index) => {
-    const newEquipe = [...editedClinique.equipe];
-    newEquipe.splice(index, 1);
-    setEditedClinique({
-      ...editedClinique,
-      equipe: newEquipe
-    });
+    if (editedClinique.equipe) {
+      const newEquipe = [...editedClinique.equipe];
+      newEquipe.splice(index, 1);
+      setEditedClinique({
+        ...editedClinique,
+        equipe: newEquipe
+      });
+    }
   };
 
   // Activation du mode édition
@@ -159,57 +198,73 @@ const MaClinique = () => {
     setEditedClinique({...clinique});
   };
 
-  // Sauvegarde des modifications
-  const handleSave = () => {
-    setClinique({...editedClinique});
-    setEditMode(false);
-    // Ici, vous pourriez ajouter une requête API pour sauvegarder les modifications
-    alert("Profil de la clinique mis à jour avec succès !");
-  };
+  
 
   // Annulation des modifications
   const handleCancel = () => {
     setEditMode(false);
-  };
-
-  // Gestion du téléchargement du logo
-  const handleLogoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Dans une application réelle, vous utiliseriez un service de stockage de fichiers
-      // Ici, nous simulons en créant une URL locale
-      const fileURL = URL.createObjectURL(file);
-      setEditedClinique({
-        ...editedClinique,
-        logo: fileURL
-      });
-    }
-  };
-
-  // Gestion du téléchargement des photos
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const fileURL = URL.createObjectURL(file);
-      setEditedClinique({
-        ...editedClinique,
-        photos: [...editedClinique.photos, fileURL]
-      });
-    }
-  };
-
-  const handleRemovePhoto = (index) => {
-    const newPhotos = [...editedClinique.photos];
-    newPhotos.splice(index, 1);
-    setEditedClinique({
-      ...editedClinique,
-      photos: newPhotos
+    setNewService("");
+    setNewEquipement("");
+    setNewSpecialite("");
+    setNewLangue("");
+    setNewAssurance("");
+    setNewEmploye({
+      nom: "",
+      poste: "",
+      specialite: ""
     });
   };
 
+  
+
+  
+  const handleRemovePhoto = (index) => {
+    if (editedClinique.photos) {
+      const newPhotos = [...editedClinique.photos];
+      newPhotos.splice(index, 1);
+      setEditedClinique({
+        ...editedClinique,
+        photos: newPhotos
+      });
+    }
+  };
+
+  // Afficher un message de chargement
+  if (loading && !clinique) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Chargement du profil de la clinique...</p>
+      </div>
+    );
+  }
+  
+  // Afficher un message d'erreur
+  if (error && !clinique) {
+    return (
+      <div className="error-container">
+        <div className="error-icon">
+          <i className="fas fa-exclamation-circle"></i>
+        </div>
+        <p>{error}</p>
+        <button 
+          className="retry-button"
+          onClick={() => window.location.reload()}
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+  
+  // Si la clinique n'est pas chargée, ne rien afficher
+  if (!clinique) {
+    return null;
+  }
+
   return (
-<div className={`maclinique-container ${editMode ? 'edit-mode' : ''}`}>
-    <div className="profile-header">
+    <div className={`maclinique-container ${editMode ? 'edit-mode' : ''}`}>
+      <div className="profile-header">
         <div className="profile-header-content">
           <div className="logo-container">
             {clinique.logo ? (
@@ -220,7 +275,7 @@ const MaClinique = () => {
               </div>
             )}
           </div>
-          <h1>{clinique.nom}</h1>
+          <h1>{clinique.nom || 'Ma Clinique'}</h1>
         </div>
         {!editMode ? (
           <button className="edit-profile-button" onClick={handleEdit}>
@@ -248,29 +303,37 @@ const MaClinique = () => {
                 <div className="info-column">
                   <div className="info-row">
                     <span className="info-label"><i className="fas fa-clinic-medical"></i> Nom :</span>
-                    <span className="info-value">{clinique.nom}</span>
+                    <span className="info-value">{clinique.nom || 'Non spécifié'}</span>
                   </div>
                   <div className="info-row">
                     <span className="info-label"><i className="fas fa-map-marker-alt"></i> Adresse :</span>
-                    <span className="info-value">{clinique.adresse}, {clinique.codePostal} {clinique.ville}</span>
+                    <span className="info-value">
+                      {clinique.adresse ? 
+                        `${clinique.adresse}, ${clinique.codePostal || ''} ${clinique.ville || ''}` : 
+                        'Non spécifiée'}
+                    </span>
                   </div>
                   <div className="info-row">
                     <span className="info-label"><i className="fas fa-phone"></i> Téléphone :</span>
-                    <span className="info-value">{clinique.telephone}</span>
+                    <span className="info-value">{clinique.telephone || 'Non spécifié'}</span>
                   </div>
                 </div>
                 <div className="info-column">
                   <div className="info-row">
                     <span className="info-label"><i className="fas fa-envelope"></i> Email :</span>
-                    <span className="info-value">{clinique.email}</span>
+                    <span className="info-value">{clinique.email || 'Non spécifié'}</span>
                   </div>
                   <div className="info-row">
                     <span className="info-label"><i className="fas fa-globe"></i> Site web :</span>
-                    <span className="info-value">{clinique.siteWeb}</span>
+                    <span className="info-value">{clinique.siteWeb || 'Non spécifié'}</span>
                   </div>
                   <div className="info-row">
                     <span className="info-label"><i className="fas fa-star"></i> Spécialités :</span>
-                    <span className="info-value">{clinique.specialites.join(", ")}</span>
+                    <span className="info-value">
+                      {clinique.specialites?.length > 0 ? 
+                        clinique.specialites.join(", ") : 
+                        'Non spécifiées'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -307,7 +370,7 @@ const MaClinique = () => {
                     type="text"
                     id="nom"
                     name="nom"
-                    value={editedClinique.nom}
+                    value={editedClinique.nom || ''}
                     onChange={handleInputChange}
                   />
                 </div>
@@ -318,19 +381,19 @@ const MaClinique = () => {
                       type="text"
                       id="adresse"
                       name="adresse"
-                      value={editedClinique.adresse}
+                      value={editedClinique.adresse || ''}
                       onChange={handleInputChange}
                     />
                   </div>
                 </div>
                 <div className="form-row">
-                  <div className="form-group">
+                <div className="form-group">
                     <label htmlFor="codePostal">Code postal</label>
                     <input
                       type="text"
                       id="codePostal"
                       name="codePostal"
-                      value={editedClinique.codePostal}
+                      value={editedClinique.codePostal || ''}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -340,7 +403,7 @@ const MaClinique = () => {
                       type="text"
                       id="ville"
                       name="ville"
-                      value={editedClinique.ville}
+                      value={editedClinique.ville || ''}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -352,7 +415,7 @@ const MaClinique = () => {
                       type="text"
                       id="telephone"
                       name="telephone"
-                      value={editedClinique.telephone}
+                      value={editedClinique.telephone || ''}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -362,7 +425,7 @@ const MaClinique = () => {
                       type="email"
                       id="email"
                       name="email"
-                      value={editedClinique.email}
+                      value={editedClinique.email || ''}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -373,7 +436,7 @@ const MaClinique = () => {
                     type="text"
                     id="siteWeb"
                     name="siteWeb"
-                    value={editedClinique.siteWeb}
+                    value={editedClinique.siteWeb || ''}
                     onChange={handleInputChange}
                   />
                 </div>
@@ -382,7 +445,7 @@ const MaClinique = () => {
                 <div className="form-group">
                   <label><i className="fas fa-star"></i> Spécialités</label>
                   <div className="tags-container">
-                    {editedClinique.specialites.map((specialite, index) => (
+                    {editedClinique.specialites?.map((specialite, index) => (
                       <div key={index} className="tag">
                         <span>{specialite}</span>
                         <button type="button" onClick={() => handleRemoveItem('specialites', index)}>
@@ -417,7 +480,7 @@ const MaClinique = () => {
           <h2><i className="fas fa-align-left"></i> Description</h2>
           <div className="section-content">
             {!editMode ? (
-              <p className="description-text">{clinique.description}</p>
+              <p className="description-text">{clinique.description || 'Aucune description disponible.'}</p>
             ) : (
               <div className="edit-form">
                 <div className="form-group">
@@ -425,7 +488,7 @@ const MaClinique = () => {
                   <textarea
                     id="description"
                     name="description"
-                    value={editedClinique.description}
+                    value={editedClinique.description || ''}
                     onChange={handleInputChange}
                     rows="5"
                   ></textarea>
@@ -441,51 +504,59 @@ const MaClinique = () => {
           <div className="section-content">
             {!editMode ? (
               <div className="horaires-grid">
-                {Object.entries(clinique.horaires).map(([jour, horaire]) => (
-                  <div key={jour} className="horaire-item">
-                    <span className="jour">{jour.charAt(0).toUpperCase() + jour.slice(1)}</span>
-                    <span className="heures">
-                      {horaire.ouvert ? `${horaire.debut} - ${horaire.fin}` : 'Fermé'}
-                    </span>
-                  </div>
-                ))}
+                {clinique.horaires ? (
+                  Object.entries(clinique.horaires).map(([jour, horaire]) => (
+                    <div key={jour} className="horaire-item">
+                      <span className="jour">{jour.charAt(0).toUpperCase() + jour.slice(1)}</span>
+                      <span className="heures">
+                        {horaire.ouvert ? `${horaire.debut} - ${horaire.fin}` : 'Fermé'}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p>Aucun horaire défini.</p>
+                )}
               </div>
             ) : (
               <div className="edit-form">
                 <div className="horaires-edit-grid">
-                  {Object.entries(editedClinique.horaires).map(([jour, horaire]) => (
-                    <div key={jour} className="horaire-edit-item">
-                      <div className="jour-label">
-                        {jour.charAt(0).toUpperCase() + jour.slice(1)}
+                  {editedClinique.horaires ? (
+                    Object.entries(editedClinique.horaires).map(([jour, horaire]) => (
+                      <div key={jour} className="horaire-edit-item">
+                        <div className="jour-label">
+                          {jour.charAt(0).toUpperCase() + jour.slice(1)}
+                        </div>
+                        <div className="horaire-inputs">
+                          <select
+                            value={horaire.ouvert.toString()}
+                            onChange={(e) => handleHoraireChange(jour, 'ouvert', e.target.value)}
+                          >
+                            <option value="true">Ouvert</option>
+                            <option value="false">Fermé</option>
+                          </select>
+                          {horaire.ouvert && (
+                            <>
+                              <input
+                                type="time"
+                                value={horaire.debut}
+                                onChange={(e) => handleHoraireChange(jour, 'debut', e.target.value)}
+                                disabled={!horaire.ouvert}
+                              />
+                              <span>-</span>
+                              <input
+                                type="time"
+                                value={horaire.fin}
+                                onChange={(e) => handleHoraireChange(jour, 'fin', e.target.value)}
+                                disabled={!horaire.ouvert}
+                              />
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <div className="horaire-inputs">
-                        <select
-                          value={horaire.ouvert.toString()}
-                          onChange={(e) => handleHoraireChange(jour, 'ouvert', e.target.value)}
-                        >
-                          <option value="true">Ouvert</option>
-                          <option value="false">Fermé</option>
-                        </select>
-                        {horaire.ouvert && (
-                          <>
-                            <input
-                              type="time"
-                              value={horaire.debut}
-                              onChange={(e) => handleHoraireChange(jour, 'debut', e.target.value)}
-                              disabled={!horaire.ouvert}
-                            />
-                            <span>-</span>
-                            <input
-                              type="time"
-                              value={horaire.fin}
-                              onChange={(e) => handleHoraireChange(jour, 'fin', e.target.value)}
-                              disabled={!horaire.ouvert}
-                            />
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p>Aucun horaire défini. Veuillez contacter l'administrateur.</p>
+                  )}
                 </div>
               </div>
             )}
@@ -498,17 +569,21 @@ const MaClinique = () => {
           <div className="section-content">
             {!editMode ? (
               <ul className="services-list">
-                {clinique.services.map((service, index) => (
-                  <li key={index} className="service-item">
-                    <i className="fas fa-check-circle"></i> {service}
-                  </li>
-                ))}
+                {clinique.services?.length > 0 ? (
+                  clinique.services.map((service, index) => (
+                    <li key={index} className="service-item">
+                      <i className="fas fa-check-circle"></i> {service}
+                    </li>
+                  ))
+                ) : (
+                  <p>Aucun service défini.</p>
+                )}
               </ul>
             ) : (
               <div className="edit-form">
                 <div className="edit-list-container">
                   <ul className="edit-list">
-                    {editedClinique.services.map((service, index) => (
+                    {editedClinique.services?.map((service, index) => (
                       <li key={index} className="edit-list-item">
                         <span>{service}</span>
                         <button 
@@ -548,17 +623,21 @@ const MaClinique = () => {
           <div className="section-content">
             {!editMode ? (
               <ul className="equipment-list">
-                {clinique.equipement.map((item, index) => (
-                  <li key={index} className="equipment-item">
-                    <i className="fas fa-cog"></i> {item}
-                  </li>
-                ))}
+                {clinique.equipement?.length > 0 ? (
+                  clinique.equipement.map((item, index) => (
+                    <li key={index} className="equipment-item">
+                      <i className="fas fa-cog"></i> {item}
+                    </li>
+                  ))
+                ) : (
+                  <p>Aucun équipement défini.</p>
+                )}
               </ul>
             ) : (
               <div className="edit-form">
                 <div className="edit-list-container">
                   <ul className="edit-list">
-                    {editedClinique.equipement.map((item, index) => (
+                    {editedClinique.equipement?.map((item, index) => (
                       <li key={index} className="edit-list-item">
                         <span>{item}</span>
                         <button 
@@ -598,23 +677,27 @@ const MaClinique = () => {
           <div className="section-content">
             {!editMode ? (
               <div className="team-grid">
-                {clinique.equipe.map((membre, index) => (
-                  <div key={index} className="team-card">
-                    <div className="team-icon">
-                      <i className="fas fa-user-md"></i>
+                {clinique.equipe?.length > 0 ? (
+                  clinique.equipe.map((membre, index) => (
+                    <div key={index} className="team-card">
+                      <div className="team-icon">
+                        <i className="fas fa-user-md"></i>
+                      </div>
+                      <div className="team-info">
+                        <h3>{membre.nom}</h3>
+                        <p className="team-role">{membre.poste}</p>
+                        {membre.specialite && <p className="team-specialty">{membre.specialite}</p>}
+                      </div>
                     </div>
-                    <div className="team-info">
-                      <h3>{membre.nom}</h3>
-                      <p className="team-role">{membre.poste}</p>
-                      {membre.specialite && <p className="team-specialty">{membre.specialite}</p>}
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p>Aucun membre d'équipe défini.</p>
+                )}
               </div>
             ) : (
               <div className="edit-form">
                 <div className="team-edit-container">
-                  {editedClinique.equipe.map((membre, index) => (
+                  {editedClinique.equipe?.map((membre, index) => (
                     <div key={index} className="team-edit-item">
                       <div className="team-edit-info">
                         <span className="team-name">{membre.nom}</span>
@@ -689,17 +772,21 @@ const MaClinique = () => {
           <div className="section-content">
             {!editMode ? (
               <div className="gallery-grid">
-                {clinique.photos.map((photo, index) => (
-                  <div key={index} className="gallery-item">
-                    <img src={photo} alt={`Cabinet ${index + 1}`} />
-                  </div>
-                ))}
+                {clinique.photos?.length > 0 ? (
+                  clinique.photos.map((photo, index) => (
+                    <div key={index} className="gallery-item">
+                      <img src={photo} alt={`Cabinet ${index + 1}`} />
+                    </div>
+                  ))
+                ) : (
+                  <p>Aucune photo disponible.</p>
+                )}
               </div>
             ) : (
               <div className="edit-form">
                 <div className="gallery-edit-container">
                   <div className="gallery-edit-grid">
-                    {editedClinique.photos.map((photo, index) => (
+                    {editedClinique.photos?.map((photo, index) => (
                       <div key={index} className="gallery-edit-item">
                         <img src={photo} alt={`Cabinet ${index + 1}`} />
                         <button 
@@ -731,6 +818,13 @@ const MaClinique = () => {
           </div>
         </div>
       </div>
+      
+      {/* Overlay de chargement pendant les opérations */}
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
+        </div>
+      )}
     </div>
   );
 };
