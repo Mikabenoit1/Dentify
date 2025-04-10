@@ -3,10 +3,16 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 
 const ResetMdp = ({ navigation }) => {
   const [email, setEmail] = useState<string>('');
+  const [error, setError] = useState<string>('');
 
   const handleResetPassword = () => {
     if (!email) {
-      Alert.alert('Erreur', "Veuillez entrer votre adresse e-mail.");
+      setError('"Veuillez entrer votre adresse e-mail.');
+      return;
+    }
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setError("Veuillez entrer un email valide");
       return;
     }
 
@@ -16,6 +22,7 @@ const ResetMdp = ({ navigation }) => {
       `Un lien de réinitialisation a été envoyé à : ${email}`
     );
     setEmail('');
+    setError('');
 
     // va vers la page de vérification de l'email
     navigation.navigate('EmailVerification');
@@ -29,6 +36,8 @@ const ResetMdp = ({ navigation }) => {
         </TouchableOpacity>
 
       <Text style={styles.title}>Réinitialiser le mot de passe</Text>
+
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
       
       <TextInput
         style={styles.input}
@@ -38,6 +47,8 @@ const ResetMdp = ({ navigation }) => {
         value={email}
         onChangeText={setEmail}
       />
+
+      
 
       <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
         <Text style={styles.buttonText}>Envoyer le lien</Text>
@@ -102,4 +113,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  errorText: {
+    color: "red",
+    fontSize: 14,
+    marginBottom: 10,
+    textAlign: "center",
+  },
 });
+
