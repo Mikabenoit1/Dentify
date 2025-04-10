@@ -19,6 +19,13 @@ import Fonctionnalite from "./screens/Fonctionnalite";
 import AccueilClinique from "./screens/AccueilClinique";
 import Offre from "./screens/Offre";
 import Horaire from "./screens/Horaire";
+import ResetMdp from "./screens/ResetMdp";
+import EmailVerification from "./screens/EmailVerification";
+import NewMdp from "./screens/NewMdp";
+import Error from "./screens/Error";
+import Review from "./screens/Review";
+import MessageListeScreen from "./screens/MessageListeScreen";
+import ChatScreen from "./screens/ChatScreen";
 
 
 const Stack = createStackNavigator();
@@ -45,6 +52,13 @@ export default function Navigation() {
         <Stack.Screen name="AccueilClinique" component={AccueilClinique} />
         <Stack.Screen name="Offre" component={Offre} />
         <Stack.Screen name="Horaire" component={Horaire} />
+        <Stack.Screen name="ResetMdp" component={ResetMdp} />
+        <Stack.Screen name="EmailVerification" component={EmailVerification} />
+        <Stack.Screen name="NewMdp" component={NewMdp} />
+        <Stack.Screen name="Error" component={Error} />
+        <Stack.Screen name="Review" component={Review} />
+        <Stack.Screen name="MessageListeScreen" component={MessageListeScreen} />
+        <Stack.Screen name="ChatScreen" component={ChatScreen} />
         
         {/* Ajoutez d'autres écrans ici */}
       </Stack.Navigator>
