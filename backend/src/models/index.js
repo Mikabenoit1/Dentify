@@ -1,4 +1,4 @@
-const { sequelize } = require('../config/db');
+  const { sequelize } = require('../config/db');
 
 const User = require('./User');
 const Offre = require('./Offre');
@@ -8,92 +8,93 @@ const ProfessionnelDentaire = require('./ProfessionnelDentaire');
 const Message = require('./Message');
 const ResetToken = require('./ResetToken');
 const Notification = require('./Notification');
-const Document = require('./Document')(sequelize, require('sequelize').DataTypes);
 const Entretien = require('./Entretien');
+const Evaluation = require('./Evaluation');
+const Document = require('./Document')(sequelize, require('sequelize').DataTypes);
 
-// 🔗 Utilisateur → CliniqueDentaire (1:1)
-User.hasOne(CliniqueDentaire, {
-  foreignKey: 'id_utilisateur',
-  onDelete: 'CASCADE'
-});
-CliniqueDentaire.belongsTo(User, {
-  foreignKey: 'id_utilisateur'
-});
+  // 🔗 Utilisateur → CliniqueDentaire (1:1)
+  User.hasOne(CliniqueDentaire, {
+    foreignKey: 'id_utilisateur',
+    onDelete: 'CASCADE'
+  });
+  CliniqueDentaire.belongsTo(User, {
+    foreignKey: 'id_utilisateur'
+  });
 
-// 🔗 Utilisateur → ProfessionnelDentaire (1:1)
-User.hasOne(ProfessionnelDentaire, {
-  foreignKey: 'id_utilisateur',
-  onDelete: 'CASCADE'
-});
-ProfessionnelDentaire.belongsTo(User, {
-  foreignKey: 'id_utilisateur'
-});
+  // 🔗 Utilisateur → ProfessionnelDentaire (1:1)
+  User.hasOne(ProfessionnelDentaire, {
+    foreignKey: 'id_utilisateur',
+    onDelete: 'CASCADE'
+  });
+  ProfessionnelDentaire.belongsTo(User, {
+    foreignKey: 'id_utilisateur'
+  });
 
-// 🔗 CliniqueDentaire → Offre (1:N)
-CliniqueDentaire.hasMany(Offre, {
-  foreignKey: 'id_clinique',
-  onDelete: 'CASCADE'
-});
-Offre.belongsTo(CliniqueDentaire, {
-  foreignKey: 'id_clinique'
-});
+  // 🔗 CliniqueDentaire → Offre (1:N)
+  CliniqueDentaire.hasMany(Offre, {
+    foreignKey: 'id_clinique',
+    onDelete: 'CASCADE'
+  });
+  Offre.belongsTo(CliniqueDentaire, {
+    foreignKey: 'id_clinique'
+  });
 
-// 🔗 Offre → Candidature (1:N)
-Offre.hasMany(Candidature, {
-  foreignKey: 'id_offre',
-  onDelete: 'CASCADE'
-});
-Candidature.belongsTo(Offre, {
-  foreignKey: 'id_offre'
-});
+  // 🔗 Offre → Candidature (1:N)
+  Offre.hasMany(Candidature, {
+    foreignKey: 'id_offre',
+    onDelete: 'CASCADE'
+  });
+  Candidature.belongsTo(Offre, {
+    foreignKey: 'id_offre'
+  });
 
-// 🔗 ProfessionnelDentaire → Candidature (1:N)
-ProfessionnelDentaire.hasMany(Candidature, {
-  foreignKey: 'id_professionnel',
-  onDelete: 'CASCADE'
-});
-Candidature.belongsTo(ProfessionnelDentaire, {
-  foreignKey: 'id_professionnel'
-});
+  // 🔗 ProfessionnelDentaire → Candidature (1:N)
+  ProfessionnelDentaire.hasMany(Candidature, {
+    foreignKey: 'id_professionnel',
+    onDelete: 'CASCADE'
+  });
+  Candidature.belongsTo(ProfessionnelDentaire, {
+    foreignKey: 'id_professionnel'
+  });
 
-// 🔗 Utilisateur → Messages envoyés
-User.hasMany(Message, {
-  foreignKey: 'expediteur_id',
-  as: 'messages_envoyes',
-  onDelete: 'CASCADE'
-});
-Message.belongsTo(User, {
-  foreignKey: 'expediteur_id',
-  as: 'expediteur'
-});
+  // 🔗 Utilisateur → Messages envoyés
+  User.hasMany(Message, {
+    foreignKey: 'expediteur_id',
+    as: 'messages_envoyes',
+    onDelete: 'CASCADE'
+  });
+  Message.belongsTo(User, {
+    foreignKey: 'expediteur_id',
+    as: 'expediteur'
+  });
 
-// 🔗 Utilisateur → Messages reçus
-User.hasMany(Message, {
-  foreignKey: 'destinataire_id',
-  as: 'messages_recus',
-  onDelete: 'CASCADE'
-});
-Message.belongsTo(User, {
-  foreignKey: 'destinataire_id',
-  as: 'destinataire'
-});
+  // 🔗 Utilisateur → Messages reçus
+  User.hasMany(Message, {
+    foreignKey: 'destinataire_id',
+    as: 'messages_recus',
+    onDelete: 'CASCADE'
+  });
+  Message.belongsTo(User, {
+    foreignKey: 'destinataire_id',
+    as: 'destinataire'
+  });
 
-// 🔐 Utilisateur → ResetToken (1:N)
-User.hasMany(ResetToken, {
-  foreignKey: 'id_utilisateur',
-  onDelete: 'CASCADE'
-});
-ResetToken.belongsTo(User, {
-  foreignKey: 'id_utilisateur'
-});
+  // 🔐 Utilisateur → ResetToken (1:N)
+  User.hasMany(ResetToken, {
+    foreignKey: 'id_utilisateur',
+    onDelete: 'CASCADE'
+  });
+  ResetToken.belongsTo(User, {
+    foreignKey: 'id_utilisateur'
+  });
 
-User.hasMany(Notification, {
-  foreignKey: 'id_destinataire',
-  onDelete: 'CASCADE'
-});
-Notification.belongsTo(User, {
-  foreignKey: 'id_destinataire'
-});
+  User.hasMany(Notification, {
+    foreignKey: 'id_destinataire',
+    onDelete: 'CASCADE'
+  });
+  Notification.belongsTo(User, {
+    foreignKey: 'id_destinataire'
+  });
 
 // 🔗 Utilisateur → Document (1:N)
 User.hasMany(Document, {
@@ -104,16 +105,31 @@ Document.belongsTo(User, {
   foreignKey: 'id_utilisateur'
 });
 
+// 🔗 Evaluation → Utilisateur (1:N) - évaluateur
+User.hasMany(Evaluation, {
+  foreignKey: 'evaluateur_id',
+  onDelete: 'CASCADE',
+  as: 'evaluations_donnees'  // Unique alias for evaluations given by user
+});
+Evaluation.belongsTo(User, {
+  foreignKey: 'evaluateur_id',
+  as: 'auteur_evaluation'  // Changed to unique alias
+});
 
-// Relations avec Offre, Utilisateur (clinique et professionnel)
-User.hasMany(Entretien, { foreignKey: 'id_clinique', sourceKey: 'id_utilisateur' });
-User.hasMany(Entretien, { foreignKey: 'id_professionnel', sourceKey: 'id_utilisateur' });
-Offre.hasMany(Entretien, { foreignKey: 'id_offre' });
-Entretien.belongsTo(User, { foreignKey: 'id_clinique', as: 'Clinique' });
-Entretien.belongsTo(User, { foreignKey: 'id_professionnel', as: 'Professionnel' });
-Entretien.belongsTo(Offre, { foreignKey: 'id_offre' });
+// 🔗 Evaluation → Utilisateur (1:N) - évalué
+User.hasMany(Evaluation, {
+  foreignKey: 'evalue_id',
+  onDelete: 'CASCADE',
+  as: 'evaluations_recues'  // Unique alias for evaluations received by user
+});
+Evaluation.belongsTo(User, {
+  foreignKey: 'evalue_id',
+  as: 'sujet_evaluation'  // Changed to unique alias
+});
 
 
+
+  // Ajout d'une vérification supplémentaire pour s'assurer que l'alias n'est pas dupliqué dans d'autres associations
 
 module.exports = {
   sequelize,
@@ -126,5 +142,6 @@ module.exports = {
   ResetToken,
   Notification,
   Document,
-  Entretien
+  Entretien,
+  Evaluation
 };
