@@ -53,7 +53,7 @@ router.post('/', protect, async (req, res) => {
         // Notification
         await creerNotification({
           id_destinataire: clinique.id_utilisateur,
-          type: "candidature",
+          type_notification: "candidature",
           contenu: `Vous avez reçu une nouvelle candidature pour l’offre "${offre.titre}"`
         });
       }

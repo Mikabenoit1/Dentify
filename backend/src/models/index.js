@@ -9,6 +9,7 @@ const Message = require('./Message');
 const ResetToken = require('./ResetToken');
 const Notification = require('./Notification');
 const Document = require('./Document')(sequelize, require('sequelize').DataTypes);
+const Entretien = require('./Entretien');
 
 // 🔗 Utilisateur → CliniqueDentaire (1:1)
 User.hasOne(CliniqueDentaire, {
@@ -104,6 +105,15 @@ Document.belongsTo(User, {
 });
 
 
+// Relations avec Offre, Utilisateur (clinique et professionnel)
+User.hasMany(Entretien, { foreignKey: 'id_clinique', sourceKey: 'id_utilisateur' });
+User.hasMany(Entretien, { foreignKey: 'id_professionnel', sourceKey: 'id_utilisateur' });
+Offre.hasMany(Entretien, { foreignKey: 'id_offre' });
+Entretien.belongsTo(User, { foreignKey: 'id_clinique', as: 'Clinique' });
+Entretien.belongsTo(User, { foreignKey: 'id_professionnel', as: 'Professionnel' });
+Entretien.belongsTo(Offre, { foreignKey: 'id_offre' });
+
+
 
 module.exports = {
   sequelize,
@@ -115,5 +125,6 @@ module.exports = {
   Message,
   ResetToken,
   Notification,
-  Document
+  Document,
+  Entretien
 };

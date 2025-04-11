@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models'); // ⬅️ Assure-toi que l'import est bon
 
+
 const protect = async (req, res, next) => {
   const authHeader = req.header('Authorization');
 
