@@ -13,4 +13,33 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Route pour obtenir une clinique par son ID
+router.get('/:id', async (req, res) => {
+  try {
+    const clinique = await CliniqueDentaire.findByPk(req.params.id);
+    if (!clinique) {
+      return res.status(404).json({ message: 'Clinique non trouvée' });
+    }
+    res.status(200).json(clinique);
+  } catch (error) {
+    console.error('Erreur lors de la récupération de la clinique :', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// Route pour mettre à jour une clinique
+router.put('/:id', async (req, res) => {
+  try {
+    const clinique = await CliniqueDentaire.findByPk(req.params.id);
+    if (!clinique) {
+      return res.status(404).json({ message: 'Clinique non trouvée' });
+    }
+    await clinique.update(req.body);
+    res.status(200).json(clinique);
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de la clinique :', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 module.exports = router;

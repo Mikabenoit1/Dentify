@@ -11,18 +11,70 @@ const {
 const protect = require('../middlewares/authMiddleware');
 const { creerNotification } = require('../controllers/notificationController');
 
-// ✅ Obtenir toutes les offres disponibles (publique)
-router.get('/', async (req, res) => {
+// Fonction de calcul de distance en km
+function calculerDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Rayon de la Terre en km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// ✅ Obtenir toutes les offres disponibles (filtrables)
+router.get('/', protect, async (req, res) => {
   try {
-    const offres = await Offre.findAll({
+    const utilisateur = await User.findByPk(req.user.id_utilisateur);
+
+    let offres = await Offre.findAll({
       order: [['date_publication', 'DESC']]
     });
+
+    // Si l'utilisateur est un professionnel, appliquer les filtres
+    if (utilisateur && utilisateur.type_utilisateur === 'professionnel') {
+      const professionnel = await ProfessionnelDentaire.findOne({
+        where: { id_utilisateur: utilisateur.id_utilisateur }
+      });
+
+      if (!professionnel) {
+        return res.status(400).json({ message: "Professionnel introuvable." });
+      }
+
+      const rayonKm = parseFloat(req.query.rayon) || null;         // ?rayon=15
+      const type = req.query.type || null;                         // ?type=hygiéniste
+      const salaireMin = parseFloat(req.query.salaire_min) || null; // ?salaire_min=40
+
+      offres = offres.filter(offre => {
+        const correspondanceType =
+          !type || offre.type_professionnel === type;
+
+        const correspondanceDistance =
+          !rayonKm || (offre.latitude && offre.longitude &&
+            calculerDistanceKm(
+              professionnel.latitude,
+              professionnel.longitude,
+              offre.latitude,
+              offre.longitude
+            ) <= rayonKm);
+
+        const correspondanceSalaire =
+          !salaireMin || (offre.remuneration >= salaireMin);
+
+        return correspondanceType && correspondanceDistance && correspondanceSalaire;
+      });
+    }
+
     res.json(offres);
   } catch (error) {
     console.error('Erreur lors de la récupération des offres :', error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
 
 // ✅ Créer une offre de travail (réservé aux cliniques)
 router.post('/creer', protect, async (req, res) => {
@@ -186,7 +238,7 @@ router.put('/accepter/:id', protect, async (req, res) => {
   }
 });
 
-// ❌ Refuser une candidature
+// ✅ Refuser une candidature
 router.put('/refuser/:id', protect, async (req, res) => {
   try {
     const id_candidature = req.params.id;

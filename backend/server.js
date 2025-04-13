@@ -27,6 +27,7 @@ const notificationRoutes = require('./src/routes/notificationRoutes');
 const documentRoutes = require('./src/routes/documentRoutes');
 const evaluationRoutes = require('./src/routes/evaluationRoutes');
 const entretienRoutes = require('./src/routes/entretienRoutes');
+const professionelRoutes = require('./src/routes/professionelRoutes');
 
 // 🔗 Utilisation des routes
 app.use('/api/users', userRoutes);
@@ -40,6 +41,8 @@ app.use("/api/documents", documentRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use('/api/evaluations', evaluationRoutes);
 app.use('/api/entretiens', entretienRoutes);
+app.use('api/professionels', professionelRoutes);
+
 // ✅ Route de test
 app.get('/test', (req, res) => {
   res.send('✅ Serveur opérationnel même sans MySQL');
