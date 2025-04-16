@@ -112,6 +112,16 @@ const updateProfile = async (req, res) => {
         pro.rayon_deplacement_km = rayon_deplacement_km ?? pro.rayon_deplacement_km;
         pro.disponibilite_immediate = disponibilite_immediate ?? pro.disponibilite_immediate;
         pro.site_web = site_web ?? pro.site_web;
+        pro.telephone = req.body.telephone ?? pro.telephone;
+        pro.description = req.body.description ?? pro.description;
+        pro.vehicule = req.body.vehicule ?? pro.vehicule;
+        pro.regions = req.body.regions ?? pro.regions;
+        pro.date_debut_dispo = req.body.date_debut_dispo ?? pro.date_debut_dispo;
+        pro.date_fin_dispo = req.body.date_fin_dispo ?? pro.date_fin_dispo;
+        pro.jours_disponibles = req.body.jours_disponibles ?? pro.jours_disponibles;
+        pro.competences = req.body.competences ?? pro.competences;
+        pro.langues = req.body.langues ?? pro.langues;
+        pro.specialites = req.body.specialites ?? pro.specialites;
         await pro.save();
       }
     } else if (user.type_utilisateur === 'clinique') {

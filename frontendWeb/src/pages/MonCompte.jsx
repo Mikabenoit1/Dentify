@@ -1,6 +1,213 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/MonCompte.css';
-//import { fetchUserProfile, updateUserProfile } from '../services/api';
+import { apiFetch } from '../lib/apiFetch'; // Import de apiFetch
+
+// Fonction pour transformer les données du backend vers le format du composant
+const transformApiDataToComponentFormat = (apiData) => {
+  return {
+    id: apiData.id_utilisateur,
+    nom: apiData.nom,
+    prenom: apiData.prenom,
+    email: apiData.courriel,
+    telephone: apiData.telephone || '',
+    profession: apiData.type_profession || 'dentiste',
+    description: apiData.description || '',
+    photo: apiData.photo_profil || '',
+    
+    // Conserver les champs individuels d'adresse
+    adresse: apiData.adresse || '',
+    ville: apiData.ville || '',
+    province: apiData.province || '',
+    code_postal: apiData.code_postal || '',
+    
+    // Mobilité
+    mobilite: {
+      adressePrincipale: apiData.adresse_complete || apiData.adresse || '',
+      rayon: apiData.rayon_deplacement_km || 0,
+      vehicule: apiData.vehicule || false,
+      regions: apiData.regions || [],
+      coordinates: {
+        lat: apiData.latitude || null,
+        lng: apiData.longitude || null
+      }
+    },
+    
+    // Disponibilité
+    disponibilite: {
+      debut: apiData.date_debut_dispo || '',
+      fin: apiData.date_fin_dispo || '',
+      disponibleImmediatement: apiData.disponibilite_immediate || false,
+      jours: apiData.jours_disponibles || []
+    },
+    
+    // Tarif
+    tarifJournalier: apiData.tarif_horaire ? (apiData.tarif_horaire * 8) : 0,
+    
+    // Compétences et langues
+    competences: apiData.competences || [],
+    langues: apiData.langues || [],
+    specialites: apiData.specialites || [],
+    
+    // Documents
+    documents: apiData.documents || {},
+    
+    // Formations et expériences
+    educations: apiData.formations || [],
+    experiences: apiData.experiences || []
+  };
+};
+
+// Fonction pour transformer les données du composant vers le format de l'API
+const transformComponentDataToApiFormat = (componentData) => {
+  return {
+    // Infos de base
+    nom: componentData.nom,
+    prenom: componentData.prenom || '',
+    courriel: componentData.email,
+    telephone: componentData.telephone,
+    
+    // Les champs d'adresse pris indépendamment pour le backend
+    adresse: componentData.adresse || componentData.mobilite?.adressePrincipale || '',
+    ville: componentData.ville || '',
+    province: componentData.province || '',
+    code_postal: componentData.code_postal || '',
+    
+    photo_profil: componentData.photo,
+    
+    // Infos professionnelles
+    type_profession: componentData.profession,
+    numero_permis: componentData.numero_permis || '',
+    annees_experience: componentData.annees_experience || 0,
+    
+    // Tarif et mobilité
+    tarif_horaire: componentData.tarifJournalier ? Math.round(componentData.tarifJournalier / 8) : 0,
+    rayon_deplacement_km: componentData.mobilite?.rayon || 0,
+    vehicule: componentData.mobilite?.vehicule || false,
+    regions: componentData.mobilite?.regions || [],
+    
+    // Adresse complète et coordonnées
+    adresse_complete: componentData.mobilite?.adressePrincipale || '',
+    latitude: componentData.mobilite?.coordinates?.lat || null,
+    longitude: componentData.mobilite?.coordinates?.lng || null,
+    
+    // Disponibilité
+    disponibilite_immediate: componentData.disponibilite?.disponibleImmediatement || false,
+    date_debut_dispo: componentData.disponibilite?.debut || null,
+    date_fin_dispo: componentData.disponibilite?.fin || null,
+    jours_disponibles: componentData.disponibilite?.jours || [],
+    
+    // Compétences et langues
+    description: componentData.description || '',
+    competences: componentData.competences || [],
+    langues: componentData.langues || [],
+    specialites: componentData.specialites || [],
+    
+    // Site web si présent
+    site_web: componentData.site_web || ''
+  };
+};
+
+// Fonction pour récupérer le profil de l'utilisateur
+const fetchUserProfile = async () => {
+  try {
+    const userData = await apiFetch('/users/profile');
+    return userData;
+  } catch (error) {
+    console.error('Erreur lors de la récupération du profil:', error);
+    throw error;
+  }
+};
+
+// Fonction pour mettre à jour le profil de l'utilisateur
+const updateUserProfile = async (profileData) => {
+  try {
+    const result = await apiFetch('/users/profile', {
+      method: 'PUT',
+      body: profileData
+    });
+    return result;
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du profil:', error);
+    throw error;
+  }
+};
+
+// Fonction pour uploader une photo de profil
+const uploadUserPhoto = async (formData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+    
+    const response = await fetch(`${BASE_URL}/users/upload/photo`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('Erreur lors de l\'upload de la photo:', error);
+    throw error;
+  }
+};
+
+// Fonction pour uploader un document
+const uploadUserDocument = async (formData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+    
+    const response = await fetch(`${BASE_URL}/users/upload/document`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
+    }
+    
+    return response.json();
+  } catch (error) {
+    console.error('Erreur lors de l\'upload du document:', error);
+    throw error;
+  }
+};
+
+// Fonction pour télécharger un document
+const downloadUserDocument = async (documentType) => {
+  try {
+    const token = localStorage.getItem('token');
+    const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+    
+    const response = await fetch(`${BASE_URL}/users/document/${documentType}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('Erreur lors du téléchargement du document:', error);
+    throw error;
+  }
+};
 
 const MonCompte = () => {
   // Référence pour faire défiler vers les notifications
@@ -52,8 +259,9 @@ const MonCompte = () => {
     const loadUserProfile = async () => {
       try {
         setLoading(true);
-        const data = await fetchUserProfile();
-        setProfile(data);
+        const apiData = await fetchUserProfile();
+        const formattedData = transformApiDataToComponentFormat(apiData);
+        setProfile(formattedData);
         setLoading(false);
       } catch (err) {
         setError("Impossible de charger les données du profil. Veuillez réessayer plus tard.");
@@ -69,8 +277,7 @@ const MonCompte = () => {
   useEffect(() => {
     if (!window.google && editMode) {
       const googleMapsScript = document.createElement('script');
-      googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places`;
-      googleMapsScript.async = true;
+      googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`;
       googleMapsScript.defer = true;
       window.document.body.appendChild(googleMapsScript);
       
@@ -99,7 +306,7 @@ const MonCompte = () => {
     if (input && window.google) {
       const autocomplete = new window.google.maps.places.Autocomplete(input, {
         types: ['address'],
-        componentRestrictions: { country: ['fr'] } // Limiter à la France
+        componentRestrictions: { country: ['ca'] } // Limiter à la France
       });
       
       autocomplete.addListener('place_changed', () => {
@@ -108,33 +315,92 @@ const MonCompte = () => {
           return;
         }
         
+        // Adresse complète
+        const formattedAddress = place.formatted_address;
+        
+        // Extraire les composants de l'adresse (rue, ville, code postal, etc.)
+        let streetNumber = '';
+        let route = '';
+        let locality = ''; // ville
+        let postalCode = '';
+        let administrativeArea = ''; // province/région
+        
+        // Parcourir les composants d'adresse pour extraire les informations nécessaires
+        for (const component of place.address_components) {
+          const componentType = component.types[0];
+          
+          switch (componentType) {
+            case "street_number":
+              streetNumber = component.long_name;
+              break;
+            case "route":
+              route = component.long_name;
+              break;
+            case "locality":
+              locality = component.long_name;
+              break;
+            case "postal_code":
+              postalCode = component.long_name;
+              break;
+            case "administrative_area_level_1":
+              administrativeArea = component.long_name;
+              break;
+          }
+        }
+        
+        // Construire l'adresse de rue (numéro + rue)
+        const streetAddress = streetNumber 
+          ? `${streetNumber} ${route}` 
+          : route;
+        
         // Mise à jour de l'adresse et des coordonnées
         setEditedProfile(prev => ({
           ...prev,
+          // Conserver l'adresse complète pour l'affichage
           mobilite: {
             ...prev.mobilite,
-            adressePrincipale: place.formatted_address,
+            adressePrincipale: formattedAddress,
             coordinates: {
               lat: place.geometry.location.lat(),
               lng: place.geometry.location.lng()
             }
-          }
+          },
+          // Ajouter les champs individuels pour le backend
+          adresse: streetAddress,
+          ville: locality,
+          province: administrativeArea,
+          code_postal: postalCode
         }));
       });
     }
   };
   
-  // Fonction pour activer le mode édition
-  const handleEdit = () => {
-    setEditMode(true);
-    setEditedProfile({...profile});
+// Fonction pour activer le mode édition
+const handleEdit = () => {
+  try {
+    console.log("Début handleEdit");
     
-    // Initialiser l'autocomplétion après que le DOM soit mis à jour
+    // Vérifier que profile contient des données
+    console.log("Profile data:", profile);
+    
+    setEditMode(true);
+    console.log("Mode édition activé");
+    
+    setEditedProfile({...profile});
+    console.log("Profile copié pour édition");
+    
+    // Désactiver temporairement l'autocomplétion pour voir si c'est la cause du problème
+    /*
     setTimeout(() => {
       initializeAutocomplete();
     }, 100);
-  };
-  
+    */
+    
+    console.log("Fin handleEdit sans erreur");
+  } catch (error) {
+    console.error("Erreur dans handleEdit:", error);
+  }
+};
   // Fonction pour annuler les modifications
   const handleCancel = () => {
     setEditMode(false);
@@ -184,7 +450,12 @@ const MonCompte = () => {
   const validateProfile = () => {
     // Validation des champs obligatoires
     if (!editedProfile.nom?.trim()) {
-      showNotification("Veuillez entrer votre nom complet", "error");
+      showNotification("Veuillez entrer votre nom", "error");
+      return false;
+    }
+    
+    if (!editedProfile.prenom?.trim()) {
+      showNotification("Veuillez entrer votre prénom", "error");
       return false;
     }
     
@@ -225,8 +496,9 @@ const MonCompte = () => {
     
     try {
       // Envoyer les données au serveur via l'API
+      const apiData = transformComponentDataToApiFormat(editedProfile);
       setLoading(true);
-      await updateUserProfile(editedProfile);
+      await updateUserProfile(apiData);
       setProfile({...editedProfile});
       setEditMode(false);
       
@@ -458,22 +730,30 @@ const MonCompte = () => {
     const file = e.target.files[0];
     if (file) {
       try {
+        // Vérification de la taille du fichier (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          showNotification("Le fichier est trop volumineux. Taille maximale: 5MB", "error");
+          return;
+        }
+        
         // Créer un objet FormData pour envoyer le fichier
         const formData = new FormData();
         formData.append('photo', file);
         
-        // Dans un cas réel, vous appelleriez une API pour uploader l'image
-        // const response = await uploadUserPhoto(formData);
-        // const imageUrl = response.photoUrl;
-        
-        // Pour l'exemple, on crée une URL locale temporaire
-        const imageUrl = URL.createObjectURL(file);
+        // Appeler l'API pour uploader l'image
+        setLoading(true);
+        const response = await uploadUserPhoto(formData);
+        const imageUrl = response.photoUrl;
         
         setEditedProfile({
           ...editedProfile,
           photo: imageUrl
         });
+        
+        showNotification("Photo de profil mise à jour avec succès !", "success");
+        setLoading(false);
       } catch (err) {
+        setLoading(false);
         showNotification("Erreur lors de l'upload de la photo. Veuillez réessayer.", "error");
         console.error("Erreur lors de l'upload de la photo:", err);
       }
@@ -518,20 +798,22 @@ const MonCompte = () => {
         formData.append('document', file);
         formData.append('type', documentType);
         
-        // Dans un cas réel, vous appelleriez une API pour uploader le document
-        // const response = await uploadUserDocument(formData);
-        // const documentUrl = response.documentUrl;
+        // Appeler l'API pour uploader le document
+        setLoading(true);
+        const response = await uploadUserDocument(formData);
         
         setEditedProfile({
           ...editedProfile,
           documents: {
             ...(editedProfile.documents || {}),
-            [documentType]: file.name
+            [documentType]: response.fileName
           }
         });
         
         showNotification(`Le document "${file.name}" a été téléchargé avec succès`, "success");
+        setLoading(false);
       } catch (err) {
+        setLoading(false);
         showNotification("Erreur lors de l'upload du document. Veuillez réessayer.", "error");
         console.error("Erreur lors de l'upload du document:", err);
       }
@@ -541,21 +823,23 @@ const MonCompte = () => {
   // Fonction pour télécharger un document
   const handleDocumentDownload = async (documentName, documentType) => {
     try {
-      // Dans un environnement réel, vous appelleriez une API pour télécharger le document
-      // const response = await downloadUserDocument(documentType);
-      // const documentBlob = await response.blob();
-      // const link = document.createElement('a');
-      // link.href = URL.createObjectURL(documentBlob);
-      // link.download = documentName;
-      // link.click();
-      
+      setLoading(true);
       showNotification(`Téléchargement de "${documentName}" en cours...`, "info");
       
-      // Simuler un temps de téléchargement
-      setTimeout(() => {
-        showNotification(`Le document "${documentName}" a été téléchargé avec succès`, "success");
-      }, 1500);
+      // Appeler l'API pour télécharger le document
+      const response = await downloadUserDocument(documentType);
+      const documentBlob = await response.blob();
+      
+      // Créer un lien pour télécharger le document
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(documentBlob);
+      link.download = documentName;
+      link.click();
+      
+      showNotification(`Le document "${documentName}" a été téléchargé avec succès`, "success");
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       showNotification("Erreur lors du téléchargement du document. Veuillez réessayer.", "error");
       console.error("Erreur lors du téléchargement du document:", err);
     }
@@ -647,7 +931,7 @@ const MonCompte = () => {
                   />
                 </div>
                 <div className="personal-info">
-                  <h3>{profile.nom}</h3>
+                  <h3>{profile.prenom} {profile.nom}</h3>
                   <p className="profession-tag">
                     {profile.profession === 'dentiste' ? 'Dentiste' : 
                      profile.profession === 'assistant' ? 'Assistant(e) dentaire' : 
@@ -663,13 +947,13 @@ const MonCompte = () => {
             ) : (
               <div className="edit-form">
                 <div className="photo-upload-section">
-                  <div className="current-photo">
-                    <img 
-                      src={editedProfile.photo || '/assets/img/profile_placeholder.jpg'} 
-                      alt="Photo de profil" 
-                      className="photo-preview" 
-                    />
-                  </div>
+                <div className="current-photo">
+                  <img 
+                    src={editedProfile.photo || '/assets/img/profile_placeholder.jpg'} 
+                    alt="Photo de profil" 
+                    className="photo-preview" 
+                  />
+                </div>
                   <div className="photo-upload">
                     <label htmlFor="photo-upload" className="upload-button">
                       <i className="fas fa-upload"></i> Modifier la photo
@@ -686,7 +970,7 @@ const MonCompte = () => {
                 
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="nom">Nom complet</label>
+                    <label htmlFor="nom">Nom</label>
                     <input
                       type="text"
                       id="nom"
@@ -697,6 +981,20 @@ const MonCompte = () => {
                     />
                   </div>
                   
+                  <div className="form-group">
+                    <label htmlFor="prenom">Prénom</label>
+                    <input
+                      type="text"
+                      id="prenom"
+                      name="prenom"
+                      value={editedProfile.prenom || ''}
+                      onChange={handleInputChange}
+                      className="form-control"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
                   <div className="form-group">
                     <label htmlFor="profession">Profession</label>
                     <select
@@ -712,7 +1010,7 @@ const MonCompte = () => {
                     </select>
                   </div>
                 </div>
-                
+
                 <div className="form-row">
                   <div className="form-group">
                     <label htmlFor="email">Email</label>

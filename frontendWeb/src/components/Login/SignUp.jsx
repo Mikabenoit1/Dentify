@@ -7,6 +7,7 @@ function SignUp({ type }) {
   const navigate = useNavigate(); // Hook pour la navigation
   const [formData, setFormData] = useState({
     nom: "",
+    prenom: "",
     courriel: "",
     mot_de_passe: "",
     type_utilisateur: type === "clinique" ? "clinique" : "professionnel",
@@ -80,6 +81,15 @@ function SignUp({ type }) {
           name="nom"
           placeholder="Nom"
           value={formData.nom}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="text"
+          name="prenom"
+          placeholder="Prénom"
+          value={formData.prenom}
           onChange={handleChange}
           required
         />
