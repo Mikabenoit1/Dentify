@@ -1,0 +1,584 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+
+.clinique-calendrier-container {
+  max-width: 1200px;
+  margin: 30px auto;
+  margin-top: 500px;
+  padding: 20px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.calendar-header h1 {
+  color: #6a9174;
+  margin: 0;
+  font-size: 1.8rem;
+  width: 100%;
+}
+
+.calendar-navigation {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Style pour le titre du mois en gras et majuscule */
+.month-title {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #333;
+  min-width: 200px;
+  text-align: center;
+  font-weight: 700; /* Plus gras */
+  text-transform: uppercase; /* Tout en majuscules */
+  letter-spacing: 1px; /* Espace entre les lettres pour plus de lisibilité */
+}
+
+.calendar-navigation button {
+  background: none;
+  border: 1px solid #34607d;
+  background-color: #34607d;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 0;
+}
+
+.calendar-navigation button:hover {
+  background-color: #376c8f;
+}
+
+/* Conteneur pour les boutons d'action */
+/* Correction fine pour parfaitement aligner les boutons */
+.header-buttons {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+  align-items: center; /* Alignement vertical */
+}
+
+.create-button, 
+.schedule-meeting-button {
+  height: 38px; /* Hauteur fixe identique */
+  line-height: 38px; /* Assure que le texte est centré verticalement */
+  display: inline-flex; /* Utiliser inline-flex pour mieux contrôler l'alignement */
+  align-items: center;
+  justify-content: center;
+  padding: 0 15px; /* Padding horizontal identique */
+  font-size: 0.9rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap; /* Empêche le texte de passer à la ligne */
+  font-weight: 500;
+  box-sizing: border-box; /* S'assure que padding et bordure sont inclus dans la hauteur */
+  margin: 0; /* Réinitialiser les marges */
+  vertical-align: middle; /* Aide à l'alignement */
+  position: relative; /* Pour ajustements précis si nécessaire */
+  top: 0; /* S'assurer qu'il n'y a pas de décalage vertical */
+}
+
+/* Assurer que le bouton de rendez-vous s'aligne parfaitement */
+.schedule-meeting-button {
+  background-color: #34607d;
+  color: white;
+  border: none;
+  gap: 8px;
+  position: relative; /* Pour permettre des ajustements précis */
+  top: 0; /* Ajustement vertical - modifier cette valeur si nécessaire */
+}
+
+.schedule-meeting-button:hover {
+  background-color: #376c8f;
+}
+
+.create-button {
+  background-color: #6a9174;
+  color: white;
+  border: none;
+  gap: 8px;
+}
+
+.create-button:hover {
+  background-color: #5a7b62;
+}
+
+/* Assurer que les icônes ont la même taille et sont alignées */
+.create-button i,
+.schedule-meeting-button i {
+  font-size: 0.9rem;
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 1;
+}
+.schedule-meeting-button:hover {
+  background-color: #376c8f; /* Même couleur de survol que les flèches */
+}
+
+/* Calendrier */
+.calendar {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.weekday {
+  padding: 15px;
+  text-align: center;
+  font-weight: 600;
+  color: #555;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  /* Hauteur fixe des cellules */
+  grid-auto-rows: 120px;
+}
+
+.calendar-day {
+  border-right: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 10px;
+  /* Hauteur fixe pour chaque cellule */
+  height: 120px;
+  position: relative;
+  overflow: hidden; /* Cacher le contenu qui dépasse */
+}
+
+.calendar-day:nth-child(7n) {
+  border-right: none;
+}
+
+.calendar-day.other-month {
+  background-color: #f9f9f9;
+  color: #999;
+}
+
+.calendar-day.today {
+  background-color: #f0f7ff;
+}
+
+.calendar-day.today .day-number {
+  background-color: #6a9174;
+  color: white;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-number {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 5px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-events {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  /* Activer le défilement vertical */
+  overflow-y: auto;
+  /* Hauteur calculée en soustrayant la hauteur du jour (30px + 5px margin) */
+  height: calc(100% - 35px);
+  /* Ajouter un léger padding en bas pour améliorer l'apparence */
+  padding-bottom: 5px;
+}
+
+/* Style personnalisé pour la barre de défilement */
+.day-events::-webkit-scrollbar {
+  width: 4px; /* Largeur fine */
+}
+
+.day-events::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Couleur de fond légère */
+  border-radius: 10px;
+}
+
+.day-events::-webkit-scrollbar-thumb {
+  background: #ccc; /* Couleur gris clair */
+  border-radius: 10px;
+}
+
+.day-events::-webkit-scrollbar-thumb:hover {
+  background: #aaa; /* Couleur plus foncée au survol */
+}
+
+.event {
+  background-color: #6a9174;
+  color: white;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  /* Assurer que le contenu long s'adapte */
+  word-break: break-word;
+}
+
+.event:hover {
+  transform: scale(1.03);
+}
+
+.event.meeting {
+  background-color: #34a9d7;
+}
+
+.event-time {
+  font-size: 0.7rem;
+  opacity: 0.9;
+}
+
+.event-title {
+  font-weight: 500;
+  white-space: normal; /* Permettre le retour à la ligne */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Limiter à 2 lignes */
+  display: -webkit-box;
+  line-clamp: 2; /*Anciennement un erreur*/
+  -webkit-box-orient: vertical;
+}
+
+/* Modal pour les détails d'un événement */
+.event-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.event-modal {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.event-modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.event-modal-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+  flex: 1;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #777;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+.status-badge.active {
+  background-color: #dff0d8;
+  color: #3c763d;
+}
+
+.status-badge.pending {
+  background-color: #fcf8e3;
+  color: #8a6d3b;
+}
+
+.status-badge.expired {
+  background-color: #f2f2f2;
+  color: #777;
+}
+
+.event-modal-content {
+  padding: 20px;
+}
+
+.event-modal-content p {
+  margin: 10px 0;
+  color: #555;
+}
+
+.event-modal-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.view-details-button,
+.edit-button,
+.ok-button,
+.cancel-meeting-button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.view-details-button {
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  color: #333;
+}
+
+.view-details-button:hover {
+  background-color: #f0f0f0;
+}
+
+/* Nouveau style pour le bouton OK */
+.ok-button {
+  background-color: #34607d; /* Même bleu que les flèches */
+  color: white;
+  border: none;
+  font-weight: 500;
+}
+
+.ok-button:hover {
+  background-color: #376c8f;
+}
+
+.edit-button {
+  background-color: #6a9174;
+  color: white;
+  border: none;
+}
+
+.edit-button:hover {
+  background-color: #5a7b62;
+}
+
+.cancel-meeting-button {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+.cancel-meeting-button:hover {
+  background-color: #f5c6cb;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Correction agressive pour les notifications */
+.notification {
+  position: fixed !important;
+  bottom: 30px !important;
+  right: 30px !important;
+  left: auto !important; /* Empêche le positionnement à gauche */
+  width: auto !important; /* Force la largeur automatique */
+  max-width: 350px !important; /* Limite strictement la largeur maximale */
+  padding: 15px 20px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  font-size: 1rem !important;
+  z-index: 2000 !important;
+  animation: slideIn 0.3s forwards !important;
+  margin: 0 !important; /* Réinitialise les marges */
+}
+
+/* Style pour le texte à l'intérieur de la notification */
+.notification span, 
+.notification p {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 280px !important; /* Laisse de la place pour l'icône */
+  margin: 0 !important;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification.success {
+  background-color: #d4edda !important;
+  color: #155724 !important;
+  border-left: 4px solid #28a745 !important;
+}
+
+.notification.warning {
+  background-color: #fff3cd !important;
+  color: #856404 !important;
+  border-left: 4px solid #ffc107 !important;
+}
+
+.notification i {
+  font-size: 1.2rem !important;
+  flex-shrink: 0 !important; /* Empêche l'icône de rétrécir */
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .calendar-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .calendar-navigation {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .month-title {
+    min-width: auto;
+  }
+  
+  .header-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .calendar-weekdays {
+    grid-template-columns: repeat(7, 1fr);
+  }
+  
+  .weekday {
+    padding: 10px 5px;
+    font-size: 0.8rem;
+  }
+  
+  .calendar-days {
+    grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 120px; /* Garde la même hauteur fixe */
+  }
+  
+  .calendar-day {
+    padding: 5px;
+    height: 120px; /* Garde la même hauteur fixe */
+  }
+  
+  .event {
+    padding: 3px 5px;
+    font-size: 0.7rem;
+  }
+  
+  .event-time {
+    font-size: 0.6rem;
+  }
+  
+  .day-number {
+    font-size: 0.8rem;
+    width: 25px;
+    height: 25px;
+  }
+  
+  .event-modal-buttons {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 576px) {
+  .weekday {
+    font-size: 0.7rem;
+    padding: 8px 2px;
+  }
+  
+  .calendar-days {
+    grid-auto-rows: 120px; /* Maintenir la hauteur fixe */
+  }
+  
+  .calendar-day {
+    height: 120px; /* Maintenir la hauteur fixe */
+  }
+}

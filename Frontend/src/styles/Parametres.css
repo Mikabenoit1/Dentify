@@ -1,0 +1,341 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+
+.parametres-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Aligné à gauche au lieu de centré */
+  min-height: 100vh;
+  background-color: #fbf2e8;
+  padding: 120px 20px 40px 20px; /* Padding augmenté en haut pour éviter que le contenu ne soit caché par le header */
+  font-family: 'Poppins', sans-serif;
+  width: 100%; /* Prend toute la largeur disponible */
+  box-sizing: border-box;
+}
+
+.parametres-header {
+  margin-bottom: 30px;
+  text-align: left; /* Aligné à gauche au lieu de centré */
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.parametres-header h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #34607D;
+}
+
+.parametres-content {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 800px;
+  overflow: hidden;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.parametres-tabs {
+  display: flex;
+  border-bottom: 1px solid #eee;
+  background-color: #f9f9f9;
+}
+
+.tab-button {
+  padding: 15px 20px;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 3px solid transparent;
+  display: flex;
+  align-items: center;
+}
+
+.tab-button i {
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+.tab-button:hover {
+  color: #34607D;
+  background-color: rgba(52, 96, 125, 0.05);
+}
+
+.tab-button.active {
+  color: #34607D;
+  border-bottom-color: #34607D;
+  background-color: white;
+}
+
+.parametres-panels {
+  padding: 30px;
+}
+
+.panel h2 {
+  font-size: 1.4rem;
+  color: #34607D;
+  margin-bottom: 25px;
+  font-weight: 500;
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  flex: 1;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #34607D;
+  box-shadow: 0 0 0 2px rgba(52, 96, 125, 0.1);
+}
+
+.help-text {
+  display: block;
+  font-size: 0.85rem;
+  color: #777;
+  margin-top: 5px;
+}
+
+.checkbox-group {
+  margin: 15px 0;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 35px;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 12px;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.custom-checkbox {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 20px;
+  width: 20px;
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.checkbox-container:hover input ~ .custom-checkbox {
+  background-color: #f0f0f0;
+}
+
+.checkbox-container input:checked ~ .custom-checkbox {
+  background-color: #34607D;
+  border-color: #34607D;
+}
+
+.custom-checkbox:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container input:checked ~ .custom-checkbox:after {
+  display: block;
+}
+
+.checkbox-container .custom-checkbox:after {
+  left: 7px;
+  top: 3px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox-label {
+  font-weight: normal;
+  color: #333;
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 25px;
+}
+
+.form-actions button {
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s;
+}
+
+.cancel-button {
+  background-color: #f0f0f0;
+  color: #555;
+  min-width: 120px;
+}
+
+.cancel-button:hover {
+  background-color: #e4e4e4;
+}
+
+.save-button {
+  background-color: #34607D;
+  color: white;
+  min-width: 180px;
+}
+
+.save-button:hover {
+  background-color: #284a60;
+}
+
+.success-message,
+.error-message {
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.success-message {
+  background-color: #e7f0f7;
+  color: #34607D;
+  border-left: 4px solid #34607D;
+}
+
+.error-message {
+  background-color: #fde9e9;
+  color: #c62828;
+  border-left: 4px solid #c62828;
+}
+
+.success-message i,
+.error-message i {
+  margin-right: 10px;
+  font-size: 1.1rem;
+}
+
+/* Styles pour les nouvelles sections */
+.section-title {
+  font-size: 1.1rem;
+  color: #34607D;
+  margin-top: 25px;
+  margin-bottom: 15px;
+  font-weight: 500;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.select-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: #f5f5f5;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.select-input:focus {
+  outline: none;
+  border-color: #34607D;
+  box-shadow: 0 0 0 2px rgba(52, 96, 125, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .parametres-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .tab-button {
+    padding: 12px 15px;
+    font-size: 0.9rem;
+  }
+  
+  .tab-button i {
+    margin-right: 5px;
+  }
+  
+  .parametres-panels {
+    padding: 20px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .parametres-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .panel h2 {
+    font-size: 1.2rem;
+  }
+  
+  .section-title {
+    font-size: 1rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .form-actions button {
+    width: 100%;
+  }
+}
