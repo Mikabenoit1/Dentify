@@ -24,6 +24,7 @@ import CliniqueMessagerie from "./pages/CliniqueMessagerie";
 import MaClinique from "./pages/MaClinique";
 import MonCompte from "./pages/MonCompte";
 import Parametres from "./pages/Parametres"; // Importer la page Parametres
+import Notifications from "./pages/Notifications"; // Importer la page Notifications
 import ProfessionnelOffres from "./pages/ProfessionnelOffres";
 import ProfessionnelApplique from "./pages/ProfessionnelApplique";
 import ProfessionnelCalendrier from "./pages/ProfessionnelCalendrier";
@@ -53,6 +54,7 @@ function App() {
     "/pages/Connecte/PrincipaleClinique",
     "/mon-compte",
     "/parametres", // Ajouter paramètres aux routes sans Header standard
+    "/notifications", // Ajouter notifications aux routes sans Header standard
     "/offres",
     "/applique",
     "/calendrier",
@@ -66,6 +68,7 @@ function App() {
     "/pages/Connecte/Principale",
     "/mon-compte",
     "/parametres", // Ajouter paramètres aux routes avec SidebarPro
+    "/notifications", // Ajouter notifications aux routes avec SidebarPro
     "/offres",
     "/applique",
     "/calendrier",
@@ -85,7 +88,8 @@ function App() {
     "/clinique-profile",
     "/candidats/", 
     "/pages/Connecte/PrincipaleClinique",
-    "/parametres" // Ajouter paramètres aux routes avec SidebarCli
+    "/parametres", // Ajouter paramètres aux routes avec SidebarCli
+    "/notifications" // Ajouter notifications aux routes avec SidebarCli
   ];
 
   // Routes spécifiques pour le chatbot (uniquement les pages pro, pas les pages clinique)
@@ -93,6 +97,7 @@ function App() {
     "/principale",
     "/mon-compte",
     "/parametres", // Ajouter paramètres aux routes avec chatbot
+    "/notifications", // Ajouter notifications aux routes avec chatbot
     "/offres",
     "/applique",
     "/calendrier",
@@ -177,8 +182,9 @@ function App() {
           <Route path="/clinique-messagerie/:conversationId" element={<CliniqueMessagerie />} />
           <Route path="/clinique-profile" element={<MaClinique />} />
           
-          {/* Route pour les paramètres (accessible depuis les deux espaces) */}
+          {/* Routes partagées entre professionnel et clinique */}
           <Route path="/parametres" element={<Parametres />} />
+          <Route path="/notifications" element={<Notifications />} />
           
           {/* Redirections */}
           <Route path="/pages/Connecte/Principale" element={<Navigate to="/principale" replace />} />
