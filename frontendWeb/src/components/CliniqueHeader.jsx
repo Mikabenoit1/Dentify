@@ -23,6 +23,11 @@ const CliniqueHeader = () => {
     // Rediriger vers la page des paramètres
     navigate('/parametres');
   };
+  
+  const goToNotifications = () => {
+    // Rediriger vers la page des notifications
+    navigate('/notifications');
+  };
 
   return (
     <header className="clinique-header">
@@ -32,6 +37,11 @@ const CliniqueHeader = () => {
         </div>
         
         <div className="clinique-header-actions">
+          <button className="clinique-notifications-button" onClick={goToNotifications}>
+            <i className="fa-solid fa-bell"></i>
+            <span>Notifications</span>
+            <span className="notification-badge">3</span>
+          </button>
           <button className="clinique-settings-button" onClick={goToParameters}>
             <i className="fa-solid fa-gear"></i>
             <span>Paramètres</span>
