@@ -1,0 +1,240 @@
+/* Styles pour la modal de planification de rendez-vous */
+.schedule-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .schedule-modal-wide {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalFadeIn 0.3s ease;
+  }
+  
+  .schedule-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .schedule-modal-header h3 {
+    margin: 0;
+    color: #34607d;
+    font-size: 1.3rem;
+  }
+  
+  .schedule-modal-content {
+    padding: 20px;
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  
+  .form-col {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: #555;
+  }
+  
+  .icon-label {
+    color: #34607d;
+  }
+  
+  .form-input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    transition: border-color 0.2s ease;
+  }
+  
+  .form-input:focus {
+    border-color: #34607d;
+    outline: none;
+  }
+  
+  .meeting-type-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  
+  .meeting-type-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .meeting-type-option.selected {
+    border-color: #34607d;
+    background-color: rgba(52, 96, 125, 0.05);
+  }
+  
+  .meeting-type-icon {
+    font-size: 1.5rem;
+    color: #34607d;
+    margin-bottom: 8px;
+  }
+  
+  .meeting-type-text {
+    font-size: 0.85rem;
+    text-align: center;
+  }
+  
+  .notes-input {
+    resize: vertical;
+    min-height: 80px;
+  }
+  
+  .participant-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+  }
+  
+  .participant-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1.2rem;
+  }
+  
+  .participant-avatar.dentiste {
+    background-color: #34607d;
+  }
+  
+  .participant-avatar.assistant {
+    background-color: #4e78c4;
+  }
+  
+  .participant-avatar.hygieniste {
+    background-color: #d776b6;
+  }
+  
+  .participant-details {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .participant-name {
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .participant-profession {
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  .form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  
+  .cancel-button,
+  .confirm-button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .cancel-button {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    color: #555;
+  }
+  
+  .cancel-button:hover {
+    background-color: #e9ecef;
+  }
+  
+  .confirm-button {
+    background-color: #34607d;
+    border: none;
+    color: white;
+  }
+  
+  .confirm-button:hover {
+    background-color: #2a4e67;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .meeting-type-options {
+      grid-template-columns: 1fr;
+    }
+    
+    .form-buttons {
+      flex-direction: column;
+    }
+    
+    .cancel-button, .confirm-button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
