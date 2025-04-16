@@ -1,121 +1,170 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
+} from "react-native";
+import { registerUser } from "../api/index";  // Importation de la méthode générique
 
 export default function InscriptionCli({ navigation }) {
-  const [verificationCode, setVerificationPassword] = useState<string>('');
-  const [nom, setNom] = useState("");
+  const [nomClinique, setNomClinique] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleInscription = () => {
-
-    if (verificationCode.length <= 8) {
-          setError('Votre mot de passe doit contenir un minimum de 9 caractères.');
-          return;
+  const handleInscription = async () => {
+    if (!nomClinique || !email || !password || !confirmPassword) {
+      setError("Tous les champs sont obligatoires");
+      return;
     }
-
-
+  
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setError("Veuillez entrer un email valide");
+      return;
+    }
+  
     if (password !== confirmPassword) {
-      setError("Le champ du mot de passe et de la confirmation ne sont pas identique.");
+      setError("Les mots de passe ne correspondent pas.");
       return;
     }
-
-    if (nom.length < 2) {
-      setError("Le nom doit contenir au moins 2 caractères.");
-      return;
-    }
-
-    if (!/[!@#$%&]/.test(password)) {
-      setError("Le mot de passe doit contenir au moins un caractère spécial (@, #, $, %, &).");
-      return;
-    }
-
-    if (!email.includes("@")) {
-      setError("L'adresse courriel n'est pas valide.");
-      return;
-    }
-
+  
+    setIsLoading(true);
     setError("");
-
-    Alert.alert("Succès", "Votre compte a été créé avec succès!");
-
-    navigation.navigate("ConnexionCli");
+  
+    try {
+      // Appel à la méthode générique avec type_utilisateur "clinique"
+      await registerUser({
+        nom: nomClinique,
+        courriel: email,
+        mot_de_passe: password,
+        nom_clinique: nomClinique,
+        adresse: "",
+        ville: "",
+        province: "",
+        code_postal: "",
+      }, "clinique");  // Passer "clinique" en type_utilisateur
+  
+      // Naviguer vers la page AccueilClinique après inscription réussie
+      navigation.navigate("AccueilClinique");  // Redirection vers AccueilClinique
+  
+    } catch (error) {
+      setError(error.message || "Erreur lors de l'inscription");
+    } finally {
+      setIsLoading(false);
+    }
   };
+  
 
   return (
-    <View style={styles.container}>
-
-      <TouchableOpacity style={styles.buttonBack} onPress={() => navigation.navigate("Indexx")}>
-        <Text style={styles.buttonTextBack}> Retour à la page principale </Text>
-      </TouchableOpacity>
-
-      {/* L'image du logo Dentify */}
-      <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
-
-      <Text style={styles.title}>Inscription en tant que clinique</Text>
-
-      {/* Rentrer les informations pour s'inscrire */}
-      <TextInput style={styles.input} 
-      placeholder="Nom de l'établissement" 
-      onChangeText={setNom} 
-      value={nom} />
-      <TextInput style={styles.input} 
-      placeholder="Adresse courriel" 
-      keyboardType="email-address" 
-      onChangeText={setEmail} 
-      value={email} />
-      <TextInput style={styles.input} 
-      placeholder="Mot de passe" 
-      secureTextEntry 
-      onChangeText={(mdp) => {
-        setPassword(mdp);
-        setVerificationPassword(mdp);
-      }} 
-      value={password} />
-      <TextInput style={styles.input} 
-      placeholder="Confirmer le mot de passe" 
-      secureTextEntry 
-      onChangeText={(mdp) => {
-        setConfirmPassword(mdp);
-        setVerificationPassword(mdp);
-      }} 
-      value={confirmPassword} />
-
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-      {/* Bouton pour s'inscrire */}
-      <TouchableOpacity style={styles.button} onPress={handleInscription}>
-        <Text style={styles.buttonText}>S'inscrire</Text>
-      </TouchableOpacity>
-
-
-      {/* Si professionnel ou déjà un compte */}
-      <View style={styles.linkContainer}>
-        <Text style={styles.textNormal}>Vous êtes un professionnel? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate("Inscription")}>
-          <Text style={styles.linkText}>Inscription professionnel</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: "#fbf2e8" }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={true}
+      >
+        <TouchableOpacity
+          style={styles.buttonBack}
+          onPress={() => navigation.navigate("Indexx")}
+        >
+          <Text style={styles.buttonTextBack}>Retour à la page principale</Text>
         </TouchableOpacity>
-      </View>
 
-      <View style={styles.linkContainer}>
-        <Text style={styles.textNormal}>Déjà un compte ? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate("ConnexionCli")}>
-          <Text style={styles.linkText}>Connexion</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        <View style={styles.container}>
+          <Image
+            source={require("../assets/dentify_logo_noir.png")}
+            style={styles.logo}
+          />
+
+          <Text style={styles.title}>Inscription en tant que clinique</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Nom de l'établissement"
+            onChangeText={setNomClinique}
+            value={nomClinique}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Adresse courriel"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            onChangeText={setEmail}
+            value={email}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Mot de passe"
+            secureTextEntry
+            onChangeText={setPassword}
+            value={password}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Confirmer le mot de passe"
+            secureTextEntry
+            onChangeText={setConfirmPassword}
+            value={confirmPassword}
+          />
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleInscription}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.buttonText}>S'inscrire</Text>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.linkContainer}>
+            <Text style={styles.textNormal}>Vous êtes un professionnel? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Inscription")}>
+              <Text style={styles.linkText}>Inscription professionnel</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.linkContainer}>
+            <Text style={styles.textNormal}>Déjà un compte ? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate("ConnexionCli")}>
+              <Text style={styles.linkText}>Connexion</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fbf2e8",
-    justifyContent: "center",
+  scrollContainer: {
+    padding: 20,
+    paddingTop: 80,
+    paddingBottom: 40,
     alignItems: "center",
-    paddingHorizontal: 20,
+    minHeight: Dimensions.get("window").height + 100, // Forcer le contenu à être plus grand que la hauteur de l'écran
+  },
+  container: {
+    width: "100%",
+    maxWidth: 400,
+    alignItems: "center",
   },
   logo: {
     width: 200,
@@ -156,7 +205,7 @@ const styles = StyleSheet.create({
   },
   linkContainer: {
     flexDirection: "row",
-    marginTop: 10,
+    marginTop: 15,
   },
   textNormal: {
     fontSize: 14,
