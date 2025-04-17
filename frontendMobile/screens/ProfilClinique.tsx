@@ -1,37 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { MaterialCommunityIcons, Feather, FontAwesome } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { getProfileDetails } from '../api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfilClinique = ({ navigation }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
-    name: "",
-    company: "Clinique",
-    position: "",
-    website: "",
-    documents: []
+    nom: "",
+    adresse: "",
+    ville: "",
+    province: "",
+    code_postal: "",
+    nom_clinique: "",
+    numero_entreprise: "",
+    adresse_complete: "",
+    latitude: "",
+    longitude: "",
+    horaire_ouverture: "",
+    site_web: "",
+    logiciels_utilises: "",
+    type_dossier: "",
+    type_radiographie: ""
   });
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { details } = await getProfileDetails();
-        console.log("✅ Données reçues (clinique) :", details);
-
-        setProfile({
-          name: details.nom_clinique || "Nom inconnu",
-          company: "Clinique",
-          position: details.adresse_complete || "Adresse non fournie",
-          website: details.site_web || "",
-          documents: [] // Tu peux mapper les vrais docs plus tard ici
-        });
+        const { user } = await getProfileDetails();
+        setProfile(user);
       } catch (err) {
-        console.log("❌ Erreur récupération profil clinique :", err);
-        Alert.alert("Erreur", err.message || "Impossible de charger le profil clinique");
+        Alert.alert("Erreur", err.message || "Impossible de charger le profil");
       }
     };
-
     fetchProfile();
   }, []);
 
@@ -39,128 +40,79 @@ const ProfilClinique = ({ navigation }) => {
     setProfile(prev => ({ ...prev, [field]: value }));
   };
 
-  const pickDocument = () => {
-    const newDocName = `Document_${profile.documents.length + 1}.pdf`;
-    setProfile(prev => ({
-      ...prev,
-      documents: [...prev.documents, newDocName]
-    }));
-    Alert.alert("Document simulé", `${newDocName} a été ajouté`);
+  const handleSave = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const response = await fetch("http://172.20.10.6:4000/api/users/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(profile)
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Erreur serveur");
+
+      Alert.alert("Succès", "Profil mis à jour avec succès");
+      setIsEditing(false);
+    } catch (err) {
+      Alert.alert("Erreur", err.message || "Impossible de sauvegarder les modifications");
+    }
   };
 
-  const removeDocument = (index) => {
-    setProfile(prev => ({
-      ...prev,
-      documents: prev.documents.filter((_, i) => i !== index)
-    }));
-  };
+  const fields = [
+    { label: "Nom complet", key: "nom" },
+    { label: "Adresse", key: "adresse" },
+    { label: "Ville", key: "ville" },
+    { label: "Province", key: "province" },
+    { label: "Code postal", key: "code_postal" },
+    { label: "Nom de la clinique", key: "nom_clinique" },
+    { label: "Numéro d’entreprise", key: "numero_entreprise" },
+    { label: "Adresse complète", key: "adresse_complete" },
+    { label: "Latitude", key: "latitude" },
+    { label: "Longitude", key: "longitude" },
+    { label: "Horaire d’ouverture", key: "horaire_ouverture" },
+    { label: "Site web", key: "site_web" },
+    { label: "Logiciels utilisés", key: "logiciels_utilises" },
+    { label: "Type de dossier", key: "type_dossier" },
+    { label: "Type de radiographie", key: "type_radiographie" }
+  ];
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Feather name="arrow-left" size={24} color="#6a9174" />
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        style={styles.editToggle}
-        onPress={() => setIsEditing(!isEditing)}
-      >
+      <TouchableOpacity style={styles.editToggle} onPress={() => setIsEditing(!isEditing)}>
         <Feather name={isEditing ? "check" : "edit"} size={24} color="#6a9174" />
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.profileIcon}>
-          <MaterialCommunityIcons 
-            name="account-circle" 
-            size={100} 
-            color="#6a9174" 
-          />
+          <MaterialCommunityIcons name="account-circle" size={100} color="#6a9174" />
         </View>
 
-        <Text style={styles.nameLabel}>Nom *</Text>
-        {isEditing ? (
-          <TextInput
-            style={styles.input}
-            value={profile.name}
-            onChangeText={(text) => handleChange('name', text)}
-          />
-        ) : (
-          <Text style={styles.name}>{profile.name}</Text>
-        )}
-
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoLabel}>Établissement</Text>
-          <Text style={styles.infoValue}>{profile.company}</Text>
-
-          <Text style={styles.infoLabel}>Adresse</Text>
-          {isEditing ? (
-            <TextInput
-              style={styles.input}
-              value={profile.position}
-              onChangeText={(text) => handleChange('position', text)}
-            />
-          ) : (
-            <Text style={styles.infoValue}>{profile.position}</Text>
-          )}
-        </View>
-
-        <View style={styles.separator} />
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Biographie</Text>
-
-          <Text style={styles.infoLabel}>Site Internet</Text>
-          {isEditing ? (
-            <TextInput
-              style={styles.input}
-              value={profile.website}
-              onChangeText={(text) => handleChange('website', text)}
-            />
-          ) : (
-            <TouchableOpacity>
-              <Text style={styles.linkText}>{profile.website}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Documents</Text>
-
-          {profile.documents.map((doc, index) => (
-            <View key={index} style={styles.documentItem}>
-              <FontAwesome name="file-text-o" size={20} color="#6a9174" />
-              <Text style={styles.documentName}>{doc}</Text>
-              {isEditing && (
-                <TouchableOpacity onPress={() => removeDocument(index)}>
-                  <Feather name="trash-2" size={20} color="#ff6b6b" />
-                </TouchableOpacity>
-              )}
-            </View>
-          ))}
-
-          {isEditing && (
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={pickDocument}
-            >
-              <Feather name="plus" size={20} color="#6a9174" />
-              <Text style={styles.addButtonText}>Ajouter un document</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        {fields.map(({ label, key }) => (
+          <View key={key} style={{ marginBottom: 10 }}>
+            <Text style={styles.label}>{label}</Text>
+            {isEditing ? (
+              <TextInput
+                style={styles.input}
+                value={profile[key]?.toString() || ""}
+                onChangeText={(text) => handleChange(key, text)}
+              />
+            ) : (
+              <Text style={styles.textValue}>{profile[key] || "-"}</Text>
+            )}
+          </View>
+        ))}
 
         {isEditing && (
-          <TouchableOpacity 
-            style={styles.validateButton}
-            onPress={() => {
-              setIsEditing(false);
-              Alert.alert("Succès", "Profil mis à jour");
-            }}
-          >
-            <Text style={styles.validateButtonText}>Enregistrer les modifications</Text>
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+            <Text style={styles.saveButtonText}>Enregistrer les modifications</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -169,126 +121,38 @@ const ProfilClinique = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fbf2e8',
-    paddingTop: 50,
-  },
-  backButton: {
-    position: 'absolute',
-    top: 30,
-    left: 30,
-    zIndex: 1,
-  },
-  editToggle: {
-    position: 'absolute',
-    top: 30,
-    right: 30,
-    zIndex: 1,
-  },
-  content: {
-    padding: 20,
-    paddingTop: 40,
-    paddingBottom: 40,
-  },
-  profileIcon: {
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  nameLabel: {
-    color: '#6a9174',
-    fontSize: 12,
-    marginBottom: 5,
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#34607d',
-    marginBottom: 20,
-  },
+  container: { flex: 1, backgroundColor: '#fbf2e8', paddingTop: 50 },
+  backButton: { position: 'absolute', top: 30, left: 30, zIndex: 1 },
+  editToggle: { position: 'absolute', top: 30, right: 30, zIndex: 1 },
+  content: { padding: 20, paddingTop: 40, paddingBottom: 40 },
+  profileIcon: { alignSelf: 'center', marginBottom: 20 },
+  label: { fontSize: 14, color: '#666', marginBottom: 5 },
   input: {
     backgroundColor: 'white',
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
-    marginBottom: 15,
-    fontSize: 16,
+    fontSize: 16
   },
-  infoContainer: {
-    marginBottom: 20,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
-  },
-  infoValue: {
+  textValue: {
     fontSize: 16,
     color: '#333',
-    marginBottom: 15,
-    fontWeight: '500',
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 20,
-  },
-  section: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#34607d',
-    marginBottom: 15,
-  },
-  linkText: {
-    fontSize: 16,
-    color: '#6a9174',
-    marginBottom: 15,
-    textDecorationLine: 'underline',
-  },
-  documentItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 8,
     marginBottom: 10,
+    fontWeight: '500'
   },
-  documentName: {
-    flex: 1,
-    marginLeft: 10,
-    color: '#333',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#6a9174',
-    borderRadius: 8,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-  },
-  addButtonText: {
-    color: '#6a9174',
-    marginLeft: 10,
-    fontWeight: 'bold',
-  },
-  validateButton: {
+  saveButton: {
     backgroundColor: '#6a9174',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 30
   },
-  validateButtonText: {
+  saveButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
+    fontWeight: 'bold'
+  }
 });
 
 export default ProfilClinique;

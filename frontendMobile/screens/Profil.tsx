@@ -1,34 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { MaterialCommunityIcons, Feather, FontAwesome } from '@expo/vector-icons';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Alert
+} from 'react-native';
+import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { getProfileDetails } from '../api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Profil = ({ navigation }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    name: "",
-    company: "",
-    position: "",
-    website: "",
-    documents: []
-  });
+  const [profile, setProfile] = useState({});
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { user, details } = await getProfileDetails();
-        setProfile({
-          name: `${user.prenom} ${user.nom}`,
-          company: "Dentify",
-          position: details.type_profession || "",
-          website: details.site_web || "",
-          documents: [] // à connecter plus tard si tu veux gérer les vrais docs
-        });
+        const { user } = await getProfileDetails();
+        setProfile(user);
       } catch (err) {
         Alert.alert("Erreur", err.message || "Impossible de charger le profil");
       }
     };
-
     fetchProfile();
   }, []);
 
@@ -36,21 +32,51 @@ const Profil = ({ navigation }) => {
     setProfile(prev => ({ ...prev, [field]: value }));
   };
 
-  const pickDocument = () => {
-    const newDocName = `Document_${profile.documents.length + 1}.pdf`;
-    setProfile(prev => ({
-      ...prev,
-      documents: [...prev.documents, newDocName]
-    }));
-    Alert.alert("Document simulé", `${newDocName} a été ajouté`);
+  const handleSave = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const response = await fetch("http://172.20.10.6:4000/api/users/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(profile)
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Erreur serveur");
+
+      Alert.alert("Succès", "Profil mis à jour avec succès");
+      setIsEditing(false);
+    } catch (err) {
+      Alert.alert("Erreur", err.message || "Impossible de sauvegarder");
+    }
   };
 
-  const removeDocument = (index) => {
-    setProfile(prev => ({
-      ...prev,
-      documents: prev.documents.filter((_, i) => i !== index)
-    }));
-  };
+  const fields = [
+    { label: "Prénom", key: "prenom" },
+    { label: "Nom", key: "nom" },
+    { label: "Adresse", key: "adresse" },
+    { label: "Ville", key: "ville" },
+    { label: "Province", key: "province" },
+    { label: "Code postal", key: "code_postal" },
+    { label: "Téléphone", key: "telephone" },
+    { label: "Numéro de permis", key: "numero_permis" },
+    { label: "Type de profession", key: "type_profession" },
+    { label: "Années d'expérience", key: "annees_experience" },
+    { label: "Tarif horaire", key: "tarif_horaire" },
+    { label: "Rayon de déplacement (km)", key: "rayon_deplacement_km" },
+    { label: "Site web", key: "site_web" },
+    { label: "Description", key: "description", multiline: true },
+    { label: "Langues", key: "langues" },
+    { label: "Régions", key: "regions" },
+    { label: "Jours disponibles", key: "jours_disponibles" },
+    { label: "Compétences", key: "competences" },
+    { label: "Spécialités", key: "specialites" },
+    { label: "Disponible immédiatement (Y/N)", key: "disponibilite_immediate" },
+    { label: "Véhicule (true/false)", key: "vehicule" }
+  ];
 
   return (
     <View style={styles.container}>
@@ -67,67 +93,25 @@ const Profil = ({ navigation }) => {
           <MaterialCommunityIcons name="account-circle" size={100} color="#6a9174" />
         </View>
 
-        <Text style={styles.nameLabel}>Nom *</Text>
-        {isEditing ? (
-          <TextInput style={styles.input} value={profile.name} onChangeText={(text) => handleChange('name', text)} />
-        ) : (
-          <Text style={styles.name}>{profile.name}</Text>
-        )}
-
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoLabel}>Société</Text>
-          {isEditing ? (
-            <TextInput style={styles.input} value={profile.company} onChangeText={(text) => handleChange('company', text)} />
-          ) : (
-            <Text style={styles.infoValue}>{profile.company}</Text>
-          )}
-
-          <Text style={styles.infoLabel}>Poste</Text>
-          {isEditing ? (
-            <TextInput style={styles.input} value={profile.position} onChangeText={(text) => handleChange('position', text)} />
-          ) : (
-            <Text style={styles.infoValue}>{profile.position}</Text>
-          )}
-        </View>
-
-        <View style={styles.separator} />
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Biographie</Text>
-          <Text style={styles.infoLabel}>Site Internet</Text>
-          {isEditing ? (
-            <TextInput style={styles.input} value={profile.website} onChangeText={(text) => handleChange('website', text)} />
-          ) : (
-            <TouchableOpacity><Text style={styles.linkText}>{profile.website}</Text></TouchableOpacity>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Documents</Text>
-          {profile.documents.map((doc, index) => (
-            <View key={index} style={styles.documentItem}>
-              <FontAwesome name="file-text-o" size={20} color="#6a9174" />
-              <Text style={styles.documentName}>{doc}</Text>
-              {isEditing && (
-                <TouchableOpacity onPress={() => removeDocument(index)}>
-                  <Feather name="trash-2" size={20} color="#ff6b6b" />
-                </TouchableOpacity>
-              )}
-            </View>
-          ))}
-          {isEditing && (
-            <TouchableOpacity style={styles.addButton} onPress={pickDocument}>
-              <Feather name="plus" size={20} color="#6a9174" />
-              <Text style={styles.addButtonText}>Ajouter un document</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        {fields.map(({ label, key, multiline }) => (
+          <View key={key} style={{ marginBottom: 10 }}>
+            <Text style={styles.label}>{label}</Text>
+            {isEditing ? (
+              <TextInput
+                style={[styles.input, multiline && { height: 80 }]}
+                value={profile[key]?.toString() || ""}
+                onChangeText={(text) => handleChange(key, text)}
+                multiline={multiline}
+              />
+            ) : (
+              <Text style={styles.textValue}>{profile[key]?.toString() || "-"}</Text>
+            )}
+          </View>
+        ))}
 
         {isEditing && (
-          <TouchableOpacity style={styles.validateButton} onPress={() => {
-            setIsEditing(false);
-            Alert.alert("Succès", "Profil mis à jour");
-          }}>
-            <Text style={styles.validateButtonText}>Enregistrer les modifications</Text>
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+            <Text style={styles.saveButtonText}>Enregistrer les modifications</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -136,126 +120,38 @@ const Profil = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fbf2e8',
-    paddingTop: 50,
-  },
-  backButton: {
-    position: 'absolute',
-    top: 30,
-    left: 30,
-    zIndex: 1,
-  },
-  editToggle: {
-    position: 'absolute',
-    top: 30,
-    right: 30,
-    zIndex: 1,
-  },
-  content: {
-    padding: 20,
-    paddingTop: 40,
-    paddingBottom: 40,
-  },
-  profileIcon: {
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  nameLabel: {
-    color: '#6a9174',
-    fontSize: 12,
-    marginBottom: 5,
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#34607d',
-    marginBottom: 20,
-  },
+  container: { flex: 1, backgroundColor: '#fbf2e8', paddingTop: 50 },
+  backButton: { position: 'absolute', top: 30, left: 30, zIndex: 1 },
+  editToggle: { position: 'absolute', top: 30, right: 30, zIndex: 1 },
+  content: { padding: 20, paddingTop: 40, paddingBottom: 40 },
+  profileIcon: { alignSelf: 'center', marginBottom: 20 },
+  label: { fontSize: 14, color: '#666', marginBottom: 5 },
   input: {
     backgroundColor: 'white',
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
-    marginBottom: 15,
-    fontSize: 16,
+    fontSize: 16
   },
-  infoContainer: {
-    marginBottom: 20,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
-  },
-  infoValue: {
+  textValue: {
     fontSize: 16,
     color: '#333',
-    marginBottom: 15,
-    fontWeight: '500',
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 20,
-  },
-  section: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#34607d',
-    marginBottom: 15,
-  },
-  linkText: {
-    fontSize: 16,
-    color: '#6a9174',
-    marginBottom: 15,
-    textDecorationLine: 'underline',
-  },
-  documentItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 8,
     marginBottom: 10,
+    fontWeight: '500'
   },
-  documentName: {
-    flex: 1,
-    marginLeft: 10,
-    color: '#333',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#6a9174',
-    borderRadius: 8,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-  },
-  addButtonText: {
-    color: '#6a9174',
-    marginLeft: 10,
-    fontWeight: 'bold',
-  },
-  validateButton: {
+  saveButton: {
     backgroundColor: '#6a9174',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 30
   },
-  validateButtonText: {
+  saveButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
+    fontWeight: 'bold'
+  }
 });
 
 export default Profil;
