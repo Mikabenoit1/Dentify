@@ -1,0 +1,1006 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #6a9174;
+  --secondary-color: #34607d;
+  --accent-color: #34a9d7;
+  --text-dark: #333333;
+  --text-medium: #555555;
+  --text-light: #777777;
+  --border-color: #e0e0e0;
+  --background-light: #f8f9fa;
+  --background-lighter: #ffffff;
+  --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 6px 15px rgba(0, 0, 0, 0.1);
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --transition: all 0.3s ease;
+}
+
+.principale-clinique-container {
+  max-width: 1200px;
+  margin: 30px auto;
+  margin-top: 900px;
+  padding: 20px;
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-dark);
+}
+
+.dashboard-header {
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dashboard-header h1 {
+  color: var(--primary-color);
+  margin-bottom: 5px;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.welcome-message {
+  font-size: 1.1rem;
+  color: var(--text-medium);
+  margin: 0;
+}
+
+/* Cartes de statistiques */
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.stat-card {
+  background-color: var(--background-lighter);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 25px;
+  display: flex;
+  align-items: center;
+  transition: var(--transition);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  background-color: rgba(106, 145, 116, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20px;
+  color: var(--primary-color);
+  font-size: 1.5rem;
+}
+
+.stat-content h3 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.stat-content p {
+  margin: 5px 0 0;
+  color: var(--text-medium);
+  font-size: 0.9rem;
+}
+
+/* Sections du tableau de bord */
+.dashboard-main-row {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.dashboard-section {
+  background-color: var(--background-lighter);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.offers-section, .calendar-section {
+  flex: 1;
+  min-width: 0; /* Pour éviter que le contenu ne dépasse */
+}
+
+.messages-section {
+  margin-bottom: 30px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background-color: var(--background-light);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--secondary-color);
+}
+
+.section-action-button {
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.section-action-button:hover {
+  color: var(--secondary-color);
+  text-decoration: underline;
+}
+
+.section-content {
+  padding: 20px;
+}
+
+/* Offres récentes */
+.recent-offers {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+}
+
+.recent-offer-card {
+  background-color: var(--background-light);
+  border-radius: var(--radius-sm);
+  padding: 15px;
+  border-left: 4px solid var(--primary-color);
+  transition: var(--transition);
+}
+
+.recent-offer-card:hover {
+  transform: translateX(5px);
+  box-shadow: var(--shadow-sm);
+}
+
+.recent-offer-card.pending {
+  border-left-color: #f0ad4e;
+}
+
+.recent-offer-card.expired {
+  border-left-color: #888;
+  opacity: 0.8;
+}
+
+.offer-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.offer-card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.status-badge.active {
+  background-color: #dff0d8;
+  color: #3c763d;
+}
+
+.status-badge.pending {
+  background-color: #fcf8e3;
+  color: #8a6d3b;
+}
+
+.status-badge.expired {
+  background-color: #f2f2f2;
+  color: #777;
+}
+
+.offer-date, .offer-period, .offer-applications {
+  margin: 5px 0;
+  font-size: 0.85rem;
+  color: var(--text-medium);
+}
+
+.view-details-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-medium);
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.view-details-button:hover {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+  color: white;
+}
+
+/* Rendez-vous à venir */
+.upcoming-meetings {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+}
+
+.meeting-card {
+  display: flex;
+  align-items: center;
+  background-color: var(--background-light);
+  border-radius: var(--radius-sm);
+  padding: 15px;
+  transition: var(--transition);
+}
+
+.meeting-card:hover {
+  transform: translateX(5px);
+  box-shadow: var(--shadow-sm);
+}
+
+.meeting-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background-color: var(--secondary-color);
+  color: white;
+  border-radius: var(--radius-sm);
+  margin-right: 15px;
+  text-align: center;
+}
+
+.meeting-date .day {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.meeting-date .month {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.meeting-details {
+  flex: 1;
+}
+
+.meeting-details h3 {
+  margin: 0 0 5px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.meeting-time, .meeting-candidate, .meeting-type {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 3px 0;
+  font-size: 0.85rem;
+  color: var(--text-medium);
+}
+
+/* Aperçu des messages */
+.messages-preview {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.message-preview-card {
+  display: flex;
+  align-items: center;
+  background-color: var(--background-light);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  position: relative;
+  transition: var(--transition);
+}
+
+.message-preview-card:hover {
+  transform: translateX(5px);
+  box-shadow: var(--shadow-sm);
+}
+
+.unread-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent-color);
+  border-radius: 50%;
+}
+
+.message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  margin-right: 15px;
+}
+
+.message-avatar.dentiste {
+  background-color: #34607d;
+}
+
+.message-avatar.assistant {
+  background-color: #4e78c4;
+}
+
+.message-avatar.hygieniste {
+  background-color: #d776b6;
+}
+
+.message-preview-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-preview-content h3 {
+  margin: 0 0 5px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.message-preview-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.section-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.primary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.primary-button:hover {
+  background-color: #5a7b62;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* États vides */
+.empty-state {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-light);
+}
+
+.create-button, .view-calendar-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.create-button:hover, .view-calendar-button:hover {
+  background-color: #5a7b62;
+  transform: translateY(-2px);
+}
+
+/* Actions rapides - version plus voyante */
+.quick-actions.highlight {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  padding: 20px;
+  margin-bottom: 30px;
+  border: none;
+}
+
+.quick-actions h2 {
+  margin: 0 0 20px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--secondary-color);
+  text-align: center;
+}
+
+.quick-action-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+
+.highlight .quick-action-button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 15px;
+  transition: var(--transition);
+  cursor: pointer;
+  min-height: 60px;
+}
+
+.highlight .quick-action-button:hover {
+  background-color: white;
+  color: var(--primary-color);
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.highlight .quick-action-button i {
+  font-size: 1.8rem;
+  margin-right: 15px;
+  min-width: 30px;
+  text-align: center;
+  color: var(--primary-color);
+}
+
+.highlight .quick-action-button span {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+/* Messages Layout */
+.messages-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .dashboard-main-row {
+    flex-direction: column;
+  }
+  
+  .messages-preview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .stats-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .quick-action-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .principale-clinique-container {
+    padding: 15px;
+  }
+  
+  .stats-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .messages-preview {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-action-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .stats-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .meeting-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .meeting-date {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+  
+  .quick-action-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Ajoutez ces styles à votre fichier PrincipaleClinique.css */
+
+/* Style pour les contrôles de section */
+.section-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .toggle-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  
+  .toggle-button:hover {
+    color: var(--secondary-color);
+  }
+  
+  .toggle-button i {
+    font-size: 0.8rem;
+  }
+  
+  /* Style pour l'indicateur "plus d'éléments" */
+  .more-items-indicator {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+  }
+  
+  .more-items-indicator button {
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border-color);
+  }
+  
+  .more-items-indicator button:hover {
+    background-color: var(--background-light);
+    color: var(--secondary-color);
+  }
+  
+  /* Animation pour les sections déroulantes */
+  .recent-offers, .upcoming-meetings {
+    transition: max-height 0.3s ease;
+  }
+
+  /* Ajoutez ces styles à votre fichier PrincipaleClinique.css */
+
+/* Style pour les contrôles de section */
+.section-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .toggle-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  
+  .toggle-button:hover {
+    color: var(--secondary-color);
+  }
+  
+  .toggle-button i {
+    font-size: 0.8rem;
+  }
+  
+  /* Style pour l'indicateur "plus d'éléments" */
+  .more-items-indicator {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+  }
+  
+  .more-items-indicator button {
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border-color);
+  }
+  
+  .more-items-indicator button:hover {
+    background-color: var(--background-light);
+    color: var(--secondary-color);
+  }
+  
+  /* Animation pour les sections déroulantes */
+  .recent-offers, .upcoming-meetings, .messages-preview {
+    transition: max-height 0.3s ease;
+  }
+  
+  /* Styles améliorés pour les messages */
+  .messages-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+  }
+  
+  .message-preview-card {
+    display: flex;
+    align-items: center;
+    background-color: var(--background-light);
+    border-radius: var(--radius-sm);
+    padding: 15px;
+    position: relative;
+    cursor: pointer;
+    transition: var(--transition);
+    border-left: 4px solid transparent;
+  }
+  
+  .message-preview-card:hover {
+    transform: translateX(5px);
+    box-shadow: var(--shadow-sm);
+    background-color: var(--background-lighter);
+    border-left-color: var(--primary-color);
+  }
+  
+  .message-preview-card .unread-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 8px;
+    height: 8px;
+    background-color: var(--accent-color);
+    border-radius: 50%;
+  }
+  
+  /* Actions rapides améliorées */
+  .quick-actions.enhanced {
+    margin-top: 30px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    border-radius: var(--radius-md);
+    padding: 25px;
+    box-shadow: var(--shadow-md);
+  }
+  
+  .quick-actions.enhanced h2 {
+    margin: 0 0 20px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+  }
+  
+  .quick-actions.enhanced .quick-action-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  
+  .quick-actions.enhanced .quick-action-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 20px 15px;
+    cursor: pointer;
+    transition: var(--transition);
+    min-height: 120px;
+  }
+  
+  .quick-actions.enhanced .quick-action-button:hover {
+    background-color: white;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .quick-actions.enhanced .action-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(106, 145, 116, 0.1);
+    border-radius: 50%;
+    margin-bottom: 10px;
+    transition: var(--transition);
+  }
+  
+  .quick-actions.enhanced .quick-action-button:hover .action-icon {
+    background-color: var(--primary-color);
+    transform: scale(1.1);
+  }
+  
+  .quick-actions.enhanced .action-icon i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    transition: var(--transition);
+  }
+  
+  .quick-actions.enhanced .quick-action-button:hover .action-icon i {
+    color: white;
+  }
+  
+  .quick-actions.enhanced .quick-action-button span {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    text-align: center;
+  }
+  
+  /* Responsive design pour les actions rapides */
+  @media (max-width: 992px) {
+    .quick-actions.enhanced .quick-action-buttons {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .quick-actions.enhanced .quick-action-buttons {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Ajoutez ces styles à votre fichier PrincipaleClinique.css */
+
+/* Styles pour les conteneurs à défilement */
+.scrollable-content {
+    max-height: 320px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 10px; /* Espace pour la barre de défilement */
+    scrollbar-width: thin; /* Pour Firefox */
+    scrollbar-color: var(--primary-color) var(--background-light); /* Pour Firefox */
+  }
+  
+  /* Style des barres de défilement pour Chrome/Safari/Edge */
+  .scrollable-content::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .scrollable-content::-webkit-scrollbar-track {
+    background: var(--background-light);
+    border-radius: 10px;
+  }
+  
+  .scrollable-content::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color);
+    border-radius: 10px;
+    border: 2px solid var(--background-light);
+  }
+  
+  /* Ajustement des sections du dashboard */
+  .dashboard-section {
+    background-color: var(--background-lighter);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: 30px;
+  }
+  
+  /* Hauteur fixe pour les sections */
+  .dashboard-main-row {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 30px;
+  }
+  
+  .offers-section, .calendar-section {
+    flex: 1;
+    min-width: 0; /* Pour éviter que le contenu ne dépasse */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .dashboard-section .section-content {
+    padding: 20px;
+    height: 100%;
+  }
+  
+  /* Styles améliorés pour les messages */
+  .messages-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+  }
+  
+  .message-preview-card {
+    display: flex;
+    align-items: center;
+    background-color: var(--background-light);
+    border-radius: var(--radius-sm);
+    padding: 15px;
+    position: relative;
+    cursor: pointer;
+    transition: var(--transition);
+    border-left: 4px solid transparent;
+  }
+  
+  .message-preview-card:hover {
+    transform: translateX(5px);
+    box-shadow: var(--shadow-sm);
+    background-color: var(--background-lighter);
+    border-left-color: var(--primary-color);
+  }
+  
+  .message-preview-card .unread-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 8px;
+    height: 8px;
+    background-color: var(--accent-color);
+    border-radius: 50%;
+  }
+  
+  /* Actions rapides améliorées */
+  .quick-actions.enhanced {
+    margin-top: 30px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    border-radius: var(--radius-md);
+    padding: 25px;
+    box-shadow: var(--shadow-md);
+  }
+  
+  .quick-actions.enhanced h2 {
+    margin: 0 0 20px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+  }
+  
+  .quick-actions.enhanced .quick-action-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  
+  .quick-actions.enhanced .quick-action-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 20px 15px;
+    cursor: pointer;
+    transition: var(--transition);
+    min-height: 120px;
+  }
+  
+  .quick-actions.enhanced .quick-action-button:hover {
+    background-color: white;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .quick-actions.enhanced .action-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(106, 145, 116, 0.1);
+    border-radius: 50%;
+    margin-bottom: 10px;
+    transition: var(--transition);
+  }
+  
+  .quick-actions.enhanced .quick-action-button:hover .action-icon {
+    background-color: var(--primary-color);
+    transform: scale(1.1);
+  }
+  
+  .quick-actions.enhanced .action-icon i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    transition: var(--transition);
+  }
+  
+  .quick-actions.enhanced .quick-action-button:hover .action-icon i {
+    color: white;
+  }
+  
+  .quick-actions.enhanced .quick-action-button span {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    text-align: center;
+  }
+  
+  /* Responsive design pour les actions rapides */
+  @media (max-width: 992px) {
+    .dashboard-main-row {
+      flex-direction: column;
+    }
+    
+    .quick-actions.enhanced .quick-action-buttons {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  
+    .scrollable-content {
+      max-height: 400px; /* Plus d'espace sur les petits écrans */
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .quick-actions.enhanced .quick-action-buttons {
+      grid-template-columns: 1fr;
+    }
+  
+    .messages-preview {
+      grid-template-columns: 1fr;
+    }
+  }

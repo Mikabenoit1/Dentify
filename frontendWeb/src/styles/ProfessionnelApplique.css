@@ -1,0 +1,472 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #34607d;
+  --primary-light: #e3f1f8;
+  --secondary-color: #6a9174;
+  --secondary-light: #e8f1eb;
+  --accent-color: #34a9d7;
+  --danger-color: #dc3545;
+  --danger-light: #f8d7da;
+  --success-color: #28a745;
+  --success-light: #d4edda;
+  --warning-color: #ffc107;
+  --warning-light: #fff3cd;
+  --info-color: #17a2b8;
+  --info-light: #d1ecf1;
+  --gray-color: #6c757d;
+  --gray-light: #e9ecef;
+  --text-dark: #333333;
+  --text-medium: #555555;
+  --text-light: #777777;
+  --border-color: #e0e0e0;
+  --background-light: #f8f9fa;
+  --background-lighter: #ffffff;
+  --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 6px 15px rgba(0, 0, 0, 0.1);
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --transition: all 0.3s ease;
+}
+
+.professionnel-applique-container {
+  max-width: 1200px;
+  margin: 30px auto;
+  margin-top: 2000px; /* Position plus basse pour éviter la perte d'information */
+  padding: 20px;
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-dark);
+}
+
+.page-header {
+  margin-bottom: 30px;
+}
+
+.page-header h1 {
+  color: var(--primary-color);
+  margin-bottom: 5px;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.page-header p {
+  font-size: 1.1rem;
+  color: var(--text-medium);
+  margin: 0;
+}
+
+/* Filtres */
+.filter-container {
+  margin-bottom: 30px;
+  background-color: var(--background-lighter);
+  padding: 20px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.search-bar {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 12px 20px 12px 45px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 96, 125, 0.2);
+}
+
+.clear-search {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 5px;
+}
+
+.clear-search:hover {
+  color: var(--danger-color);
+}
+
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-medium);
+  font-size: 0.9rem;
+}
+
+.filter-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  transition: var(--transition);
+  color: var(--text-dark);
+  background-color: var(--background-lighter);
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 96, 125, 0.2);
+}
+
+/* Résultats */
+.candidatures-results {
+  margin-bottom: 30px;
+}
+
+.results-count {
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+  color: var(--text-medium);
+}
+
+.candidatures-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.candidature-card {
+  background-color: var(--background-lighter);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.candidature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+}
+
+.candidature-left {
+  display: flex;
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.candidature-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+  margin-right: 20px;
+  flex-shrink: 0;
+}
+
+.candidature-logo.entretien {
+  background-color: var(--info-color);
+}
+
+.candidature-logo.acceptée {
+  background-color: var(--success-color);
+}
+
+.candidature-logo.examen {
+  background-color: var(--warning-color);
+}
+
+.candidature-logo.reçue {
+  background-color: var(--primary-color);
+}
+
+.candidature-logo.refusée {
+  background-color: var(--gray-color);
+}
+
+.candidature-info {
+  flex: 1;
+}
+
+.candidature-info h3 {
+  margin: 0 0 10px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.candidature-clinique, .candidature-lieu, .candidature-date, .candidature-salaire {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: var(--text-medium);
+}
+
+.candidature-info i {
+  color: var(--primary-color);
+  width: 16px;
+  text-align: center;
+}
+
+.candidature-right {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: var(--background-light);
+}
+
+.candidature-meta {
+  flex: 3;
+}
+
+.candidature-applied {
+  font-size: 0.85rem;
+  color: var(--text-medium);
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.candidature-applied i {
+  color: var(--primary-color);
+}
+
+.candidature-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.candidature-status.status-interview {
+  background-color: var(--info-light);
+  color: var(--info-color);
+}
+
+.candidature-status.status-accepted {
+  background-color: var(--success-light);
+  color: var(--success-color);
+}
+
+.candidature-status.status-review {
+  background-color: var(--warning-light);
+  color: var(--warning-color);
+}
+
+.candidature-status.status-received {
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.candidature-status.status-rejected {
+  background-color: var(--gray-light);
+  color: var(--gray-color);
+}
+
+.entretien-details {
+  font-size: 0.85rem;
+  color: var(--info-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.candidature-actions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.prepare-button, .withdraw-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 15px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.prepare-button {
+  background-color: var(--info-color);
+  color: white;
+  border: none;
+}
+
+.prepare-button:hover {
+  background-color: #138496;
+}
+
+.withdraw-button {
+  background-color: transparent;
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+}
+
+.withdraw-button:hover {
+  background-color: var(--danger-light);
+}
+
+.candidature-notes {
+  padding: 15px 20px;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  color: var(--text-medium);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.candidature-notes i {
+  color: var(--warning-color);
+}
+
+/* Aucun résultat */
+.no-results {
+  text-align: center;
+  padding: 50px 20px;
+  background-color: var(--background-lighter);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.no-results i {
+  font-size: 3rem;
+  color: var(--text-light);
+  margin-bottom: 20px;
+}
+
+.no-results h3 {
+  margin: 0 0 10px;
+  font-size: 1.3rem;
+  color: var(--text-dark);
+}
+
+.no-results p {
+  margin: 0 0 20px;
+  font-size: 1rem;
+  color: var(--text-medium);
+}
+
+.explore-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.explore-button:hover {
+  background-color: #2a4d65;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
+  .candidature-left {
+    padding: 15px;
+  }
+  
+  .candidature-right {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .candidature-actions {
+    align-items: flex-start;
+    flex-direction: row;
+    width: 100%;
+  }
+  
+  .prepare-button, .withdraw-button {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .professionnel-applique-container {
+    padding: 15px;
+  }
+  
+  .filters-row {
+    gap: 15px;
+  }
+  
+  .filter-group {
+    min-width: calc(50% - 15px);
+  }
+  
+  .candidature-left {
+    flex-direction: column;
+  }
+  
+  .candidature-logo {
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+}
+
+@media (max-width: 576px) {
+  .filter-group {
+    min-width: 100%;
+  }
+}
