@@ -165,7 +165,12 @@ const loginUser = async (req, res) => {
       { expiresIn: "30d" }
     );
 
-    res.json({ token });
+    res.json({
+      token,
+      id_utilisateur: user.id_utilisateur,
+      type_utilisateur: user.type_utilisateur
+    });
+    
 
   } catch (error) {
     console.error("❌ Erreur lors de la connexion :", error);
@@ -175,6 +180,8 @@ const loginUser = async (req, res) => {
 
 // ✅ PROFIL UTILISATEUR
 const getProfile = async (req, res) => {
+  console.log("📥 Route /profile atteinte !");
+  console.log("🧑‍💼 req.user :", req.user); // ça doit contenir id_utilisateur et type_utilisateur
   try {
     const user = await User.findByPk(req.user.id_utilisateur, {
       attributes: { exclude: ["mot_de_passe"] }
@@ -182,15 +189,25 @@ const getProfile = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
 
-    const pro = await ProfessionnelDentaire.findOne({ where: { id_utilisateur: user.id_utilisateur } });
-    const clinique = await CliniqueDentaire.findOne({ where: { id_utilisateur: user.id_utilisateur } });
+let pro = null;
+let clinique = null;
 
-    // ✅ Fusion des données utilisateur + pro/clinique
-    const profil = {
-      ...user.toJSON(),
-      ...(pro ? pro.toJSON() : {}),
-      ...(clinique ? clinique.toJSON() : {})
-    };
+if (user.type_utilisateur === "professionnel") {
+  pro = await ProfessionnelDentaire.findOne({ where: { id_utilisateur: user.id_utilisateur } });
+  if (!pro) console.log("⚠️ Pro non trouvé malgré utilisateur existant");
+}
+
+if (user.type_utilisateur === "clinique") {
+  clinique = await CliniqueDentaire.findOne({ where: { id_utilisateur: user.id_utilisateur } });
+  if (!clinique) console.log("⚠️ Clinique non trouvée malgré utilisateur existant");
+}
+
+const profil = {
+  ...user.toJSON(),
+  ...(pro?.toJSON?.() || {}),
+  ...(clinique?.toJSON?.() || {})
+};
+
 
     // ✅ Ajout des documents
     const documents = await Document.findAll({
@@ -229,6 +246,17 @@ const getProfile = async (req, res) => {
     }
 
     profil.profil_complet = !!profil_complet;
+
+    const testClinique = await CliniqueDentaire.findOne({ where: { id_utilisateur: 4 } });
+    console.log("🔍 TEST Sequelize : Clinique avec id_utilisateur=4 :", testClinique);
+    
+    const { sequelize } = require("../config/db");
+    const bruteClinique = await sequelize.query(
+      "SELECT * FROM CliniqueDentaire WHERE id_utilisateur = :id",
+      { replacements: { id: 4 }, type: sequelize.QueryTypes.SELECT }
+    );
+    console.log("🧨 Résultat brut SQL :", bruteClinique);
+    
 
     res.json(profil);
     

@@ -8,7 +8,7 @@ export default function Error ({navigation}) {
         <View style={styles.container}>
             <View style={styles.premiercarre}>
                 <View style={styles.deuxiemecarre}>
-                <Image source={require("../assets/Dent.png")} style={styles.logo}/>
+                <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo}/>
                 </View>
 
             <Text style={styles.titleText}>Oups ! Page introuvable</Text>

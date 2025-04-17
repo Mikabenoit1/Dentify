@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { 
   View, 
   Text, 
@@ -41,8 +43,9 @@ export default function Connexions({ navigation }) {
         type_utilisateur: "professionnel"
       });
 
-      // Stockez le token ici si nécessaire (AsyncStorage, etc.)
-      // await AsyncStorage.setItem('userToken', response.token);
+      await AsyncStorage.setItem("token", response.token);
+      await AsyncStorage.setItem("type", response.type_utilisateur);
+      await AsyncStorage.setItem("userId", String(response.id_utilisateur));
 
       navigation.navigate("Accueil");
     } catch (error) {

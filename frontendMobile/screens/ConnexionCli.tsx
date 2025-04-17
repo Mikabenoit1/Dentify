@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { 
   View, 
   Text, 
@@ -41,7 +43,10 @@ export default function ConnexionCli({ navigation }) {
         type_utilisateur: "clinique" // Spécifique aux cliniques
       });
 
-      // Stockez le token ici (ex: AsyncStorage.setItem('token', response.token))
+      await AsyncStorage.setItem("token", response.token);
+      await AsyncStorage.setItem("type", response.type_utilisateur);
+      await AsyncStorage.setItem("userId", String(response.id_utilisateur));
+
       navigation.navigate("AccueilClinique"); // Redirige vers l'espace clinique
     } catch (error) {
       setError(error.message || "Échec de la connexion");

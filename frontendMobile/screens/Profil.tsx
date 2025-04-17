@@ -1,20 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { MaterialCommunityIcons, Feather, FontAwesome } from '@expo/vector-icons';
+import { getProfileDetails } from '../api';
 
-
-const Profil = ({navigation}) => {
-
+const Profil = ({ navigation }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
-    name: "Kenzo Tenma",
-    company: "Dentify",
-    position: "Docteur",
-    website: "http://www.Dentify.com/",
-    documents: ["CV.pdf", "Diplôme.pdf"]
+    name: "",
+    company: "",
+    position: "",
+    website: "",
+    documents: []
   });
 
-  const handleChange = (field: string, value: string) => {
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { user, details } = await getProfileDetails();
+        setProfile({
+          name: `${user.prenom} ${user.nom}`,
+          company: "Dentify",
+          position: details.type_profession || "",
+          website: details.site_web || "",
+          documents: [] // à connecter plus tard si tu veux gérer les vrais docs
+        });
+      } catch (err) {
+        Alert.alert("Erreur", err.message || "Impossible de charger le profil");
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleChange = (field, value) => {
     setProfile(prev => ({ ...prev, [field]: value }));
   };
 
@@ -27,7 +45,7 @@ const Profil = ({navigation}) => {
     Alert.alert("Document simulé", `${newDocName} a été ajouté`);
   };
 
-  const removeDocument = (index: number) => {
+  const removeDocument = (index) => {
     setProfile(prev => ({
       ...prev,
       documents: prev.documents.filter((_, i) => i !== index)
@@ -36,94 +54,55 @@ const Profil = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      {/* Bouton de retour */}
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Feather name="arrow-left" size={24} color="#6a9174" />
       </TouchableOpacity>
 
-      {/* Bouton d'édition */}
-      <TouchableOpacity 
-        style={styles.editToggle}
-        onPress={() => setIsEditing(!isEditing)}
-      >
+      <TouchableOpacity style={styles.editToggle} onPress={() => setIsEditing(!isEditing)}>
         <Feather name={isEditing ? "check" : "edit"} size={24} color="#6a9174" />
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Icône de profil */}
         <View style={styles.profileIcon}>
-          <MaterialCommunityIcons 
-            name="account-circle" 
-            size={100} 
-            color="#6a9174" 
-          />
+          <MaterialCommunityIcons name="account-circle" size={100} color="#6a9174" />
         </View>
 
-        {/* Nom */}
         <Text style={styles.nameLabel}>Nom *</Text>
         {isEditing ? (
-          <TextInput
-            style={styles.input}
-            value={profile.name}
-            onChangeText={(text) => handleChange('name', text)}
-          />
+          <TextInput style={styles.input} value={profile.name} onChangeText={(text) => handleChange('name', text)} />
         ) : (
           <Text style={styles.name}>{profile.name}</Text>
         )}
 
-        {/* Informations société */}
         <View style={styles.infoContainer}>
           <Text style={styles.infoLabel}>Société</Text>
           {isEditing ? (
-            <TextInput
-              style={styles.input}
-              value={profile.company}
-              onChangeText={(text) => handleChange('company', text)}
-            />
+            <TextInput style={styles.input} value={profile.company} onChangeText={(text) => handleChange('company', text)} />
           ) : (
             <Text style={styles.infoValue}>{profile.company}</Text>
           )}
 
           <Text style={styles.infoLabel}>Poste</Text>
           {isEditing ? (
-            <TextInput
-              style={styles.input}
-              value={profile.position}
-              onChangeText={(text) => handleChange('position', text)}
-            />
+            <TextInput style={styles.input} value={profile.position} onChangeText={(text) => handleChange('position', text)} />
           ) : (
             <Text style={styles.infoValue}>{profile.position}</Text>
           )}
         </View>
 
-        {/* Séparateur */}
         <View style={styles.separator} />
-
-        {/* Biographie */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Biographie</Text>
-          
           <Text style={styles.infoLabel}>Site Internet</Text>
           {isEditing ? (
-            <TextInput
-              style={styles.input}
-              value={profile.website}
-              onChangeText={(text) => handleChange('website', text)}
-            />
+            <TextInput style={styles.input} value={profile.website} onChangeText={(text) => handleChange('website', text)} />
           ) : (
-            <TouchableOpacity>
-              <Text style={styles.linkText}>{profile.website}</Text>
-            </TouchableOpacity>
+            <TouchableOpacity><Text style={styles.linkText}>{profile.website}</Text></TouchableOpacity>
           )}
         </View>
 
-        {/* Section Documents */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Documents</Text>
-          
           {profile.documents.map((doc, index) => (
             <View key={index} style={styles.documentItem}>
               <FontAwesome name="file-text-o" size={20} color="#6a9174" />
@@ -135,12 +114,8 @@ const Profil = ({navigation}) => {
               )}
             </View>
           ))}
-          
           {isEditing && (
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={pickDocument}
-            >
+            <TouchableOpacity style={styles.addButton} onPress={pickDocument}>
               <Feather name="plus" size={20} color="#6a9174" />
               <Text style={styles.addButtonText}>Ajouter un document</Text>
             </TouchableOpacity>
@@ -148,13 +123,10 @@ const Profil = ({navigation}) => {
         </View>
 
         {isEditing && (
-          <TouchableOpacity 
-            style={styles.validateButton}
-            onPress={() => {
-              setIsEditing(false);
-              Alert.alert("Succès", "Profil mis à jour");
-            }}
-          >
+          <TouchableOpacity style={styles.validateButton} onPress={() => {
+            setIsEditing(false);
+            Alert.alert("Succès", "Profil mis à jour");
+          }}>
             <Text style={styles.validateButtonText}>Enregistrer les modifications</Text>
           </TouchableOpacity>
         )}

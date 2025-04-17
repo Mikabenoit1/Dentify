@@ -1,16 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { MaterialCommunityIcons, Feather, FontAwesome } from '@expo/vector-icons';
+import { getProfileDetails } from '../api';
 
 const ProfilClinique = ({ navigation }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
-    name: "Clinique de Sourire",
+    name: "",
     company: "Clinique",
-    position: "5950 St-Catherine, Montréal, QC H2X 2X9",
-    website: "http://www.Clinique_Sourire.com/",
-    documents: ["Certificat-Dentaire.pdf", "License.pdf"]
+    position: "",
+    website: "",
+    documents: []
   });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { details } = await getProfileDetails();
+        console.log("✅ Données reçues (clinique) :", details);
+
+        setProfile({
+          name: details.nom_clinique || "Nom inconnu",
+          company: "Clinique",
+          position: details.adresse_complete || "Adresse non fournie",
+          website: details.site_web || "",
+          documents: [] // Tu peux mapper les vrais docs plus tard ici
+        });
+      } catch (err) {
+        console.log("❌ Erreur récupération profil clinique :", err);
+        Alert.alert("Erreur", err.message || "Impossible de charger le profil clinique");
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleChange = (field, value) => {
     setProfile(prev => ({ ...prev, [field]: value }));
@@ -70,15 +93,7 @@ const ProfilClinique = ({ navigation }) => {
 
         <View style={styles.infoContainer}>
           <Text style={styles.infoLabel}>Établissement</Text>
-          {isEditing ? (
-            <TextInput
-              style={styles.input}
-              value={profile.company}
-              onChangeText={(text) => handleChange('company', text)}
-            />
-          ) : (
-            <Text style={styles.infoValue}>{profile.company}</Text>
-          )}
+          <Text style={styles.infoValue}>{profile.company}</Text>
 
           <Text style={styles.infoLabel}>Adresse</Text>
           {isEditing ? (
