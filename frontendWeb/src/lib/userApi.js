@@ -1,5 +1,5 @@
 // lib/userApi.js
-import { apiFetch } from './apiFetch';
+import { apiFetch, API_BASE_URL } from './apiFetch';
 
 // Récupérer le profil de l'utilisateur
 export const fetchUserProfile = async () => {
@@ -56,7 +56,9 @@ export const uploadUserDocument = async (formData) => {
     const token = localStorage.getItem('token');
     const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
     
-    const response = await fetch(`${BASE_URL}/users/upload/document`, {
+    console.log("BASE_URL pour upload document:", BASE_URL);
+    
+    const response = await fetch(`${BASE_URL}/documents/upload`, {  // Changez ici
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -64,8 +66,11 @@ export const uploadUserDocument = async (formData) => {
       body: formData
     });
     
+    console.log("Statut de la réponse:", response.status);
+    
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error("Erreur du serveur:", errorData);
       throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
     }
     
@@ -82,7 +87,7 @@ export const downloadUserDocument = async (documentType) => {
     const token = localStorage.getItem('token');
     const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
     
-    const response = await fetch(`${BASE_URL}/users/document/${documentType}`, {
+    const response = await fetch(`${BASE_URL}/documents/download/${documentType}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -94,7 +99,7 @@ export const downloadUserDocument = async (documentType) => {
       throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
     }
     
-    return response;
+    return response.blob(); // Retourner un blob pour le téléchargement
   } catch (error) {
     console.error('Erreur lors du téléchargement du document:', error);
     throw error;
@@ -103,14 +108,21 @@ export const downloadUserDocument = async (documentType) => {
 
 // Convertir les données API vers le format du composant
 export const transformApiDataToComponentFormat = (apiData) => {
+  const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+  const fullBaseUrl = BASE_URL.replace('/api', '');
+  console.log("🖼️ apiData.photo_profil :", apiData.photo_profil);
   return {
     id: apiData.id_utilisateur,
     nom: apiData.nom,
+    prenom: apiData.prenom,
     email: apiData.courriel,
     telephone: apiData.telephone || '',
     profession: apiData.type_profession || 'dentiste',
     description: apiData.description || '',
-    photo: apiData.photo_profil || '',
+    photo: apiData.photo_profil 
+    ? `${fullBaseUrl}/uploads/photos/${apiData.photo_profil}` 
+    : '',
+    
     
     // Mobilité
     mobilite: {
@@ -157,7 +169,7 @@ export const transformComponentDataToApiFormat = (componentData) => {
     ville: componentData.ville || '',
     province: componentData.province || '',
     code_postal: componentData.code_postal || '',
-    photo_profil: componentData.photo,
+    photo_profil: componentData.photo?.split('/').pop() || '',
     
     // Infos professionnelles
     type_profession: componentData.profession,

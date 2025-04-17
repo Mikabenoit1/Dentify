@@ -2,7 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const { sequelize, connectDB } = require('./src/config/db');
-
+const path = require('path');
 // 🔒 Charger les variables d'environnement
 dotenv.config();
 
@@ -42,6 +42,9 @@ app.use("/uploads", express.static("uploads"));
 app.use('/api/evaluations', evaluationRoutes);
 app.use('/api/entretiens', entretienRoutes);
 app.use('/api/professionels', professionelRoutes);
+// Servir les fichiers statiques depuis le dossier documents
+app.use('/documents', express.static(path.resolve(__dirname, 'documents')));
+app.use('/uploads/photos', express.static(path.join(__dirname, 'uploads/photos')));
 
 // ✅ Route de test
 app.get('/test', (req, res) => {

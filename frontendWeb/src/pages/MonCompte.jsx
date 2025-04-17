@@ -2,212 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../styles/MonCompte.css';
 import { apiFetch } from '../lib/apiFetch'; // Import de apiFetch
 
-// Fonction pour transformer les données du backend vers le format du composant
-const transformApiDataToComponentFormat = (apiData) => {
-  return {
-    id: apiData.id_utilisateur,
-    nom: apiData.nom,
-    prenom: apiData.prenom,
-    email: apiData.courriel,
-    telephone: apiData.telephone || '',
-    profession: apiData.type_profession || 'dentiste',
-    description: apiData.description || '',
-    photo: apiData.photo_profil || '',
-    
-    // Conserver les champs individuels d'adresse
-    adresse: apiData.adresse || '',
-    ville: apiData.ville || '',
-    province: apiData.province || '',
-    code_postal: apiData.code_postal || '',
-    
-    // Mobilité
-    mobilite: {
-      adressePrincipale: apiData.adresse_complete || apiData.adresse || '',
-      rayon: apiData.rayon_deplacement_km || 0,
-      vehicule: apiData.vehicule || false,
-      regions: apiData.regions || [],
-      coordinates: {
-        lat: apiData.latitude || null,
-        lng: apiData.longitude || null
-      }
-    },
-    
-    // Disponibilité
-    disponibilite: {
-      debut: apiData.date_debut_dispo || '',
-      fin: apiData.date_fin_dispo || '',
-      disponibleImmediatement: apiData.disponibilite_immediate || false,
-      jours: apiData.jours_disponibles || []
-    },
-    
-    // Tarif
-    tarifJournalier: apiData.tarif_horaire ? (apiData.tarif_horaire * 8) : 0,
-    
-    // Compétences et langues
-    competences: apiData.competences || [],
-    langues: apiData.langues || [],
-    specialites: apiData.specialites || [],
-    
-    // Documents
-    documents: apiData.documents || {},
-    
-    // Formations et expériences
-    educations: apiData.formations || [],
-    experiences: apiData.experiences || []
-  };
-};
 
-// Fonction pour transformer les données du composant vers le format de l'API
-const transformComponentDataToApiFormat = (componentData) => {
-  return {
-    // Infos de base
-    nom: componentData.nom,
-    prenom: componentData.prenom || '',
-    courriel: componentData.email,
-    telephone: componentData.telephone,
-    
-    // Les champs d'adresse pris indépendamment pour le backend
-    adresse: componentData.adresse || componentData.mobilite?.adressePrincipale || '',
-    ville: componentData.ville || '',
-    province: componentData.province || '',
-    code_postal: componentData.code_postal || '',
-    
-    photo_profil: componentData.photo,
-    
-    // Infos professionnelles
-    type_profession: componentData.profession,
-    numero_permis: componentData.numero_permis || '',
-    annees_experience: componentData.annees_experience || 0,
-    
-    // Tarif et mobilité
-    tarif_horaire: componentData.tarifJournalier ? Math.round(componentData.tarifJournalier / 8) : 0,
-    rayon_deplacement_km: componentData.mobilite?.rayon || 0,
-    vehicule: componentData.mobilite?.vehicule || false,
-    regions: componentData.mobilite?.regions || [],
-    
-    // Adresse complète et coordonnées
-    adresse_complete: componentData.mobilite?.adressePrincipale || '',
-    latitude: componentData.mobilite?.coordinates?.lat || null,
-    longitude: componentData.mobilite?.coordinates?.lng || null,
-    
-    // Disponibilité
-    disponibilite_immediate: componentData.disponibilite?.disponibleImmediatement || false,
-    date_debut_dispo: componentData.disponibilite?.debut || null,
-    date_fin_dispo: componentData.disponibilite?.fin || null,
-    jours_disponibles: componentData.disponibilite?.jours || [],
-    
-    // Compétences et langues
-    description: componentData.description || '',
-    competences: componentData.competences || [],
-    langues: componentData.langues || [],
-    specialites: componentData.specialites || [],
-    
-    // Site web si présent
-    site_web: componentData.site_web || ''
-  };
-};
-
-// Fonction pour récupérer le profil de l'utilisateur
-const fetchUserProfile = async () => {
-  try {
-    const userData = await apiFetch('/users/profile');
-    return userData;
-  } catch (error) {
-    console.error('Erreur lors de la récupération du profil:', error);
-    throw error;
-  }
-};
-
-// Fonction pour mettre à jour le profil de l'utilisateur
-const updateUserProfile = async (profileData) => {
-  try {
-    const result = await apiFetch('/users/profile', {
-      method: 'PUT',
-      body: profileData
-    });
-    return result;
-  } catch (error) {
-    console.error('Erreur lors de la mise à jour du profil:', error);
-    throw error;
-  }
-};
-
-// Fonction pour uploader une photo de profil
-const uploadUserPhoto = async (formData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-    
-    const response = await fetch(`${BASE_URL}/users/upload/photo`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: formData
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
-    }
-    
-    return response.json();
-  } catch (error) {
-    console.error('Erreur lors de l\'upload de la photo:', error);
-    throw error;
-  }
-};
-
-// Fonction pour uploader un document
-const uploadUserDocument = async (formData) => {
-  try {
-    const token = localStorage.getItem('token');
-    const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-    
-    const response = await fetch(`${BASE_URL}/users/upload/document`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: formData
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
-    }
-    
-    return response.json();
-  } catch (error) {
-    console.error('Erreur lors de l\'upload du document:', error);
-    throw error;
-  }
-};
-
-// Fonction pour télécharger un document
-const downloadUserDocument = async (documentType) => {
-  try {
-    const token = localStorage.getItem('token');
-    const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-    
-    const response = await fetch(`${BASE_URL}/users/document/${documentType}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
-    }
-    
-    return response;
-  } catch (error) {
-    console.error('Erreur lors du téléchargement du document:', error);
-    throw error;
-  }
-};
+import {
+  fetchUserProfile,
+  updateUserProfile,
+  uploadUserPhoto,
+  uploadUserDocument,
+  downloadUserDocument,
+  transformApiDataToComponentFormat,
+  transformComponentDataToApiFormat
+} from '../lib/userApi';
 
 const MonCompte = () => {
   // Référence pour faire défiler vers les notifications
@@ -740,14 +544,15 @@ const handleEdit = () => {
         const formData = new FormData();
         formData.append('photo', file);
         
-        // Appeler l'API pour uploader l'image
         setLoading(true);
-        const response = await uploadUserPhoto(formData);
-        const imageUrl = response.photoUrl;
+        const response = await uploadUserPhoto(formData); // ← retourne { photo_profil: "uploads/photos/..." }
+       
+        const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+        const fullImageUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}/${response.photo_profil}`;
         
         setEditedProfile({
           ...editedProfile,
-          photo: imageUrl
+          photo: fullImageUrl
         });
         
         showNotification("Photo de profil mise à jour avec succès !", "success");
@@ -760,88 +565,119 @@ const handleEdit = () => {
     }
   };
   
-  // Gestion du téléchargement de documents
-  const handleDocumentUpload = async (e, documentType) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Vérification de la taille du fichier (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        showNotification("Le fichier est trop volumineux. Taille maximale: 5MB", "error");
-        return;
-      }
-      
-      // Vérification du type de fichier selon le documentType
-      if (documentType === 'cv') {
-        if (!['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type)) {
-          showNotification("Format de CV non valide. Utilisez PDF ou DOC/DOCX", "error");
-          return;
-        }
-      } else {
-        // Pour les autres documents, accepter aussi les images
-        const validTypes = [
-          'application/pdf', 
-          'application/msword', 
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'image/jpeg',
-          'image/png'
-        ];
-        
-        if (!validTypes.includes(file.type)) {
-          showNotification("Format de fichier non valide. Utilisez PDF, DOC/DOCX, JPG ou PNG", "error");
-          return;
-        }
-      }
-      
-      try {
-        // Créer un objet FormData pour envoyer le fichier
-        const formData = new FormData();
-        formData.append('document', file);
-        formData.append('type', documentType);
-        
-        // Appeler l'API pour uploader le document
-        setLoading(true);
-        const response = await uploadUserDocument(formData);
-        
-        setEditedProfile({
-          ...editedProfile,
-          documents: {
-            ...(editedProfile.documents || {}),
-            [documentType]: response.fileName
-          }
-        });
-        
-        showNotification(`Le document "${file.name}" a été téléchargé avec succès`, "success");
-        setLoading(false);
-      } catch (err) {
-        setLoading(false);
-        showNotification("Erreur lors de l'upload du document. Veuillez réessayer.", "error");
-        console.error("Erreur lors de l'upload du document:", err);
-      }
+  // Dans la méthode handleDocumentUpload, ajoutez un log pour vérifier l'URL
+const handleDocumentUpload = async (e, documentType) => {
+  const file = e.target.files[0];
+  if (file) {
+    console.log("Fichier sélectionné:", file);
+    console.log("Type de document:", documentType);
+
+    // Vérifiez l'URL de base
+    const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+    console.log("BASE_URL:", BASE_URL);
+
+    // Vérification de la taille du fichier (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification("Le fichier est trop volumineux. Taille maximale: 5MB", "error");
+      return;
     }
-  };
+    
+    // Vérification du type de fichier selon le documentType
+    const validTypesCV = [
+      'application/pdf', 
+      'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+
+    const validTypesOthers = [
+      'application/pdf', 
+      'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/png'
+    ];
+    
+    const allowedTypes = documentType === 'cv' ? validTypesCV : validTypesOthers;
+    
+    if (!allowedTypes.includes(file.type)) {
+      console.error("Type de fichier non valide:", file.type);
+      showNotification(
+        documentType === 'cv' 
+        ? "Format de CV non valide. Utilisez PDF ou DOC/DOCX" 
+        : "Format de fichier non valide. Utilisez PDF, DOC/DOCX, JPG ou PNG", 
+        "error"
+      );
+      return;
+    }
+    
+    try {
+      // Créer un objet FormData pour envoyer le fichier
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('type', documentType);
+      
+      console.log("Envoi du document à:", `${BASE_URL}/documents/upload`);
+      
+      // Appeler l'API pour uploader le document
+      setLoading(true);
+      const response = await fetch(`${BASE_URL}/documents/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+      
+      console.log("Statut de la réponse:", response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Erreur du serveur:", errorData);
+        throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log("Résultat de l'upload:", result);
+      
+      // Mise à jour du profil avec le nouveau document
+      setEditedProfile(prev => ({
+        ...prev,
+        documents: {
+          ...(prev.documents || {}),
+          [documentType]: result.document.filename 
+        }
+      }));
+      
+      showNotification(`Le document "${file.name}" a été téléchargé avec succès`, "success");
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      console.error("Erreur détaillée lors de l'upload du document:", err);
+      showNotification("Erreur lors de l'upload du document. Veuillez réessayer.", "error");
+    }
+  }
+};
   
   // Fonction pour télécharger un document
   const handleDocumentDownload = async (documentName, documentType) => {
     try {
-      setLoading(true);
-      showNotification(`Téléchargement de "${documentName}" en cours...`, "info");
-      
-      // Appeler l'API pour télécharger le document
-      const response = await downloadUserDocument(documentType);
-      const documentBlob = await response.blob();
+      // Obtenir le blob du document
+      const blob = await downloadUserDocument(documentType);
       
       // Créer un lien pour télécharger le document
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(documentBlob);
+      link.href = url;
       link.download = documentName;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
       showNotification(`Le document "${documentName}" a été téléchargé avec succès`, "success");
-      setLoading(false);
     } catch (err) {
-      setLoading(false);
+      console.error("Erreur de téléchargement:", err);
       showNotification("Erreur lors du téléchargement du document. Veuillez réessayer.", "error");
-      console.error("Erreur lors du téléchargement du document:", err);
     }
   };
   
@@ -893,7 +729,7 @@ const handleEdit = () => {
   if (!profile) {
     return null;
   }
-  
+  console.log("photo finale :", profile?.photo);
   return (
     <div className="mon-compte-container">
       <div className="profile-header">

@@ -1,5 +1,6 @@
 // 1. Configuration de base
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const BASE_URL = API_BASE_URL;
 
 // 2. Fonction générique pour les requêtes
 export const apiFetch = async (endpoint, { method = 'GET', body = null, headers = {} } = {}) => {

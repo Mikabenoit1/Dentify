@@ -3,35 +3,28 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// Assurer que le dossier uploads existe
-const uploadDir = 'uploads';
+// Définir un chemin absolu cohérent pour tous les uploads
+const uploadDir = path.resolve(__dirname, '../../uploads/documents');
+console.log("📂 Dossier d'upload unifié:", uploadDir);
+
+// Créer le dossier s'il n'existe pas
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+  console.log("📂 Dossier d'upload créé");
 }
 
 // Configuration pour l'upload de fichiers
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    let folder = 'uploads';
-    
-    // Déterminer le sous-dossier selon le type de fichier
-    if (file.fieldname === 'photo') {
-      folder = 'uploads/photos';
-    } else if (file.fieldname === 'document') {
-      folder = 'uploads/documents';
-    }
-    
-    // Créer le dossier s'il n'existe pas
-    if (!fs.existsSync(folder)) {
-      fs.mkdirSync(folder, { recursive: true });
-    }
-    
-    cb(null, folder);
+    console.log("📤 Destination de l'upload:", uploadDir);
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname);
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + ext);
+    const fileName = uniqueSuffix + ext;
+    console.log("📄 Nom de fichier généré:", fileName);
+    cb(null, fileName);
   }
 });
 
