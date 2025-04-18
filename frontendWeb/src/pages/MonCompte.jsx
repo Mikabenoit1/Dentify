@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../styles/MonCompte.css';
-import { apiFetch } from '../lib/apiFetch'; // Import de apiFetch
+import { apiFetch, FILE_BASE_URL, API_BASE_URL  } from '../lib/apiFetch'; 
+// Import de apiFetch
 
 
 import {
@@ -546,9 +547,9 @@ const handleEdit = () => {
         
         setLoading(true);
         const response = await uploadUserPhoto(formData); // ← retourne { photo_profil: "uploads/photos/..." }
-       
-        const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-        const fullImageUrl = `${import.meta.env.VITE_API_URL.replace('/api', '')}/${response.photo_profil}`;
+
+        const fullImageUrl = `${FILE_BASE_URL}/uploads/photos/${response.photo_profil}`;
+
         
         setEditedProfile({
           ...editedProfile,
@@ -566,97 +567,91 @@ const handleEdit = () => {
   };
   
   // Dans la méthode handleDocumentUpload, ajoutez un log pour vérifier l'URL
-const handleDocumentUpload = async (e, documentType) => {
-  const file = e.target.files[0];
-  if (file) {
-    console.log("Fichier sélectionné:", file);
-    console.log("Type de document:", documentType);
-
-    // Vérifiez l'URL de base
-    const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-    console.log("BASE_URL:", BASE_URL);
-
-    // Vérification de la taille du fichier (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showNotification("Le fichier est trop volumineux. Taille maximale: 5MB", "error");
-      return;
-    }
-    
-    // Vérification du type de fichier selon le documentType
-    const validTypesCV = [
-      'application/pdf', 
-      'application/msword', 
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-
-    const validTypesOthers = [
-      'application/pdf', 
-      'application/msword', 
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'image/jpeg',
-      'image/png'
-    ];
-    
-    const allowedTypes = documentType === 'cv' ? validTypesCV : validTypesOthers;
-    
-    if (!allowedTypes.includes(file.type)) {
-      console.error("Type de fichier non valide:", file.type);
-      showNotification(
-        documentType === 'cv' 
-        ? "Format de CV non valide. Utilisez PDF ou DOC/DOCX" 
-        : "Format de fichier non valide. Utilisez PDF, DOC/DOCX, JPG ou PNG", 
-        "error"
-      );
-      return;
-    }
-    
-    try {
-      // Créer un objet FormData pour envoyer le fichier
-      const formData = new FormData();
-      formData.append('document', file);
-      formData.append('type', documentType);
-      
-      console.log("Envoi du document à:", `${BASE_URL}/documents/upload`);
-      
-      // Appeler l'API pour uploader le document
-      setLoading(true);
-      const response = await fetch(`${BASE_URL}/documents/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
-      });
-      
-      console.log("Statut de la réponse:", response.status);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Erreur du serveur:", errorData);
-        throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
+  const handleDocumentUpload = async (e, documentType) => {
+    const file = e.target.files[0];
+    if (file) {
+      console.log("Fichier sélectionné:", file);
+      console.log("Type de document:", documentType);
+  
+      // Vérification de la taille du fichier (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showNotification("Le fichier est trop volumineux. Taille maximale: 5MB", "error");
+        return;
       }
-      
-      const result = await response.json();
-      console.log("Résultat de l'upload:", result);
-      
-      // Mise à jour du profil avec le nouveau document
-      setEditedProfile(prev => ({
-        ...prev,
-        documents: {
-          ...(prev.documents || {}),
-          [documentType]: result.document.filename 
+  
+      // Vérification du type de fichier selon le documentType
+      const validTypesCV = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+  
+      const validTypesOthers = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'image/jpeg',
+        'image/png'
+      ];
+  
+      const allowedTypes = documentType === 'cv' ? validTypesCV : validTypesOthers;
+  
+      if (!allowedTypes.includes(file.type)) {
+        console.error("Type de fichier non valide:", file.type);
+        showNotification(
+          documentType === 'cv'
+            ? "Format de CV non valide. Utilisez PDF ou DOC/DOCX"
+            : "Format de fichier non valide. Utilisez PDF, DOC/DOCX, JPG ou PNG",
+          "error"
+        );
+        return;
+      }
+  
+      try {
+        const formData = new FormData();
+        formData.append('document', file);
+        formData.append('type', documentType);
+  
+        console.log("📤 Envoi du document à:", `${API_BASE_URL}/documents/upload`);
+  
+        setLoading(true);
+  
+        const response = await fetch(`${API_BASE_URL}/documents/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formData
+        });
+  
+        console.log("📥 Statut de la réponse:", response.status);
+  
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("❌ Erreur du serveur:", errorData);
+          throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
         }
-      }));
-      
-      showNotification(`Le document "${file.name}" a été téléchargé avec succès`, "success");
-      setLoading(false);
-    } catch (err) {
-      setLoading(false);
-      console.error("Erreur détaillée lors de l'upload du document:", err);
-      showNotification("Erreur lors de l'upload du document. Veuillez réessayer.", "error");
+  
+        const result = await response.json();
+        console.log("✅ Résultat de l'upload:", result);
+  
+        setEditedProfile(prev => ({
+          ...prev,
+          documents: {
+            ...(prev.documents || {}),
+            [documentType]: result.document.filename
+          }
+        }));
+  
+        showNotification(`Le document "${file.name}" a été téléchargé avec succès`, "success");
+      } catch (err) {
+        console.error("🚨 Erreur détaillée lors de l'upload du document:", err);
+        showNotification("Erreur lors de l'upload du document. Veuillez réessayer.", "error");
+      } finally {
+        setLoading(false);
+      }
     }
-  }
-};
+  };  
   
   // Fonction pour télécharger un document
   const handleDocumentDownload = async (documentName, documentType) => {

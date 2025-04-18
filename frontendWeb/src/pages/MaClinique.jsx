@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/MaClinique.css';
+import { apiFetch, FILE_BASE_URL, API_BASE_URL  } from '../lib/apiFetch'; 
 import {
   fetchClinicProfile,
   updateClinicProfile,
@@ -219,7 +220,6 @@ const MaClinique = () => {
     });
   };
 
-  // Gestion du téléchargement du logo
   const handleLogoUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -228,18 +228,22 @@ const MaClinique = () => {
         formData.append('logo', file);
   
         const response = await uploadClinicLogo(formData);
-        const logoUrl = response.logoUrl;
+        const FILE_BASE_URL = import.meta.env.VITE_API_URL.replace('/api', '');
   
-        setEditedClinique({
-          ...editedClinique,
+        const logoUrl = `${FILE_BASE_URL}${response.logoUrl}`; // ← important
+  
+        setEditedClinique((prev) => ({
+          ...prev,
           logo: logoUrl
-        });
+        }));
+  
       } catch (err) {
         alert("Erreur lors de l'upload du logo. Veuillez réessayer.");
         console.error("Erreur lors de l'upload du logo:", err);
       }
     }
   };
+  
   
   // Gestion du téléchargement des photos
   const handlePhotoUpload = async (e) => {

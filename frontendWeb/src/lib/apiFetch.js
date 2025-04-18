@@ -1,6 +1,7 @@
 // 1. Configuration de base
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-const BASE_URL = API_BASE_URL;
+export const FILE_BASE_URL = API_BASE_URL.replace('/api', '');
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 // 2. Fonction générique pour les requêtes
 export const apiFetch = async (endpoint, { method = 'GET', body = null, headers = {} } = {}) => {
   // Gestion du token JWT (si existant)
