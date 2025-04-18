@@ -1,12 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/MaClinique.css';
-//import { fetchClinicProfile, updateClinicProfile } from '../services/api';
+import {
+  fetchClinicProfile,
+  updateClinicProfile,
+  uploadClinicLogo,
+  uploadClinicPhoto
+} from '../lib/clinicApi';
 
 const MaClinique = () => {
-  // État pour la clinique
-  const [clinique, setClinique] = useState(null);
+  // État pour la clinique avec valeurs par défaut
+  const [clinique, setClinique] = useState({
+    nom: '',
+    adresse: '',
+    ville: '',
+    codePostal: '',
+    telephone: '',
+    email: '',
+    siteWeb: '',
+    description: '',
+    specialites: [],
+    services: [],
+    equipement: [],
+    equipe: [],
+    logo: '',
+    photos: [],
+    horaires: {
+      lundi: { ouvert: true, debut: '09:00', fin: '17:00' },
+      mardi: { ouvert: true, debut: '09:00', fin: '17:00' },
+      mercredi: { ouvert: true, debut: '09:00', fin: '17:00' },
+      jeudi: { ouvert: true, debut: '09:00', fin: '17:00' },
+      vendredi: { ouvert: true, debut: '09:00', fin: '17:00' },
+      samedi: { ouvert: false, debut: '09:00', fin: '17:00' },
+      dimanche: { ouvert: false, debut: '09:00', fin: '17:00' }
+    }
+  });
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   // État pour le mode édition
   const [editMode, setEditMode] = useState(false);
@@ -34,15 +65,21 @@ const MaClinique = () => {
       try {
         setLoading(true);
         const data = await fetchClinicProfile();
-        setClinique(data);
+        console.log("Données récupérées:", data);
+        
+        // Fusionner avec les valeurs par défaut pour s'assurer que tous les champs existent
+        setClinique(prevState => ({ ...prevState, ...data }));
+        setEditedClinique(prevState => ({ ...prevState, ...data }));
+        setDataLoaded(true);
         setLoading(false);
       } catch (err) {
-        setError("Impossible de charger les données de la clinique. Veuillez réessayer plus tard.");
-        setLoading(false);
         console.error("Erreur lors du chargement du profil de la clinique:", err);
+        // Ne pas définir d'erreur ici, juste utiliser les valeurs par défaut
+        setLoading(false);
+        setDataLoaded(true); // Considérer les données comme chargées même avec l'erreur
       }
     };
-    
+  
     loadClinicProfile();
   }, []);
 
@@ -148,23 +185,28 @@ const MaClinique = () => {
   const handleSave = async () => {
     try {
       setLoading(true);
+
+      // Envoyer les données mises à jour
       await updateClinicProfile(editedClinique);
-      setClinique({...editedClinique});
+
+      // Mettre à jour l'état local
+      setClinique({ ...editedClinique });
       setEditMode(false);
       setLoading(false);
-      
-      // Afficher une notification de succès
+
+      // Notification succès
       alert("Profil de la clinique mis à jour avec succès !");
     } catch (err) {
+      console.error("Erreur lors de la mise à jour:", err);
       setLoading(false);
       alert("Erreur lors de la mise à jour du profil de la clinique. Veuillez réessayer.");
-      console.error("Erreur lors de la mise à jour du profil de la clinique:", err);
     }
   };
 
   // Annulation des modifications
   const handleCancel = () => {
     setEditMode(false);
+    setEditedClinique({...clinique});
     setNewService("");
     setNewEquipement("");
     setNewSpecialite("");
@@ -182,20 +224,15 @@ const MaClinique = () => {
     const file = e.target.files[0];
     if (file) {
       try {
-        // Créer un objet FormData pour envoyer le fichier
         const formData = new FormData();
         formData.append('logo', file);
-        
-        // Dans un cas réel, vous appelleriez une API pour uploader l'image
-        // const response = await uploadClinicLogo(formData);
-        // const logoUrl = response.logoUrl;
-        
-        // Pour l'exemple, on crée une URL locale temporaire
-        const fileURL = URL.createObjectURL(file);
-        
+  
+        const response = await uploadClinicLogo(formData);
+        const logoUrl = response.logoUrl;
+  
         setEditedClinique({
           ...editedClinique,
-          logo: fileURL
+          logo: logoUrl
         });
       } catch (err) {
         alert("Erreur lors de l'upload du logo. Veuillez réessayer.");
@@ -203,26 +240,21 @@ const MaClinique = () => {
       }
     }
   };
-
+  
   // Gestion du téléchargement des photos
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
       try {
-        // Créer un objet FormData pour envoyer le fichier
         const formData = new FormData();
         formData.append('photo', file);
-        
-        // Dans un cas réel, vous appelleriez une API pour uploader l'image
-        // const response = await uploadClinicPhoto(formData);
-        // const photoUrl = response.photoUrl;
-        
-        // Pour l'exemple, on crée une URL locale temporaire
-        const fileURL = URL.createObjectURL(file);
-        
+  
+        const response = await uploadClinicPhoto(formData);
+        const photoUrl = response.photoUrl;
+  
         setEditedClinique({
           ...editedClinique,
-          photos: [...(editedClinique.photos || []), fileURL]
+          photos: [...(editedClinique.photos || []), photoUrl]
         });
       } catch (err) {
         alert("Erreur lors de l'upload de la photo. Veuillez réessayer.");
@@ -230,7 +262,7 @@ const MaClinique = () => {
       }
     }
   };
-
+  
   const handleRemovePhoto = (index) => {
     if (editedClinique.photos) {
       const newPhotos = [...editedClinique.photos];
@@ -243,36 +275,13 @@ const MaClinique = () => {
   };
 
   // Afficher un message de chargement
-  if (loading && !clinique) {
+  if (loading && !dataLoaded) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
         <p>Chargement du profil de la clinique...</p>
       </div>
     );
-  }
-  
-  // Afficher un message d'erreur
-  if (error && !clinique) {
-    return (
-      <div className="error-container">
-        <div className="error-icon">
-          <i className="fas fa-exclamation-circle"></i>
-        </div>
-        <p>{error}</p>
-        <button 
-          className="retry-button"
-          onClick={() => window.location.reload()}
-        >
-          Réessayer
-        </button>
-      </div>
-    );
-  }
-  
-  // Si la clinique n'est pas chargée, ne rien afficher
-  if (!clinique) {
-    return null;
   }
 
   return (
@@ -796,7 +805,7 @@ const MaClinique = () => {
                 )}
               </div>
             ) : (
-              <div className="edit-form">
+<div className="edit-form">
                 <div className="gallery-edit-container">
                   <div className="gallery-edit-grid">
                     {editedClinique.photos?.map((photo, index) => (

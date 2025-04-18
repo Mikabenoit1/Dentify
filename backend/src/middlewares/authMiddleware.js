@@ -19,6 +19,7 @@ const protect = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log("🔓 Token décodé:", decoded);
+    console.log("🔐 Token décodé - Utilisateur ID :", decoded.id_utilisateur);
 
     // Aller chercher le user complet en DB
     const user = await User.findByPk(decoded.id_utilisateur);

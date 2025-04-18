@@ -38,7 +38,9 @@ const registerUser = async (req, res) => {
       await CliniqueDentaire.create({
         id_utilisateur: newUser.id_utilisateur,
         nom_clinique,
-        numero_entreprise: ''
+        numero_entreprise: '',
+        adresse_complete: req.body.adresse || '',
+        site_web: req.body.site_web || '',
       });
 
     } else if (type_utilisateur === 'professionnel') {
@@ -77,7 +79,6 @@ const registerUser = async (req, res) => {
 
 // ✅ MISE À JOUR DU PROFIL
 const updateProfile = async (req, res) => {
-  
   try {
     const id = req.user.id_utilisateur;
     const user = await User.findByPk(id);
@@ -85,7 +86,7 @@ const updateProfile = async (req, res) => {
 
     const {
       nom, prenom, adresse, ville, province, code_postal,
-      numero_permis,courriel, type_profession, annees_experience,
+      numero_permis, type_profession, annees_experience,
       tarif_horaire, rayon_deplacement_km, disponibilite_immediate,
       site_web,
       nom_clinique, numero_entreprise, adresse_complete,
@@ -97,10 +98,8 @@ const updateProfile = async (req, res) => {
     user.prenom = prenom ?? user.prenom;
     user.adresse = adresse ?? user.adresse;
     user.ville = ville ?? user.ville;
-    user.courriel = courriel ?? user.courriel;
     user.province = province ?? user.province;
     user.code_postal = code_postal ?? user.code_postal;
-    console.log("📷 photo_profil reçue :", req.body.photo_profil);
     user.photo_profil = req.body.photo_profil ?? user.photo_profil;
     user.accepte_notifications = req.body.accepte_notifications ?? user.accepte_notifications;
     await user.save();
@@ -234,7 +233,6 @@ const profil = {
         user.nom &&
         user.prenom &&
         user.adresse &&
-        user.email &&
         user.ville &&
         user.code_postal;
     } else if (user.type_utilisateur === 'clinique') {
@@ -244,7 +242,6 @@ const profil = {
         clinique.numero_entreprise &&
         clinique.adresse_complete &&
         user.nom &&
-        user.email &&
         user.adresse &&
         user.ville &&
         user.code_postal;

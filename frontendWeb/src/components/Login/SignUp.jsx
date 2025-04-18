@@ -1,13 +1,15 @@
 import { FaFacebookF, FaGooglePlusG, FaLinkedinIn } from "react-icons/fa";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Import pour la redirection
+import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../../lib/apiFetch";
 
 function SignUp({ type }) {
-  const navigate = useNavigate(); // Hook pour la navigation
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
+    nom_clinique: "",
     courriel: "",
     mot_de_passe: "",
     type_utilisateur: type === "clinique" ? "clinique" : "professionnel",
@@ -20,7 +22,6 @@ function SignUp({ type }) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Met à jour le type d'utilisateur si la prop change
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
@@ -37,26 +38,40 @@ function SignUp({ type }) {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-
-    console.log("Envoi des données d'inscription :", formData); // Debug
-
+  
+    const finalData = {
+      ...formData,
+      nom: type === "clinique" ? formData.nom_clinique : formData.nom,
+      nom_clinique: formData.nom_clinique
+    };
+  
     try {
-      const response = await apiFetch("/users/register", {
+      // Étape 1 : Inscription
+      await apiFetch("/users/register", {
         method: "POST",
-        body: formData
+        body: finalData,
       });
-
-      console.log("Inscription réussie :", response);
-
-      // 🔹 Redirection selon le type d'utilisateur
-      if (formData.type_utilisateur === "clinique") {
+  
+      // Étape 2 : Connexion automatique
+      const loginData = await apiFetch("/users/login", {
+        method: "POST",
+        body: {
+          courriel: finalData.courriel,
+          mot_de_passe: finalData.mot_de_passe
+        }
+      });
+  
+      localStorage.setItem("token", loginData.token);
+  
+      // Étape 3 : Redirection selon type réel
+      const profile = await apiFetch("/users/profile");
+      if (profile.type_utilisateur === "clinique") {
         navigate("/pages/Connecte/PrincipaleClinique");
       } else {
         navigate("/pages/Connecte/Principale");
       }
-
+  
     } catch (error) {
-      console.error("Erreur d'inscription :", error);
       setError(error.message || "Erreur lors de l'inscription");
     } finally {
       setIsLoading(false);
@@ -67,7 +82,7 @@ function SignUp({ type }) {
     <div className="form-container sign-up-container">
       <form onSubmit={handleSubmit}>
         <h1>{type === "clinique" ? "Inscription Clinique" : "Inscription Professionnel"}</h1>
-        
+
         <div className="social-container">
           <a href="#" className="social"><FaFacebookF /></a>
           <a href="#" className="social"><FaGooglePlusG /></a>
@@ -76,23 +91,35 @@ function SignUp({ type }) {
 
         <span>ou utilisez votre courriel pour vous inscrire</span>
 
-        <input
-          type="text"
-          name="nom"
-          placeholder="Nom"
-          value={formData.nom}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          type="text"
-          name="prenom"
-          placeholder="Prénom"
-          value={formData.prenom}
-          onChange={handleChange}
-          required
-        />
+        {type === "clinique" ? (
+          <input
+            type="text"
+            name="nom_clinique"
+            placeholder="Nom de la clinique"
+            value={formData.nom_clinique}
+            onChange={handleChange}
+            required
+          />
+        ) : (
+          <>
+            <input
+              type="text"
+              name="nom"
+              placeholder="Nom"
+              value={formData.nom}
+              onChange={handleChange}
+              required
+            />
+            <input
+              type="text"
+              name="prenom"
+              placeholder="Prénom"
+              value={formData.prenom}
+              onChange={handleChange}
+              required
+            />
+          </>
+        )}
 
         <input
           type="email"

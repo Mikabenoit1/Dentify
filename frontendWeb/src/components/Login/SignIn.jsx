@@ -1,6 +1,8 @@
 import { FaFacebookF, FaGooglePlusG, FaLinkedinIn } from "react-icons/fa";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../../lib/apiFetch";
+
 
 function SignIn({ type }) {
   const navigate = useNavigate();
@@ -18,38 +20,36 @@ function SignIn({ type }) {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-
-    console.log("Tentative de connexion avec:", credentials);
-
+  
     try {
-      const response = await fetch("http://localhost:4000/api/users/login", {
+      // 🔐 Connexion
+      const loginData = await apiFetch("/users/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json"
-        },
-        body: JSON.stringify(credentials),
-        credentials: "include"
+        body: {
+          courriel: credentials.courriel,
+          mot_de_passe: credentials.mot_de_passe
+        }
       });
-
-      console.log("Réponse du serveur - Status:", response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Échec de la connexion");
+  
+      localStorage.setItem("token", loginData.token);
+  
+      // 👤 Récupération du vrai type
+      const profile = await apiFetch("/users/profile");
+  
+      if (profile.type_utilisateur !== type) {
+        // ⛔ Blocage si le type ne correspond pas à l’interface utilisée
+        setError("Ce compte est de type " + profile.type_utilisateur + ". Veuillez utiliser la bonne section de connexion.");
+        localStorage.removeItem("token");
+        return;
       }
-
-      const data = await response.json();
-      localStorage.setItem("token", data.token);
-      console.log("Connexion réussie. Token:", data.token);
-
-      // 🔹 Redirection dynamique selon le type d'utilisateur
-      if (credentials.type_utilisateur === "clinique") {
+  
+      // ✅ Redirection selon rôle réel
+      if (profile.type_utilisateur === "clinique") {
         navigate("/pages/Connecte/PrincipaleClinique");
       } else {
         navigate("/pages/Connecte/Principale");
       }
-
+  
     } catch (error) {
       console.error("Erreur complète:", error);
       setError(error.message || "Identifiants incorrects");
@@ -57,6 +57,7 @@ function SignIn({ type }) {
       setIsLoading(false);
     }
   };
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
