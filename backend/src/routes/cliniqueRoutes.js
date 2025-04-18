@@ -3,6 +3,7 @@ const router = express.Router();
 const { CliniqueDentaire } = require('../models');
 const protect = require('../middlewares/authMiddleware');
 const uploadLogo = require('../middlewares/logoUploadMiddleware');// Unifié pour photos et logos
+const uploadPhoto = require('../middlewares/photoUploadMiddleware'); // Nouveau middleware
 
 // ✅ Créer une clinique
 router.post('/', async (req, res) => {
@@ -88,13 +89,15 @@ router.post('/upload/logo', protect, uploadLogo.single('logo'), async (req, res)
 });
 
 // ✅ Upload d'une photo de galerie
-router.post('/upload/photo', protect, uploadLogo.single('photo'), async (req, res) => {
+// ✅ Upload d'une photo de galerie
+router.post('/upload/photo', protect, uploadPhoto.single('photo'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "Fichier manquant (photo)" });
     }
 
     const photoUrl = `/uploads/photos/${req.file.filename}`;
+    console.log("Photo uploadée:", photoUrl);
 
     const clinique = await CliniqueDentaire.findOne({ where: { id_utilisateur: req.user.id_utilisateur } });
 
