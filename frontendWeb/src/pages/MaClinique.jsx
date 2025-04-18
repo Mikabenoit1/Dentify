@@ -186,17 +186,32 @@ const MaClinique = () => {
   const handleSave = async () => {
     try {
       setLoading(true);
-
-      console.log("📝 Données envoyées à updateClinicProfile:", editedClinique);
-
+  
+      // Préparer une copie des données à envoyer
+      const dataToSend = { ...editedClinique };
+      
+      // Nettoyer les URL pour le logo (retirer FILE_BASE_URL)
+      if (dataToSend.logo && dataToSend.logo.startsWith(FILE_BASE_URL)) {
+        dataToSend.logo = dataToSend.logo.replace(FILE_BASE_URL, '');
+      }
+      
+      // Nettoyer les URL pour les photos (retirer FILE_BASE_URL)
+      if (Array.isArray(dataToSend.photos)) {
+        dataToSend.photos = dataToSend.photos.map(photo => {
+          return photo.startsWith(FILE_BASE_URL) ? photo.replace(FILE_BASE_URL, '') : photo;
+        });
+      }
+  
+      console.log("📝 Données envoyées à updateClinicProfile:", dataToSend);
+  
       // Envoyer les données mises à jour
-      await updateClinicProfile(editedClinique);
-
+      await updateClinicProfile(dataToSend);
+  
       // Mettre à jour l'état local
       setClinique({ ...editedClinique });
       setEditMode(false);
       setLoading(false);
-
+  
       // Notification succès
       alert("Profil de la clinique mis à jour avec succès !");
     } catch (err) {
@@ -252,22 +267,30 @@ const MaClinique = () => {
       try {
         const formData = new FormData();
         formData.append('photo', file);
-  
-        const response = await uploadClinicPhoto(formData); // { photoUrl: "/uploads/photos/..." }
-  
-        const fullPhotoUrl = `${FILE_BASE_URL}${response.photoUrl}`; // ← important
-  
-        setEditedClinique((prev) => ({
-          ...prev,
-          photos: [...(prev.photos || []), fullPhotoUrl]
-        }));
-  
+        
+        console.log("Téléchargement de la photo en cours...");
+        
+        const response = await uploadClinicPhoto(formData);
+        console.log("Réponse du serveur:", response);
+        
+        const fullPhotoUrl = `${FILE_BASE_URL}${response.photoUrl}`;
+        console.log("URL complète de la photo:", fullPhotoUrl);
+        
+        setEditedClinique((prev) => {
+          const newPhotos = [...(prev.photos || []), fullPhotoUrl];
+          console.log("Liste des photos mise à jour:", newPhotos);
+          return {
+            ...prev,
+            photos: newPhotos
+          };
+        });
+        
       } catch (err) {
         alert("Erreur lors de l'upload de la photo. Veuillez réessayer.");
         console.error("Erreur lors de l'upload de la photo:", err);
       }
     }
-  };  
+  };
   
   const handleRemovePhoto = (index) => {
     if (editedClinique.photos) {
@@ -800,6 +823,7 @@ const MaClinique = () => {
           <div className="section-content">
             {!editMode ? (
               <div className="gallery-grid">
+                {console.log("Photos URLs:", clinique.photos)}
                 {clinique.photos?.length > 0 ? (
                   clinique.photos.map((photo, index) => (
                     <div key={index} className="gallery-item">

@@ -3,6 +3,13 @@ import { apiFetch, API_BASE_URL, FILE_BASE_URL } from './apiFetch';
 
 // 🔁 Transformer les données API vers le format du composant MaClinique
 export const transformApiToComponentFormat = (apiData) => {
+  // Fonction auxiliaire pour construire l'URL complète si nécessaire
+  const getFullUrl = (path) => {
+    if (!path) return '';
+    // Éviter la duplication de FILE_BASE_URL
+    return path.startsWith('http') || path.startsWith(FILE_BASE_URL) ? path : `${FILE_BASE_URL}${path}`;
+  };
+
   return {
     nom: apiData.nom_clinique || apiData.nom || '',
     adresse: apiData.adresse_complete || apiData.adresse || '',
@@ -16,9 +23,9 @@ export const transformApiToComponentFormat = (apiData) => {
     services: apiData.services || [],
     equipement: apiData.equipement || [],
     equipe: apiData.equipe || [],
-    logo: apiData.logo ? `${FILE_BASE_URL}${apiData.logo}` : '',
+    logo: getFullUrl(apiData.logo),
     photos: Array.isArray(apiData.photos)
-      ? apiData.photos.map((p) => `${FILE_BASE_URL}${p}`)
+      ? apiData.photos.map(p => getFullUrl(p))
       : [],
     horaires: apiData.horaires || {
       lundi: { ouvert: true, debut: '09:00', fin: '17:00' },
@@ -68,6 +75,15 @@ export const updateClinicProfile = async (data) => {
       }
     });
 
+    // Nettoyage des URLs pour les photos
+    const cleanPhotos = Array.isArray(data.photos) 
+      ? data.photos.map(photo => {
+          return photo.startsWith(FILE_BASE_URL) ? photo.replace(FILE_BASE_URL, '') : photo;
+        })
+      : [];
+
+    console.log("Photos nettoyées avant envoi:", cleanPhotos);
+
     const clinicData = {
       nom: data.nom,
       adresse: data.adresse,
@@ -83,7 +99,7 @@ export const updateClinicProfile = async (data) => {
       equipe: data.equipe || [],
       horaires: data.horaires,
       logo: data.logo,
-      photos: data.photos || []
+      photos: cleanPhotos
     };
 
     return await apiFetch('/cliniques/profile', {
