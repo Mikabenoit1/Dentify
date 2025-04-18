@@ -196,8 +196,8 @@ const CliniqueCree = () => {
       descript: newOffer.description,
       type_professionnel: newOffer.profession,
       date_mission: newOffer.startDate,
-      date_debut: newOffer.startDate,
-      date_fin: newOffer.endDate,
+      date_debut: newOffer.startDate,  
+      date_fin: newOffer.endDate, 
       heure_debut: heureDebutDatetime,
       heure_fin: heureFinDatetime,
       duree_heures: calculateDuration(newOffer.startTime, newOffer.endTime), // ✅ correct
