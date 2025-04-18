@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useOffers } from '../components/OffersContext';
+import { createOffer, updateOffer, deleteOffer, fetchOfferById } from '../lib/offerApi';
 import '../styles/CliniqueCree.css';
+
 
 const CliniqueCree = () => {
   const [previewMode, setPreviewMode] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams(); // Pour l'édition
-  const { addOffer, updateOffer, getOfferById } = useOffers();
   const addressInputRef = useRef(null);
   
   // État pour le formulaire de création d'offre avec heures
@@ -28,22 +28,37 @@ const CliniqueCree = () => {
 
   // Charger l'offre existante si en mode édition
   useEffect(() => {
-    if (id) {
-      const existingOffer = getOfferById(parseInt(id));
-      if (existingOffer) {
-        // Assurer que les champs d'heure existent même pour les anciennes offres
-        const updatedOffer = {
-          ...existingOffer,
-          startTime: existingOffer.startTime || '09:00',
-          endTime: existingOffer.endTime || '17:00',
-          location: existingOffer.location || '',
-          coordinates: existingOffer.coordinates || null,
-          isSingleDay: existingOffer.startDate === existingOffer.endDate
-        };
-        setNewOffer(updatedOffer);
+    const loadOffer = async () => {
+      try {
+        if (id) {
+          const data = await fetchOfferById(id);
+  
+          setNewOffer({
+            title: data.titre || '',
+            profession: data.type_professionnel || 'dentiste',
+            startDate: data.date_mission || '',
+            endDate: data.date_mission || '',
+            startTime: data.heure_debut || '09:00',
+            endTime: data.heure_fin || '17:00',
+            description: data.descript || '',
+            requirements: data.competences_requises || '',
+            compensation: data.remuneration?.toString() || '',
+            location: data.adresse_complete || '',
+            coordinates: {
+              lat: data.latitude || 45.2538,
+              lng: data.longitude || -74.1334
+            },
+            isSingleDay: true // ← on assume une seule journée pour le moment
+          });
+        }
+      } catch (error) {
+        alert("Erreur lors du chargement de l'offre à modifier.");
+        console.error("❌ Chargement échoué :", error);
       }
-    }
-  }, [id, getOfferById]);
+    };
+  
+    loadOffer();
+  }, [id]);  
 
   // Gère les changements dans le formulaire
   const handleInputChange = (e) => {
@@ -131,18 +146,21 @@ const CliniqueCree = () => {
 
   // Formater les dates pour l'affichage
   const formatDateRange = () => {
-    if (newOffer.startDate === newOffer.endDate) {
-      return `Le ${newOffer.startDate}`;
-    } else {
-      return `Du ${newOffer.startDate} au ${newOffer.endDate}`;
-    }
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  
+    const start = new Date(newOffer.startDate).toLocaleDateString('fr-CA', options);
+    const end = new Date(newOffer.endDate).toLocaleDateString('fr-CA', options);
+  
+    return newOffer.startDate === newOffer.endDate
+      ? `Le ${start}`
+      : `Du ${start} au ${end}`;
   };
+  
 
   // Soumission du formulaire avec validation
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Vérification des champs obligatoires avant la soumission
+  
     const requiredFields = {
       title: newOffer.title,
       startDate: newOffer.startDate,
@@ -153,40 +171,62 @@ const CliniqueCree = () => {
       compensation: newOffer.compensation,
       location: newOffer.location
     };
-    
+  
     const emptyFields = Object.entries(requiredFields)
       .filter(([_, value]) => !value || value.trim() === '')
-      .map(([key, _]) => key);
-    
+      .map(([key]) => key);
+  
     if (emptyFields.length > 0) {
-      // Afficher une alerte avec les champs manquants
       alert(`Veuillez remplir tous les champs obligatoires avant de publier l'offre: ${emptyFields.join(', ')}`);
       return;
     }
-    
-    const today = new Date().toISOString().split('T')[0];
-    
-    const offerToSubmit = {
-      ...newOffer,
-      id: id ? parseInt(id) : Date.now(),
-      datePosted: id ? newOffer.datePosted : today,
-      status: id ? newOffer.status : 'pending',
-      applications: id ? newOffer.applications : 0,
-      isSingleDay: newOffer.startDate === newOffer.endDate,
-      coordinates: newOffer.coordinates || { lat: 45.2538, lng: -74.1334 } // Coordonnées par défaut
+  
+    const coordinates = newOffer.coordinates || { lat: 45.2538, lng: -74.1334 };
+  
+    const calculateDuration = (start, end) => {
+      const [startH, startM] = start.split(':').map(Number);
+      const [endH, endM] = end.split(':').map(Number);
+      return (endH + endM / 60) - (startH + startM / 60);
     };
-    
-    // Ajouter ou mettre à jour l'offre
-    if (id) {
-      updateOffer(offerToSubmit);
-    } else {
-      addOffer(offerToSubmit);
-    }
-    
-    // Naviguer vers la page des offres après publication
-    navigate('/clinique-offres');
-  };
+    const heureDebutDatetime = `${newOffer.startDate}T${newOffer.startTime}:00`;
+    const heureFinDatetime = `${newOffer.startDate}T${newOffer.endTime}:00`;
 
+    const offerPayload = {
+      titre: newOffer.title,
+      descript: newOffer.description,
+      type_professionnel: newOffer.profession,
+      date_mission: newOffer.startDate,
+      date_debut: newOffer.startDate,
+      date_fin: newOffer.endDate,
+      heure_debut: heureDebutDatetime,
+      heure_fin: heureFinDatetime,
+      duree_heures: calculateDuration(newOffer.startTime, newOffer.endTime), // ✅ correct
+      remuneration: parseFloat(newOffer.compensation),
+      est_urgent: false,
+      statut: 'pending',
+      competences_requises: newOffer.requirements,
+      latitude: coordinates.lat,
+      longitude: coordinates.lng,
+      adresse_complete: newOffer.location,
+      date_modification: new Date().toISOString()
+    };
+  
+    try {
+      if (id) {
+        await updateOffer(id, offerPayload);
+        alert("✅ Offre mise à jour avec succès !");
+      } else {
+        await createOffer(offerPayload);
+        alert("✅ Offre créée avec succès !");
+      }
+  
+      navigate('/clinique-offres');
+    } catch (error) {
+      console.error("❌ Erreur lors de la soumission de l'offre :", error);
+      alert("Erreur lors de la publication de l'offre. Veuillez réessayer.");
+    }
+  };
+  
   return (
     <div className="clinique-cree-container">
       <div className="create-offer-section">
@@ -219,7 +259,17 @@ const CliniqueCree = () => {
                                               newOffer.profession === 'assistant' ? 'Assistant(e) dentaire' : 
                                               'Hygiéniste dentaire'}</p>
               <p><strong>Période:</strong> {formatDateRange()}</p>
-              <p><strong>Horaires:</strong> {newOffer.startTime || "09:00"} à {newOffer.endTime || "17:00"}</p>
+              <p><strong>Horaires:</strong> {
+  new Date(`${newOffer.startDate}T${newOffer.startTime}`).toLocaleTimeString('fr-CA', {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+} à {
+  new Date(`${newOffer.startDate}T${newOffer.endTime}`).toLocaleTimeString('fr-CA', {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}</p>
               <p><strong>Adresse:</strong> {newOffer.location}</p>
             </div>
             

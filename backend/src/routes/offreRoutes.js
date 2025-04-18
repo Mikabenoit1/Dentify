@@ -94,7 +94,7 @@ router.post('/creer', protect, async (req, res) => {
     }
 
     const {
-      titre, descript, type_professionnel, date_mission,
+      titre, descript, type_professionnel, date_mission, date_debut, date_fin,
       heure_debut, heure_fin, duree_heures, remuneration,
       est_urgent, statut, competences_requises,
       latitude, longitude, adresse_complete, date_modification
@@ -107,6 +107,8 @@ router.post('/creer', protect, async (req, res) => {
       type_professionnel,
       date_publication: new Date(),
       date_mission,
+      date_debut,
+      date_fin,
       heure_debut,
       heure_fin,
       duree_heures,
@@ -280,5 +282,67 @@ router.put('/refuser/:id', protect, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
+// ✅ Récupérer les offres associées à la clinique connectée
+router.get('/mes-offres', protect, async (req, res) => {
+  try {
+    const utilisateur = await User.findByPk(req.user.id_utilisateur);
+
+    if (!utilisateur || utilisateur.type_utilisateur !== 'clinique') {
+      return res.status(403).json({ message: "Seules les cliniques peuvent accéder à leurs offres." });
+    }
+
+    const clinique = await CliniqueDentaire.findOne({
+      where: { id_utilisateur: utilisateur.id_utilisateur }
+    });
+
+    if (!clinique) {
+      return res.status(404).json({ message: "Clinique introuvable" });
+    }
+
+    const offres = await Offre.findAll({
+      where: { id_clinique: clinique.id_clinique },
+      order: [['date_publication', 'DESC']]
+    });
+
+    res.json(offres);
+  } catch (error) {
+    console.error("❌ Erreur lors de la récupération des offres de la clinique :", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+// ✅ Supprimer une offre
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const utilisateur = await User.findByPk(req.user.id_utilisateur);
+
+    if (!utilisateur || utilisateur.type_utilisateur !== 'clinique') {
+      return res.status(403).json({ message: "Seules les cliniques peuvent supprimer des offres." });
+    }
+
+    const offre = await Offre.findByPk(req.params.id);
+    if (!offre) {
+      return res.status(404).json({ message: "Offre non trouvée." });
+    }
+
+    // Vérifie que l'offre appartient bien à la clinique connectée
+    const clinique = await CliniqueDentaire.findOne({
+      where: { id_utilisateur: utilisateur.id_utilisateur }
+    });
+
+    if (!clinique || offre.id_clinique !== clinique.id_clinique) {
+      return res.status(403).json({ message: "Vous ne pouvez pas supprimer cette offre." });
+    }
+
+    await offre.destroy();
+    res.json({ message: "Offre supprimée avec succès." });
+  } catch (error) {
+    console.error("❌ Erreur lors de la suppression de l'offre:", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+
 
 module.exports = router;

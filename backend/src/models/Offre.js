@@ -9,6 +9,8 @@ const Offre = sequelize.define('Offre', {
   type_professionnel: { type: DataTypes.STRING, allowNull: false },
   date_publication: { type: DataTypes.DATE, allowNull: false },
   date_mission: { type: DataTypes.DATE, allowNull: false },
+  date_debut: { type: DataTypes.DATEONLY, allowNull: false },
+  date_fin: { type: DataTypes.DATEONLY, allowNull: false },
   heure_debut: { type: DataTypes.DATE },
   heure_fin: { type: DataTypes.DATE },
   duree_heures: { type: DataTypes.FLOAT },

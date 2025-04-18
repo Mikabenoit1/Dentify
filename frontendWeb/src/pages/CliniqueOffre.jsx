@@ -1,49 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useOffers } from '../components/OffersContext';
+import { fetchOffersForClinic, deleteOffer } from '../lib/offerApi';
 import '../styles/CliniqueOffre.css';
 
 const CliniqueOffre = () => {
   const [filterStatus, setFilterStatus] = useState('all');
-  const { offers, deleteOffer, getCandidatesForOffer } = useOffers();
+  const [offers, setOffers] = useState([]);
   const navigate = useNavigate();
 
-  // Filtre les offres en fonction du statut sélectionné
-  const filteredOffers = filterStatus === 'all' 
-    ? offers 
-    : offers.filter(offer => offer.status === filterStatus);
+  useEffect(() => {
+    const loadOffers = async () => {
+      try {
+        const data = await fetchOffersForClinic();
+        setOffers(data);
+      } catch (error) {
+        console.error('Erreur lors du chargement des offres:', error);
+      }
+    };
 
-  // Suppression d'une offre
-  const handleDeleteOffer = (offerId) => {
+    loadOffers();
+  }, []);
+
+  const handleDeleteOffer = async (offerId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette offre ?')) {
-      deleteOffer(offerId);
+      try {
+        await deleteOffer(offerId);
+        setOffers(prev => prev.filter(o => o.id_offre !== offerId));
+      } catch (err) {
+        console.error("Erreur lors de la suppression:", err);
+        alert("❌ Suppression échouée.");
+      }
     }
   };
 
-  // Navigation vers la page de création d'offre
   const handleCreateOffer = () => {
     navigate('/clinique-cree');
   };
 
-  // Navigation vers la page de détail/modification de l'offre
   const handleViewOffer = (offerId) => {
     navigate(`/clinique-offres/${offerId}`);
   };
 
-  // Navigation vers la page des candidats
-  const viewCandidates = (offerId, event) => {
-    event.stopPropagation(); // Empêcher la propagation pour éviter de naviguer vers la vue détaillée
-    navigate(`/candidats/${offerId}`);
-  };
-
-  // Formater les dates pour l'affichage
   const formatDateRange = (startDate, endDate) => {
-    if (startDate === endDate) {
-      return `Le ${startDate}`;
-    } else {
-      return `Du ${startDate} au ${endDate}`;
-    }
+    if (!startDate || !endDate) return 'Date inconnue';
+  
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  
+    const start = new Date(startDate).toLocaleDateString('fr-CA', options);
+    const end = new Date(endDate).toLocaleDateString('fr-CA', options);
+  
+    return startDate === endDate
+      ? `Le ${start}`
+      : `Du ${start} au ${end}`;
   };
+  
+  
+
+  const filteredOffers = filterStatus === 'all'
+    ? offers
+    : offers.filter(offer => offer.statut === filterStatus);
 
   return (
     <div className="clinique-offre-container">
@@ -85,76 +100,70 @@ const CliniqueOffre = () => {
               </button>
             </div>
           ) : (
-            filteredOffers.map(offer => {
-              // Récupérer les candidats pour cette offre
-              const candidatesCount = getCandidatesForOffer ? getCandidatesForOffer(offer.id).length : 0;
-              
-              return (
-                <div key={offer.id} className={`offer-card ${offer.status}`}>
-                  <div className="offer-header">
-                    <h3>{offer.title}</h3>
-                    <div className="offer-status">
-                      <span className={`status-badge ${offer.status}`}>
-                        {offer.status === 'active' ? 'Active' : 
-                         offer.status === 'pending' ? 'En attente' : 'Expirée'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Bannière si un candidat est assigné */}
-                  {offer.assignedCandidate && (
-                    <div className="assigned-candidate-banner">
-                      <i className="fa-solid fa-check-circle"></i>
-                      Poste pourvu par <strong>{offer.assignedCandidate.name}</strong>
-                    </div>
-                  )}
-                  
-                  <div className="offer-details">
-                    <p><strong>Profession:</strong> {offer.profession === 'dentiste' ? 'Dentiste' : 
-                                              offer.profession === 'assistant' ? 'Assistant(e) dentaire' : 
-                                              'Hygiéniste dentaire'}</p>
-                    <p><strong>Période:</strong> {formatDateRange(offer.startDate, offer.endDate)}</p>
-                    <p><strong>Publiée le:</strong> {offer.datePosted}</p>
-                  </div>
-                  
-                  <div className="offer-actions">
-                    <button 
-                      className="view-button"
-                      onClick={() => handleViewOffer(offer.id)}
-                    >
-                      <i className="fa-solid fa-eye"></i> Voir l'offre
-                    </button>
-                    <button 
-                      className="edit-button"
-                      onClick={() => navigate(`/clinique-cree/${offer.id}`)}
-                    >
-                      <i className="fa-solid fa-pen"></i> Modifier
-                    </button>
-                    <button 
-                      className="delete-button"
-                      onClick={() => handleDeleteOffer(offer.id)}
-                    >
-                      <i className="fa-solid fa-trash"></i> Supprimer
-                    </button>
-                  </div>
-                  
-                  <div className="applications-info">
-                    <p>
-                      <i className="fa-solid fa-user-group"></i> 
-                      {candidatesCount} candidature(s)
-                    </p>
-                    {candidatesCount > 0 && (
-                      <button 
-                        className="applications-button"
-                        onClick={(e) => viewCandidates(offer.id, e)}
-                      >
-                        <i className="fa-solid fa-users"></i> Voir les candidats
-                      </button>
-                    )}
+            filteredOffers.map(offer => (
+              <div key={offer.id_offre} className={`offer-card ${offer.statut}`}>
+                <div className="offer-header">
+                  <h3>{offer.titre}</h3>
+                  <div className="offer-status">
+                    <span className={`status-badge ${offer.statut}`}>
+                      {offer.statut === 'active' ? 'Active' : 
+                       offer.statut === 'pending' ? 'En attente' : 'Expirée'}
+                    </span>
                   </div>
                 </div>
-              );
-            })
+
+             <div className="offer-details">
+  <p><strong>Profession:</strong> {offer.type_professionnel}</p>
+
+  <p><strong>Période:</strong> {
+  formatDateRange(offer.date_debut, offer.date_fin)
+}</p>
+
+
+  {offer.heure_debut && offer.heure_fin && (
+    <p><strong>Horaires:</strong> {
+      new Date(offer.heure_debut).toLocaleTimeString('fr-CA', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    } à {
+      new Date(offer.heure_fin).toLocaleTimeString('fr-CA', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }</p>
+  )}
+
+  <p><strong>Publiée le:</strong> {
+    offer.date_publication
+      ? new Date(offer.date_publication).toLocaleDateString('fr-CA')
+      : 'Inconnue'
+  }</p>
+</div>
+
+
+                <div className="offer-actions">
+                  <button 
+                    className="view-button"
+                    onClick={() => handleViewOffer(offer.id_offre)}
+                  >
+                    <i className="fa-solid fa-eye"></i> Voir l'offre
+                  </button>
+                  <button 
+                    className="edit-button"
+                    onClick={() => navigate(`/clinique-cree/${offer.id_offre}`)}
+                  >
+                    <i className="fa-solid fa-pen"></i> Modifier
+                  </button>
+                  <button 
+                    className="delete-button"
+                    onClick={() => handleDeleteOffer(offer.id_offre)}
+                  >
+                    <i className="fa-solid fa-trash"></i> Supprimer
+                  </button>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>
