@@ -1,10 +1,8 @@
 // src/lib/clinicApi.js
-import { apiFetch, API_BASE_URL } from './apiFetch';
+import { apiFetch, API_BASE_URL, FILE_BASE_URL } from './apiFetch';
 
-// Transformer les données API vers le format du composant MaClinique
+// 🔁 Transformer les données API vers le format du composant MaClinique
 export const transformApiToComponentFormat = (apiData) => {
-  const BASE_URL = API_BASE_URL.replace('/api', '');
-  
   return {
     nom: apiData.nom_clinique || apiData.nom || '',
     adresse: apiData.adresse_complete || apiData.adresse || '',
@@ -18,8 +16,10 @@ export const transformApiToComponentFormat = (apiData) => {
     services: apiData.services || [],
     equipement: apiData.equipement || [],
     equipe: apiData.equipe || [],
-    logo: apiData.logo ? `${BASE_URL}${apiData.logo}` : '',
-    photos: apiData.photos || [],
+    logo: apiData.logo ? `${FILE_BASE_URL}${apiData.logo}` : '',
+    photos: Array.isArray(apiData.photos)
+      ? apiData.photos.map((p) => `${FILE_BASE_URL}${p}`)
+      : [],
     horaires: apiData.horaires || {
       lundi: { ouvert: true, debut: '09:00', fin: '17:00' },
       mardi: { ouvert: true, debut: '09:00', fin: '17:00' },
@@ -35,24 +35,18 @@ export const transformApiToComponentFormat = (apiData) => {
 // 🔹 Récupérer le profil de la clinique
 export const fetchClinicProfile = async () => {
   try {
-    // D'abord, essayons juste de récupérer le profil utilisateur qui devrait exister
     const userData = await apiFetch('/users/profile');
-    
-    // Initialiser un profil de base avec les données utilisateur
     let clinicData = transformApiToComponentFormat(userData);
-    
+
     try {
-      // Ensuite, essayons de récupérer le profil clinique (qui pourrait ne pas exister encore)
       const cliniqueData = await apiFetch('/cliniques/profile');
       if (cliniqueData) {
-        // Si on a des données de clinique, on les fusionne avec les données utilisateur
-        clinicData = transformApiToComponentFormat({...userData, ...cliniqueData});
+        clinicData = transformApiToComponentFormat({ ...userData, ...cliniqueData });
       }
-    } catch (clinicError) {
-      console.warn("Profil clinique non trouvé ou non créé, utilisation des données utilisateur uniquement");
-      // Si cette requête échoue, on continue avec juste les données utilisateur
+    } catch {
+      console.warn("⚠️ Profil clinique non trouvé, utilisation des données utilisateur uniquement");
     }
-    
+
     return clinicData;
   } catch (error) {
     console.error("Erreur lors de la récupération du profil de la clinique:", error);
@@ -63,7 +57,6 @@ export const fetchClinicProfile = async () => {
 // 🔹 Mettre à jour le profil de la clinique
 export const updateClinicProfile = async (data) => {
   try {
-    // Mettre à jour les données utilisateur (email, etc.)
     await apiFetch('/users/profile', {
       method: 'PUT',
       body: {
@@ -74,8 +67,7 @@ export const updateClinicProfile = async (data) => {
         courriel: data.email
       }
     });
-    
-    // Préparer les données pour la clinique
+
     const clinicData = {
       nom: data.nom,
       adresse: data.adresse,
@@ -93,8 +85,7 @@ export const updateClinicProfile = async (data) => {
       logo: data.logo,
       photos: data.photos || []
     };
-    
-    // Mettre à jour les données spécifiques à la clinique
+
     return await apiFetch('/cliniques/profile', {
       method: 'PUT',
       body: clinicData
@@ -108,12 +99,10 @@ export const updateClinicProfile = async (data) => {
 // 🔹 Uploader le logo
 export const uploadClinicLogo = async (formData) => {
   const token = localStorage.getItem('token');
-  const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-
-  const response = await fetch(`${BASE_URL}/cliniques/upload/logo`, {
+  const response = await fetch(`${API_BASE_URL}/cliniques/upload/logo`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     },
     body: formData
   });
@@ -122,18 +111,16 @@ export const uploadClinicLogo = async (formData) => {
     throw new Error("Erreur lors de l'upload du logo");
   }
 
-  return response.json();
+  return response.json(); // { logoUrl: "/uploads/logos/..." }
 };
 
 // 🔹 Uploader une photo
 export const uploadClinicPhoto = async (formData) => {
   const token = localStorage.getItem('token');
-  const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-
-  const response = await fetch(`${BASE_URL}/cliniques/upload/photo`, {
+  const response = await fetch(`${API_BASE_URL}/cliniques/upload/photo`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     },
     body: formData
   });
@@ -142,5 +129,5 @@ export const uploadClinicPhoto = async (formData) => {
     throw new Error("Erreur lors de l'upload de la photo");
   }
 
-  return response.json();
+  return response.json(); // { photoUrl: "/uploads/logos/..." }
 };

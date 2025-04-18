@@ -65,7 +65,7 @@ router.put('/profile', protect, async (req, res) => {
 });
 
 // ✅ Upload du logo
-router.post('/upload/logo', protect, upload.single('logo'), async (req, res) => {
+router.post('/upload/logo', protect, uploadLogo.single('logo'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "Fichier manquant (logo)" });
@@ -88,7 +88,7 @@ router.post('/upload/logo', protect, upload.single('logo'), async (req, res) => 
 });
 
 // ✅ Upload d'une photo de galerie
-router.post('/upload/photo', protect, upload.single('photo'), async (req, res) => {
+router.post('/upload/photo', protect, uploadLogo.single('photo'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "Fichier manquant (photo)" });

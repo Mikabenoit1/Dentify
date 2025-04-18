@@ -187,6 +187,8 @@ const MaClinique = () => {
     try {
       setLoading(true);
 
+      console.log("📝 Données envoyées à updateClinicProfile:", editedClinique);
+
       // Envoyer les données mises à jour
       await updateClinicProfile(editedClinique);
 
@@ -228,22 +230,20 @@ const MaClinique = () => {
         formData.append('logo', file);
   
         const response = await uploadClinicLogo(formData);
-        const FILE_BASE_URL = import.meta.env.VITE_API_URL.replace('/api', '');
-  
         const logoUrl = `${FILE_BASE_URL}${response.logoUrl}`; // ← important
+        console.log("📸 Logo uploadé →", logoUrl);
   
         setEditedClinique((prev) => ({
           ...prev,
           logo: logoUrl
         }));
-  
+        
       } catch (err) {
         alert("Erreur lors de l'upload du logo. Veuillez réessayer.");
         console.error("Erreur lors de l'upload du logo:", err);
       }
     }
   };
-  
   
   // Gestion du téléchargement des photos
   const handlePhotoUpload = async (e) => {
@@ -253,19 +253,21 @@ const MaClinique = () => {
         const formData = new FormData();
         formData.append('photo', file);
   
-        const response = await uploadClinicPhoto(formData);
-        const photoUrl = response.photoUrl;
+        const response = await uploadClinicPhoto(formData); // { photoUrl: "/uploads/photos/..." }
   
-        setEditedClinique({
-          ...editedClinique,
-          photos: [...(editedClinique.photos || []), photoUrl]
-        });
+        const fullPhotoUrl = `${FILE_BASE_URL}${response.photoUrl}`; // ← important
+  
+        setEditedClinique((prev) => ({
+          ...prev,
+          photos: [...(prev.photos || []), fullPhotoUrl]
+        }));
+  
       } catch (err) {
         alert("Erreur lors de l'upload de la photo. Veuillez réessayer.");
         console.error("Erreur lors de l'upload de la photo:", err);
       }
     }
-  };
+  };  
   
   const handleRemovePhoto = (index) => {
     if (editedClinique.photos) {
