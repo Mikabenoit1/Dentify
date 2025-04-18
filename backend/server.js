@@ -45,6 +45,7 @@ app.use('/api/professionels', professionelRoutes);
 // Servir les fichiers statiques depuis le dossier documents
 app.use('/documents', express.static(path.resolve(__dirname, 'documents')));
 app.use('/uploads/photos', express.static(path.join(__dirname, 'uploads/photos')));
+app.use('/uploads/logos', express.static(path.join(__dirname, 'uploads/logos')));
 
 // ✅ Route de test
 app.get('/test', (req, res) => {

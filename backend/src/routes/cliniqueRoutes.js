@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { CliniqueDentaire } = require('../models');
 const protect = require('../middlewares/authMiddleware');
-const upload = require('../middlewares/photoUploadMiddleware'); // Unifié pour photos et logos
+const uploadLogo = require('../middlewares/logoUploadMiddleware');// Unifié pour photos et logos
 
 // ✅ Créer une clinique
 router.post('/', async (req, res) => {
