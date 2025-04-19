@@ -21,6 +21,45 @@ const CliniqueOffre = () => {
     loadOffers();
   }, []);
 
+  const formatHeure = (heureStr) => {
+    if (!heureStr) return 'Heure inconnue';
+    
+    try {
+      // Pour les formats ISO avec fuseau horaire (se terminant par Z ou +/-XX:XX)
+      if (typeof heureStr === 'string' && 
+          (heureStr.endsWith('Z') || /T\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:[+-]\d{2}:\d{2})?$/.test(heureStr))) {
+        
+        // Extraire directement l'heure:minute de la chaîne ISO
+        const timeParts = heureStr.split('T')[1].split(':');
+        if (timeParts.length >= 2) {
+          return `${timeParts[0]}:${timeParts[1]}`;
+        }
+      }
+      
+      // Pour les formats simples "HH:MM" ou "HH:MM:SS"
+      if (typeof heureStr === 'string' && heureStr.includes(':') && !heureStr.includes('T')) {
+        const parts = heureStr.split(':');
+        if (parts.length >= 2) {
+          return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+        }
+      }
+      
+      // Dernier recours
+      const date = new Date(heureStr);
+      if (!isNaN(date.getTime())) {
+        const isoString = date.toISOString();
+        const timePart = isoString.split('T')[1].substring(0, 5);
+        return timePart;
+      }
+      
+      return 'Heure invalide';
+    } catch (error) {
+      console.error('Erreur de formatage d\'heure:', error);
+      return 'Heure invalide';
+    }
+  };
+
+
   const handleDeleteOffer = async (offerId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette offre ?')) {
       try {
@@ -119,20 +158,9 @@ const CliniqueOffre = () => {
   formatDateRange(offer.date_debut, offer.date_fin)
 }</p>
 
-
-  {offer.heure_debut && offer.heure_fin && (
-    <p><strong>Horaires:</strong> {
-      new Date(offer.heure_debut).toLocaleTimeString('fr-CA', {
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    } à {
-      new Date(offer.heure_fin).toLocaleTimeString('fr-CA', {
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    }</p>
-  )}
+{offer.heure_debut && offer.heure_fin && (
+  <p><strong>Horaires:</strong> {formatHeure(offer.heure_debut)} à {formatHeure(offer.heure_fin)}</p>
+)}
 
   <p><strong>Publiée le:</strong> {
     offer.date_publication

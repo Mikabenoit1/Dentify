@@ -1,5 +1,8 @@
 const { Offre, CliniqueDentaire } = require('../models');
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
+const protect = require('../middlewares/authMiddleware');
+const { get } = require('http');
+
 
 const haversineDistance = (lat1, lon1, lat2, lon2) => {
   const toRad = x => x * Math.PI / 180;
@@ -57,6 +60,41 @@ const getFilteredOffres = async (req, res) => {
   }
 };
 
+const getOffresProches = async (req, res) => {
+  const { lat, lng, rayon } = req.query;
+
+  if (!lat || !lng || !rayon) {
+    return res.status(400).json({ message: "Latitude, longitude et rayon requis." });
+  }
+
+  try {
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+    const distanceKm = parseFloat(rayon);
+
+    // Formule de Haversine pour calcul de distance entre 2 points
+    const offres = await Offre.findAll({
+      where: literal(`(
+        6371 * acos(
+          cos(radians(${latitude})) *
+          cos(radians(latitude)) *
+          cos(radians(longitude) - radians(${longitude})) +
+          sin(radians(${latitude})) *
+          sin(radians(latitude))
+        )
+      ) <= ${distanceKm}`),
+      order: [['date_publication', 'DESC']]
+    });
+
+    res.json(offres);
+  } catch (error) {
+    console.error("Erreur récupération offres proches:", error);
+    res.status(500).json({ message: "Erreur serveur." });
+  }
+};
+
+
 module.exports = {
-  getFilteredOffres
+  getFilteredOffres,
+  getOffresProches
 };

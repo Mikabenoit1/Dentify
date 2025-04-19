@@ -1,6 +1,25 @@
 // src/lib/clinicApi.js
 import { apiFetch, API_BASE_URL, FILE_BASE_URL } from './apiFetch';
 
+
+export const fetchCliniqueById = async (cliniqueId) => {
+  try {
+    return await apiFetch(`/cliniques/${cliniqueId}`);
+  } catch (error) {
+    console.error("Erreur lors du chargement des informations de la clinique :", error);
+    throw error;
+  }
+};
+
+export const fetchAllCliniques = async () => {
+  try {
+    return await apiFetch('/cliniques');
+  } catch (error) {
+    console.error("Erreur lors du chargement des cliniques :", error);
+    throw error;
+  }
+};
+
 // 🔁 Transformer les données API vers le format du composant MaClinique
 export const transformApiToComponentFormat = (apiData) => {
   // Fonction auxiliaire pour construire l'URL complète si nécessaire

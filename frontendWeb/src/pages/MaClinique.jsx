@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import '../styles/MaClinique.css';
 import { apiFetch, FILE_BASE_URL, API_BASE_URL  } from '../lib/apiFetch'; 
 import {
@@ -13,6 +13,7 @@ const MaClinique = () => {
   const [clinique, setClinique] = useState({
     nom: '',
     adresse: '',
+    adresse_complete: '',
     ville: '',
     codePostal: '',
     telephone: '',
@@ -25,6 +26,10 @@ const MaClinique = () => {
     equipe: [],
     logo: '',
     photos: [],
+    coordinates: {
+      lat: 45.2538, 
+      lng: -74.1334
+    },
     horaires: {
       lundi: { ouvert: true, debut: '09:00', fin: '17:00' },
       mardi: { ouvert: true, debut: '09:00', fin: '17:00' },
@@ -60,6 +65,9 @@ const MaClinique = () => {
     specialite: ""
   });
 
+  // Référence pour l'input d'adresse
+  const addressInputRef = useRef(null);
+
   // Charger les données de la clinique depuis le backend
   useEffect(() => {
     const loadClinicProfile = async () => {
@@ -83,6 +91,101 @@ const MaClinique = () => {
   
     loadClinicProfile();
   }, []);
+
+  // Charger Google Maps API
+  useEffect(() => {
+    if (!window.google && editMode) {
+      const googleMapsScript = document.createElement('script');
+      googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`;
+      googleMapsScript.defer = true;
+      window.document.body.appendChild(googleMapsScript);
+      
+      googleMapsScript.onload = () => {
+        initializeAutocomplete();
+      };
+      
+      return () => {
+        // Supprimer le script lors du démontage du composant
+        const scripts = document.getElementsByTagName('script');
+        for (let i = 0; i < scripts.length; i++) {
+          if (scripts[i].src.includes('maps.googleapis.com')) {
+            scripts[i].parentNode.removeChild(scripts[i]);
+            break;
+          }
+        }
+      };
+    } else if (window.google && editMode) {
+      initializeAutocomplete();
+    }
+  }, [editMode]);
+
+  // Initialiser l'autocomplétion de l'adresse
+  const initializeAutocomplete = () => {
+    if (!addressInputRef.current || !window.google) return;
+    
+    const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
+      types: ['address'],
+      componentRestrictions: { country: ['ca'] } // Restreindre au Canada
+    });
+    
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry) {
+        console.log("Aucun détail disponible pour cette adresse");
+        return;
+      }
+      
+      // Adresse complète
+      const formattedAddress = place.formatted_address;
+      
+      // Extraire les composants de l'adresse
+      let streetNumber = '';
+      let route = '';
+      let locality = ''; // ville
+      let postalCode = '';
+      let administrativeArea = ''; // province
+      
+      for (const component of place.address_components) {
+        const componentType = component.types[0];
+        
+        switch (componentType) {
+          case "street_number":
+            streetNumber = component.long_name;
+            break;
+          case "route":
+            route = component.long_name;
+            break;
+          case "locality":
+            locality = component.long_name;
+            break;
+          case "postal_code":
+            postalCode = component.long_name;
+            break;
+          case "administrative_area_level_1":
+            administrativeArea = component.long_name;
+            break;
+        }
+      }
+      
+      // Construire l'adresse de rue
+      const streetAddress = streetNumber 
+        ? `${streetNumber} ${route}` 
+        : route;
+      
+      setEditedClinique(prev => ({
+        ...prev,
+        adresse: streetAddress,
+        ville: locality,
+        codePostal: postalCode,
+        province: administrativeArea,
+        adresse_complete: formattedAddress,
+        coordinates: {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng()
+        }
+      }));
+    });
+  };
 
   // Gestion des modifications des champs texte
   const handleInputChange = (e) => {
@@ -359,8 +462,8 @@ const MaClinique = () => {
                   <div className="info-row">
                     <span className="info-label"><i className="fas fa-map-marker-alt"></i> Adresse :</span>
                     <span className="info-value">
-                      {clinique.adresse ? 
-                        `${clinique.adresse}, ${clinique.codePostal || ''} ${clinique.ville || ''}` : 
+                      {clinique.adresse_complete || clinique.adresse ? 
+                        `${clinique.adresse_complete || clinique.adresse}, ${clinique.codePostal || ''} ${clinique.ville || ''}` : 
                         'Non spécifiée'}
                     </span>
                   </div>
@@ -427,14 +530,19 @@ const MaClinique = () => {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="adresse"><i className="fas fa-map-marker-alt"></i> Adresse</label>
+                    <label htmlFor="adresse_complete"><i className="fas fa-map-marker-alt"></i> Adresse complète</label>
                     <input
                       type="text"
-                      id="adresse"
-                      name="adresse"
-                      value={editedClinique.adresse || ''}
+                      id="adresse_complete"
+                      name="adresse_complete"
+                      value={editedClinique.adresse_complete || ''}
                       onChange={handleInputChange}
+                      ref={addressInputRef}
+                      placeholder="Entrez l'adresse de votre clinique"
                     />
+                    <small className="help-text">
+                      Commencez à taper votre adresse et sélectionnez une suggestion dans la liste déroulante
+                    </small>
                   </div>
                 </div>
                 <div className="form-row">
@@ -703,182 +811,182 @@ const MaClinique = () => {
                   </ul>
                   <div className="add-item-form">
                     <input
-                      type="text"
-                      value={newEquipement}
-                      onChange={(e) => setNewEquipement(e.target.value)}
-                      placeholder="Ajouter un équipement..."
-                    />
-                    <button 
-                      type="button" 
-                      onClick={() => handleAddItem('equipement', newEquipement, setNewEquipement)}
-                      disabled={!newEquipement.trim()}
-                    >
-                      <i className="fas fa-plus"></i> Ajouter
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+type="text"
+value={newEquipement}
+onChange={(e) => setNewEquipement(e.target.value)}
+placeholder="Ajouter un équipement..."
+/>
+<button 
+type="button" 
+onClick={() => handleAddItem('equipement', newEquipement, setNewEquipement)}
+disabled={!newEquipement.trim()}
+>
+<i className="fas fa-plus"></i> Ajouter
+</button>
+</div>
+</div>
+</div>
+)}
+</div>
+</div>
 
-        {/* Section Équipe */}
-        <div className="profile-section">
-          <h2><i className="fas fa-users"></i> Notre équipe</h2>
-          <div className="section-content">
-            {!editMode ? (
-              <div className="team-grid">
-                {clinique.equipe?.length > 0 ? (
-                  clinique.equipe.map((membre, index) => (
-                    <div key={index} className="team-card">
-                      <div className="team-icon">
-                        <i className="fas fa-user-md"></i>
-                      </div>
-                      <div className="team-info">
-                        <h3>{membre.nom}</h3>
-                        <p className="team-role">{membre.poste}</p>
-                        {membre.specialite && <p className="team-specialty">{membre.specialite}</p>}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p>Aucun membre d'équipe défini.</p>
-                )}
-              </div>
-            ) : (
-              <div className="edit-form">
-                <div className="team-edit-container">
-                  {editedClinique.equipe?.map((membre, index) => (
-                    <div key={index} className="team-edit-item">
-                      <div className="team-edit-info">
-                        <span className="team-name">{membre.nom}</span>
-                        <span className="team-role">{membre.poste}</span>
-                        {membre.specialite && <span className="team-specialty">{membre.specialite}</span>}
-                      </div>
-                      <button 
-                        type="button" 
-                        className="remove-item" 
-                        onClick={() => handleRemoveEmploye(index)}
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
-                    </div>
-                  ))}
-                  
-                  <div className="add-team-form">
-                    <h4>Ajouter un membre de l'équipe</h4>
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label htmlFor="employe-nom">Nom</label>
-                        <input
-                          type="text"
-                          id="employe-nom"
-                          name="nom"
-                          value={newEmploye.nom}
-                          onChange={handleEmployeInputChange}
-                          placeholder="Nom du professionnel"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label htmlFor="employe-poste">Poste</label>
-                        <input
-                          type="text"
-                          id="employe-poste"
-                          name="poste"
-                          value={newEmploye.poste}
-                          onChange={handleEmployeInputChange}
-                          placeholder="Poste occupé"
-                        />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="employe-specialite">Spécialité (optionnel)</label>
-                      <input
-                        type="text"
-                        id="employe-specialite"
-                        name="specialite"
-                        value={newEmploye.specialite}
-                        onChange={handleEmployeInputChange}
-                        placeholder="Spécialité (si applicable)"
-                      />
-                    </div>
-                    <button 
-                      type="button" 
-                      className="add-team-button"
-                      onClick={handleAddEmploye}
-                      disabled={!newEmploye.nom.trim() || !newEmploye.poste.trim()}
-                    >
-                      <i className="fas fa-plus"></i> Ajouter à l'équipe
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Section Galerie */}
-        <div className="profile-section">
-          <h2><i className="fas fa-images"></i> Galerie photos</h2>
-          <div className="section-content">
-            {!editMode ? (
-              <div className="gallery-grid">
-                {console.log("Photos URLs:", clinique.photos)}
-                {clinique.photos?.length > 0 ? (
-                  clinique.photos.map((photo, index) => (
-                    <div key={index} className="gallery-item">
-                      <img src={photo} alt={`Cabinet ${index + 1}`} />
-                    </div>
-                  ))
-                ) : (
-                  <p>Aucune photo disponible.</p>
-                )}
-              </div>
-            ) : (
+{/* Section Équipe */}
+<div className="profile-section">
+<h2><i className="fas fa-users"></i> Notre équipe</h2>
+<div className="section-content">
+{!editMode ? (
+<div className="team-grid">
+{clinique.equipe?.length > 0 ? (
+clinique.equipe.map((membre, index) => (
+<div key={index} className="team-card">
+<div className="team-icon">
+  <i className="fas fa-user-md"></i>
+</div>
+<div className="team-info">
+  <h3>{membre.nom}</h3>
+  <p className="team-role">{membre.poste}</p>
+  {membre.specialite && <p className="team-specialty">{membre.specialite}</p>}
+</div>
+</div>
+))
+) : (
+<p>Aucun membre d'équipe défini.</p>
+)}
+</div>
+) : (
 <div className="edit-form">
-                <div className="gallery-edit-container">
-                  <div className="gallery-edit-grid">
-                    {editedClinique.photos?.map((photo, index) => (
-                      <div key={index} className="gallery-edit-item">
-                        <img src={photo} alt={`Cabinet ${index + 1}`} />
-                        <button 
-                          type="button" 
-                          className="remove-photo" 
-                          onClick={() => handleRemovePhoto(index)}
-                        >
-                          <i className="fas fa-trash"></i>
-                        </button>
-                      </div>
-                    ))}
-                    <div className="add-photo-item">
-                      <label htmlFor="photo-upload" className="photo-upload-label">
-                        <i className="fas fa-plus"></i>
-                        <span>Ajouter une photo</span>
-                      </label>
-                      <input 
-                        type="file" 
-                        id="photo-upload" 
-                        accept="image/*" 
-                        onChange={handlePhotoUpload}
-                        style={{ display: 'none' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      
-      {/* Overlay de chargement pendant les opérations */}
-      {loading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner"></div>
-        </div>
-      )}
-    </div>
-  );
+<div className="team-edit-container">
+{editedClinique.equipe?.map((membre, index) => (
+<div key={index} className="team-edit-item">
+<div className="team-edit-info">
+  <span className="team-name">{membre.nom}</span>
+  <span className="team-role">{membre.poste}</span>
+  {membre.specialite && <span className="team-specialty">{membre.specialite}</span>}
+</div>
+<button 
+  type="button" 
+  className="remove-item" 
+  onClick={() => handleRemoveEmploye(index)}
+>
+  <i className="fas fa-times"></i>
+</button>
+</div>
+))}
+
+<div className="add-team-form">
+<h4>Ajouter un membre de l'équipe</h4>
+<div className="form-row">
+<div className="form-group">
+  <label htmlFor="employe-nom">Nom</label>
+  <input
+    type="text"
+    id="employe-nom"
+    name="nom"
+    value={newEmploye.nom}
+    onChange={handleEmployeInputChange}
+    placeholder="Nom du professionnel"
+  />
+</div>
+<div className="form-group">
+  <label htmlFor="employe-poste">Poste</label>
+  <input
+    type="text"
+    id="employe-poste"
+    name="poste"
+    value={newEmploye.poste}
+    onChange={handleEmployeInputChange}
+    placeholder="Poste occupé"
+  />
+</div>
+</div>
+<div className="form-group">
+<label htmlFor="employe-specialite">Spécialité (optionnel)</label>
+<input
+  type="text"
+  id="employe-specialite"
+  name="specialite"
+  value={newEmploye.specialite}
+  onChange={handleEmployeInputChange}
+  placeholder="Spécialité (si applicable)"
+/>
+</div>
+<button 
+type="button" 
+className="add-team-button"
+onClick={handleAddEmploye}
+disabled={!newEmploye.nom.trim() || !newEmploye.poste.trim()}
+>
+<i className="fas fa-plus"></i> Ajouter à l'équipe
+</button>
+</div>
+</div>
+</div>
+)}
+</div>
+</div>
+
+{/* Section Galerie */}
+<div className="profile-section">
+<h2><i className="fas fa-images"></i> Galerie photos</h2>
+<div className="section-content">
+{!editMode ? (
+<div className="gallery-grid">
+{console.log("Photos URLs:", clinique.photos)}
+{clinique.photos?.length > 0 ? (
+clinique.photos.map((photo, index) => (
+<div key={index} className="gallery-item">
+<img src={photo} alt={`Cabinet ${index + 1}`} />
+</div>
+))
+) : (
+<p>Aucune photo disponible.</p>
+)}
+</div>
+) : (
+<div className="edit-form">
+<div className="gallery-edit-container">
+<div className="gallery-edit-grid">
+{editedClinique.photos?.map((photo, index) => (
+<div key={index} className="gallery-edit-item">
+  <img src={photo} alt={`Cabinet ${index + 1}`} />
+  <button 
+    type="button" 
+    className="remove-photo" 
+    onClick={() => handleRemovePhoto(index)}
+  >
+    <i className="fas fa-trash"></i>
+  </button>
+</div>
+))}
+<div className="add-photo-item">
+<label htmlFor="photo-upload" className="photo-upload-label">
+  <i className="fas fa-plus"></i>
+  <span>Ajouter une photo</span>
+</label>
+<input 
+  type="file" 
+  id="photo-upload" 
+  accept="image/*" 
+  onChange={handlePhotoUpload}
+  style={{ display: 'none' }}
+/>
+</div>
+</div>
+</div>
+</div>
+)}
+</div>
+</div>
+</div>
+
+{/* Overlay de chargement pendant les opérations */}
+{loading && (
+<div className="loading-overlay">
+<div className="loading-spinner"></div>
+</div>
+)}
+</div>
+);
 };
 
 export default MaClinique;

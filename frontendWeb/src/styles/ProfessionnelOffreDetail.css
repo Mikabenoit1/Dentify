@@ -1,0 +1,502 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #34607d;
+  --primary-light: #e3f1f8;
+  --secondary-color: #6a9174;
+  --secondary-light: #e8f1eb;
+  --accent-color: #34a9d7;
+  --danger-color: #dc3545;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --text-dark: #333333;
+  --text-medium: #555555;
+  --text-light: #777777;
+  --border-color: #e0e0e0;
+  --background-light: #f8f9fa;
+  --background-lighter: #ffffff;
+  --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 6px 15px rgba(0, 0, 0, 0.1);
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --transition: all 0.3s ease;
+}
+
+.professionnel-offre-detail-container {
+  max-width: 900px;
+  margin: 30px auto;
+  margin-top: 600px;
+  padding: 20px;
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-dark);
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.detail-header h1 {
+  color: var(--primary-color);
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-medium);
+  padding: 10px 15px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.back-button:hover {
+  background-color: var(--background-light);
+  color: var(--primary-color);
+}
+
+.back-button i {
+  font-size: 0.9rem;
+}
+
+.loading-container, .error-container {
+  background-color: var(--background-lighter);
+  border-radius: var(--radius-md);
+  padding: 50px 20px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  margin-top: 20px;
+}
+
+.error-container p {
+  margin-bottom: 20px;
+  color: var(--danger-color);
+}
+
+.application-success-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--secondary-light);
+  border-left: 4px solid var(--success-color);
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+  color: var(--text-dark);
+}
+
+.application-success-banner i {
+  color: var(--success-color);
+  font-size: 1.2rem;
+}
+
+.application-success-banner button {
+  margin-left: auto;
+  background-color: transparent;
+  color: var(--primary-color);
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: underline;
+  padding: 5px;
+  transition: var(--transition);
+}
+
+.application-success-banner button:hover {
+  color: var(--accent-color);
+}
+
+.offer-detail-card {
+  background-color: var(--background-lighter);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.offer-status-header {
+  background-color: var(--background-light);
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.offer-status-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  flex: 1;
+}
+
+.offer-status {
+  display: flex;
+  gap: 10px;
+}
+
+.status-badge {
+  padding: 5px 12px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-badge.active {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+}
+
+.status-badge.pending, .status-badge.attente {
+  background-color: #FFF8E1;
+  color: #F57F17;
+}
+
+.status-badge.expired, .status-badge.archivée {
+  background-color: #ECEFF1;
+  color: #607D8B;
+}
+
+.urgent-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background-color: #FFEBEE;
+  color: #C62828;
+}
+
+.clinique-info {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.clinique-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--accent-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.clinique-details h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.2rem;
+  color: var(--text-dark);
+}
+
+.clinique-details p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-medium);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clinique-details i {
+  color: var(--primary-color);
+}
+
+.offer-details-section {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.offer-detail-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.offer-detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.detail-item {
+  flex: 1;
+  min-width: 250px;
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.detail-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.detail-content h4 {
+  margin: 0 0 5px 0;
+  font-size: 0.9rem;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+.detail-content p {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.offer-description-section, .offer-requirements-section {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.offer-description-section h3, .offer-requirements-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.2rem;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.description-content, .requirements-content {
+  color: var(--text-medium);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.description-content p, .requirements-content p {
+  margin: 0;
+}
+
+.offer-action-section {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.primary-button, .secondary-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+}
+
+.primary-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.primary-button:hover {
+  background-color: #2a4d65;
+}
+
+.secondary-button {
+  background-color: var(--background-light);
+  color: var(--text-medium);
+  border: 1px solid var(--border-color);
+}
+
+.secondary-button:hover {
+  background-color: #e9ecef;
+}
+
+.apply-button {
+  width: 100%;
+  font-size: 1.05rem;
+  padding: 15px;
+}
+
+.other-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.save-button, .share-button {
+  flex: 1;
+}
+
+.application-form {
+  background-color: var(--background-light);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  margin-bottom: 15px;
+}
+
+.application-form h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.2rem;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-medium);
+  font-size: 0.95rem;
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: var(--transition);
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 96, 125, 0.2);
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.cancel-button, .submit-button {
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.cancel-button {
+  background-color: var(--background-light);
+  color: var(--text-medium);
+  border: 1px solid var(--border-color);
+}
+
+.cancel-button:hover {
+  background-color: #e9ecef;
+}
+
+.submit-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+}
+
+.submit-button:hover {
+  background-color: #2a4d65;
+}
+
+.cancel-button:disabled, .submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.already-applied-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--secondary-light);
+  padding: 15px;
+  border-radius: var(--radius-sm);
+  color: var(--text-dark);
+  font-weight: 500;
+  margin-bottom: 0;
+}
+
+.already-applied-message i {
+  color: var(--success-color);
+  font-size: 1.2rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .professionnel-offre-detail-container {
+    padding: 15px;
+  }
+  
+  .detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .back-button {
+    align-self: flex-start;
+  }
+  
+  .offer-status-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .offer-detail-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .detail-item {
+    min-width: auto;
+  }
+  
+  .other-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 576px) {
+  .clinique-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .cancel-button, .submit-button {
+    width: 100%;
+  }
+}

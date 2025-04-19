@@ -10,6 +10,8 @@ const {
 } = require('../models');
 const protect = require('../middlewares/authMiddleware');
 const { creerNotification } = require('../controllers/notificationController');
+const { getOffresProches } = require('../controllers/OffreController');
+
 
 // Fonction de calcul de distance en km
 function calculerDistanceKm(lat1, lon1, lat2, lon2) {
@@ -133,34 +135,44 @@ router.post('/creer', protect, async (req, res) => {
 router.put('/:id', protect, async (req, res) => {
   try {
     const utilisateur = await User.findByPk(req.user.id_utilisateur);
-
     if (!utilisateur || utilisateur.type_utilisateur !== 'clinique') {
       return res.status(403).json({ message: "Seules les cliniques peuvent modifier des offres." });
     }
 
     const offre = await Offre.findByPk(req.params.id);
-
     if (!offre) {
       return res.status(404).json({ message: "Offre non trouvée" });
     }
 
-    if (offre.id_clinique !== utilisateur.id_utilisateur) {
+    const clinique = await CliniqueDentaire.findOne({
+      where: { id_utilisateur: utilisateur.id_utilisateur }
+    });
+
+    if (!clinique || offre.id_clinique !== clinique.id_clinique) {
       return res.status(403).json({ message: "Vous ne pouvez pas modifier cette offre." });
     }
 
     const {
-      titre, descript, type_professionnel, date_publication,
-      date_mission, heure_debut, heure_fin, duree_heures,
+      titre, descript, type_professionnel,
+      date_mission, date_debut, date_fin,
+      heure_debut, heure_fin, duree_heures,
       remuneration, est_urgent, statut, competences_requises,
       latitude, longitude, adresse_complete, date_modification
     } = req.body;
 
     Object.assign(offre, {
-      titre, descript, type_professionnel, date_publication,
-      date_mission, heure_debut, heure_fin, duree_heures,
+      titre, descript, type_professionnel,
+      date_mission, date_debut, date_fin,
+      heure_debut, heure_fin, duree_heures,
       remuneration, est_urgent, statut, competences_requises,
-      latitude, longitude, adresse_complete, date_modification
+      latitude, longitude, adresse_complete,
+      date_modification: date_modification || new Date()
     });
+
+    // 🔐 Important : conserver la date_publication existante si elle existe
+    if (!offre.date_publication) {
+      offre.date_publication = new Date();
+    }
 
     await offre.save();
 
@@ -343,6 +355,30 @@ router.delete('/:id', protect, async (req, res) => {
   }
 });
 
+router.get('/proches', protect, getOffresProches);
 
+// Obtenir une offre par ID
+router.get('/:id', protect, async (req, res) => {
+  try {
+    const offre = await Offre.findByPk(req.params.id);
+    if (!offre) return res.status(404).json({ message: "Offre non trouvée." });
+
+    const utilisateur = await User.findByPk(req.user.id_utilisateur);
+    if (utilisateur.type_utilisateur === 'clinique') {
+      const clinique = await CliniqueDentaire.findOne({
+        where: { id_utilisateur: utilisateur.id_utilisateur }
+      });
+
+      if (!clinique || offre.id_clinique !== clinique.id_clinique) {
+        return res.status(403).json({ message: "Accès interdit à cette offre." });
+      }
+    }
+
+    res.json(offre);
+  } catch (error) {
+    console.error("Erreur lors de la récupération de l'offre :", error);
+    res.status(500).json({ message: "Erreur serveur." });
+  }
+});
 
 module.exports = router;

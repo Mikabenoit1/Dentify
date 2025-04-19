@@ -3,6 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { createOffer, updateOffer, deleteOffer, fetchOfferById } from '../lib/offerApi';
 import '../styles/CliniqueCree.css';
 
+// Formate une heure "HH:MM" proprement
+const formatHeure = (heureStr) => {
+  if (!heureStr || !heureStr.includes(':')) return 'Heure invalide';
+  const [hour, minute] = heureStr.split(':');
+  return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+};
 
 const CliniqueCree = () => {
   const [previewMode, setPreviewMode] = useState(false);
@@ -32,14 +38,23 @@ const CliniqueCree = () => {
       try {
         if (id) {
           const data = await fetchOfferById(id);
-  
+          
+          // Extraction des heures en ignorant les fuseaux horaires
+          const startTime = data.heure_debut 
+            ? extractTimeString(data.heure_debut) 
+            : '09:00';
+          
+          const endTime = data.heure_fin 
+            ? extractTimeString(data.heure_fin) 
+            : '17:00';
+    
           setNewOffer({
             title: data.titre || '',
             profession: data.type_professionnel || 'dentiste',
-            startDate: data.date_mission || '',
-            endDate: data.date_mission || '',
-            startTime: data.heure_debut || '09:00',
-            endTime: data.heure_fin || '17:00',
+            startDate: data.date_debut || '',
+            endDate: data.date_fin || '',
+            startTime: startTime,
+            endTime: endTime,
             description: data.descript || '',
             requirements: data.competences_requises || '',
             compensation: data.remuneration?.toString() || '',
@@ -48,7 +63,7 @@ const CliniqueCree = () => {
               lat: data.latitude || 45.2538,
               lng: data.longitude || -74.1334
             },
-            isSingleDay: true // ← on assume une seule journée pour le moment
+            isSingleDay: data.date_debut === data.date_fin
           });
         }
       } catch (error) {
@@ -58,7 +73,7 @@ const CliniqueCree = () => {
     };
   
     loadOffer();
-  }, [id]);  
+  }, [id]);
 
   // Gère les changements dans le formulaire
   const handleInputChange = (e) => {
@@ -144,6 +159,42 @@ const CliniqueCree = () => {
     setPreviewMode(true);
   };
 
+  const extractTimeString = (dateTime) => {
+    if (!dateTime) return null;
+    
+    try {
+      // 1. Format ISO avec T et Z (UTC)
+      if (typeof dateTime === 'string' && dateTime.includes('T')) {
+        // Extraire directement de la chaîne
+        const timeParts = dateTime.split('T')[1].split(':');
+        if (timeParts.length >= 2) {
+          return `${timeParts[0]}:${timeParts[1]}`;
+        }
+      }
+      
+      // 2. Format heure simple
+      if (typeof dateTime === 'string' && dateTime.includes(':') && !dateTime.includes('T')) {
+        const parts = dateTime.split(':');
+        if (parts.length >= 2) {
+          return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+        }
+      }
+      
+      // 3. Dernier recours
+      const date = new Date(dateTime);
+      if (!isNaN(date.getTime())) {
+        const isoString = date.toISOString();
+        const timePart = isoString.split('T')[1].substring(0, 5);
+        return timePart;
+      }
+      
+      return '09:00'; // Valeur par défaut
+    } catch (error) {
+      console.error("Erreur d'extraction d'heure:", error);
+      return '09:00'; // Valeur par défaut
+    }
+  };
+
   // Formater les dates pour l'affichage
   const formatDateRange = () => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -158,74 +209,93 @@ const CliniqueCree = () => {
   
 
   // Soumission du formulaire avec validation
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-  
-    const requiredFields = {
-      title: newOffer.title,
-      startDate: newOffer.startDate,
-      endDate: newOffer.endDate,
-      startTime: newOffer.startTime,
-      endTime: newOffer.endTime,
-      description: newOffer.description,
-      compensation: newOffer.compensation,
-      location: newOffer.location
-    };
-  
-    const emptyFields = Object.entries(requiredFields)
-      .filter(([_, value]) => !value || value.trim() === '')
-      .map(([key]) => key);
-  
-    if (emptyFields.length > 0) {
-      alert(`Veuillez remplir tous les champs obligatoires avant de publier l'offre: ${emptyFields.join(', ')}`);
-      return;
-    }
-  
-    const coordinates = newOffer.coordinates || { lat: 45.2538, lng: -74.1334 };
-  
-    const calculateDuration = (start, end) => {
-      const [startH, startM] = start.split(':').map(Number);
-      const [endH, endM] = end.split(':').map(Number);
-      return (endH + endM / 60) - (startH + startM / 60);
-    };
-    const heureDebutDatetime = `${newOffer.startDate}T${newOffer.startTime}:00`;
-    const heureFinDatetime = `${newOffer.startDate}T${newOffer.endTime}:00`;
 
-    const offerPayload = {
-      titre: newOffer.title,
-      descript: newOffer.description,
-      type_professionnel: newOffer.profession,
-      date_mission: newOffer.startDate,
-      date_debut: newOffer.startDate,  
-      date_fin: newOffer.endDate, 
-      heure_debut: heureDebutDatetime,
-      heure_fin: heureFinDatetime,
-      duree_heures: calculateDuration(newOffer.startTime, newOffer.endTime), // ✅ correct
-      remuneration: parseFloat(newOffer.compensation),
-      est_urgent: false,
-      statut: 'pending',
-      competences_requises: newOffer.requirements,
-      latitude: coordinates.lat,
-      longitude: coordinates.lng,
-      adresse_complete: newOffer.location,
-      date_modification: new Date().toISOString()
-    };
-  
-    try {
-      if (id) {
-        await updateOffer(id, offerPayload);
-        alert("✅ Offre mise à jour avec succès !");
-      } else {
-        await createOffer(offerPayload);
-        alert("✅ Offre créée avec succès !");
-      }
-  
-      navigate('/clinique-offres');
-    } catch (error) {
-      console.error("❌ Erreur lors de la soumission de l'offre :", error);
-      alert("Erreur lors de la publication de l'offre. Veuillez réessayer.");
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const requiredFields = {
+    title: newOffer.title,
+    startDate: newOffer.startDate,
+    endDate: newOffer.endDate,
+    startTime: newOffer.startTime,
+    endTime: newOffer.endTime,
+    description: newOffer.description,
+    compensation: newOffer.compensation,
+    location: newOffer.location
   };
+
+  const emptyFields = Object.entries(requiredFields)
+    .filter(([_, value]) => !value || value.trim() === '')
+    .map(([key]) => key);
+
+  if (emptyFields.length > 0) {
+    alert(`Veuillez remplir tous les champs obligatoires avant de publier l'offre: ${emptyFields.join(', ')}`);
+    return;
+  }
+
+  const coordinates = newOffer.coordinates || { lat: 45.2538, lng: -74.1334 };
+
+  const calculateDuration = (start, end) => {
+    const [startH, startM] = start.split(':').map(Number);
+    const [endH, endM] = end.split(':').map(Number);
+    return (endH + endM / 60) - (startH + startM / 60);
+  };
+
+  if (!newOffer.startDate || !newOffer.startTime || !newOffer.endTime) {
+    alert("Heures ou dates manquantes — impossible de soumettre l'offre.");
+    return;
+  }
+
+  // Nouvelle fonction pour conserver les heures exactes sans conversion de fuseau horaire
+  const createTimeString = (timeStr) => {
+    // Formatter pour garantir HH:MM
+    const [hours, minutes] = timeStr.split(':');
+    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
+  };
+
+  // Création des dates sans conversion de fuseau horaire
+  const heureDebutStr = createTimeString(newOffer.startTime);
+  const heureFinStr = createTimeString(newOffer.endTime);
+  
+  // Format complet ISO sans conversion automatique
+  const heureDebutDatetime = `${newOffer.startDate}T${heureDebutStr}`;
+  const heureFinDatetime = `${newOffer.startDate}T${heureFinStr}`;
+
+  const offerPayload = {
+    titre: newOffer.title,
+    descript: newOffer.description,
+    type_professionnel: newOffer.profession,
+    date_mission: newOffer.startDate,
+    date_debut: newOffer.startDate,  
+    date_fin: newOffer.endDate, 
+    heure_debut: heureDebutDatetime,
+    heure_fin: heureFinDatetime,
+    duree_heures: calculateDuration(newOffer.startTime, newOffer.endTime),
+    remuneration: parseFloat(newOffer.compensation),
+    est_urgent: false,
+    statut: 'pending',
+    competences_requises: newOffer.requirements,
+    latitude: coordinates.lat,
+    longitude: coordinates.lng,
+    adresse_complete: newOffer.location,
+    date_modification: new Date().toISOString()
+  };
+  
+  try {
+    if (id) {
+      await updateOffer(id, offerPayload);
+      alert("✅ Offre mise à jour avec succès !");
+    } else {
+      await createOffer(offerPayload);
+      alert("✅ Offre créée avec succès !");
+    }
+
+    navigate('/clinique-offres');
+  } catch (error) {
+    console.error("❌ Erreur lors de la soumission de l'offre :", error);
+    alert("Erreur lors de la publication de l'offre. Veuillez réessayer.");
+  }
+};
   
   return (
     <div className="clinique-cree-container">
@@ -259,17 +329,8 @@ const CliniqueCree = () => {
                                               newOffer.profession === 'assistant' ? 'Assistant(e) dentaire' : 
                                               'Hygiéniste dentaire'}</p>
               <p><strong>Période:</strong> {formatDateRange()}</p>
-              <p><strong>Horaires:</strong> {
-  new Date(`${newOffer.startDate}T${newOffer.startTime}`).toLocaleTimeString('fr-CA', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-} à {
-  new Date(`${newOffer.startDate}T${newOffer.endTime}`).toLocaleTimeString('fr-CA', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}</p>
+              <p><strong>Horaires:</strong> {formatHeure(newOffer.startTime)} à {formatHeure(newOffer.endTime)}</p>
+
               <p><strong>Adresse:</strong> {newOffer.location}</p>
             </div>
             

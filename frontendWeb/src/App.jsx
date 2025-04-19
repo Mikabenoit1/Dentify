@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { OffersProvider } from "./components/OffersContext";
 import CliniqueOffreDetail from './components/CliniqueOffreDetail';
+import ProfessionnelOffreDetail from './components/ProfessionnelOffreDetail';
 import OfferCandidates from './components/OfferCandidates';
 import Header from "./components/Header"; // Le Header original pour les pages publiques
 import CliniqueHeader from "./components/CliniqueHeader"; // Header pour les pages clinique et pro
@@ -56,6 +57,7 @@ function App() {
     "/parametres", // Ajouter paramètres aux routes sans Header standard
     "/notifications", // Ajouter notifications aux routes sans Header standard
     "/offres",
+    "/offres/", // Pour les détails d'une offre côté pro
     "/applique",
     "/calendrier",
     "/messagerie",
@@ -70,6 +72,7 @@ function App() {
     "/parametres", // Ajouter paramètres aux routes avec SidebarPro
     "/notifications", // Ajouter notifications aux routes avec SidebarPro
     "/offres",
+    "/offres/", // Pour les détails d'une offre côté pro
     "/applique",
     "/calendrier",
     "/messagerie",
@@ -99,6 +102,7 @@ function App() {
     "/parametres", // Ajouter paramètres aux routes avec chatbot
     "/notifications", // Ajouter notifications aux routes avec chatbot
     "/offres",
+    "/offres/", // Pour les détails d'une offre côté pro
     "/applique",
     "/calendrier",
     "/messagerie"
@@ -165,6 +169,7 @@ function App() {
           <Route path="/principale" element={<Principale />} />
           <Route path="/mon-compte" element={<MonCompte />} />
           <Route path="/offres" element={<ProfessionnelOffres />} />
+          <Route path="/offres/:id" element={<ProfessionnelOffreDetail />} />
           <Route path="/applique" element={<ProfessionnelApplique />} />
           <Route path="/calendrier" element={<ProfessionnelCalendrier />} />
           <Route path="/messagerie" element={<ProfessionnelMessagerie />} />
