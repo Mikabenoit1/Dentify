@@ -1,60 +1,133 @@
 
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, FlatList, Image, StyleSheet, Alert } from "react-native";
 import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import OffreStore from "../utils/OffreStore"; 
+import { getMesOffres, supprimerOffre, archiverOffre } from "../api/offreApi";
+import { useFocusEffect } from '@react-navigation/native';
+import moment from "moment";
 
-export default function Mesoffres({ navigation, route }) {
+export default function Mesoffres({ navigation }) {
   const [activePage, setActivePage] = useState("Mesoffres");
-  const [offres, setOffres] = useState<{ id: string; titre: string; profession: string; date: string; heureDebut: string; heureFin: string; description: string; exigences: string; remuneration: string; }[]>([]);
+  const [offres, setOffres] = useState([]);
 
-
-  // sert à mettre à jour les offres lorsque l'on revient sur la page 
-  useEffect(() => {
-    // pour refresh la liste des offres
-    const refreshOffres = () => {
-      setOffres(OffreStore.getOffres());
-    };
-
-    // donc ça refresh tout de suite
-    refreshOffres();
-
-    // l'écouteur, pour rafraichir à cahque fois qu'on revient sur la page
-    const unsubscribe = navigation.addListener('focus', refreshOffres);
-    
-    
-    return unsubscribe;
-  }, [navigation]);
-
-  // vérifie si nouvelle offre dans les params de route 
-  useEffect(() => {
-    if (route?.params?.newOffre) {
-      // reset pour si nouvelle offre dans storeoffre
-      setOffres(OffreStore.getOffres());
+  const fetchOffres = async () => {
+    try {
+      const data = await getMesOffres();
+      setOffres(data);
+    } catch (error) {
+      console.error("Erreur chargement offres :", error);
+      Alert.alert("Erreur", "Impossible de charger les offres");
     }
-  }, [route?.params?.newOffre]);
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchOffres();
+    }, [])
+  );
 
   const handleNavigation = (page) => {
     setActivePage(page);
     navigation.navigate(page);
   };
 
-
-
-
-  const supprimerOffre = (id) => {
-    OffreStore.supprimerOffre(id);
-    setOffres(OffreStore.getOffres());
+  const handleSupprimer = async (id) => {
+    try {
+      await supprimerOffre(id);
+      fetchOffres();
+    } catch (error) {
+      Alert.alert("Erreur", "Échec de la suppression.");
+    }
   };
+
+  const handleMasquer = async (id) => {
+    try {
+      await archiverOffre(id);
+      fetchOffres();
+    } catch (error) {
+      Alert.alert("Erreur", "Échec du masquage.");
+    }
+  };
+
+  const renderOffre = ({ item }) => {
+    const isPasse =
+      moment(item.date_mission).isBefore(moment(), "day") &&
+      moment(item.heure_fin).isBefore(moment());
+  
+    const confirmerSuppression = () => {
+      Alert.alert(
+        "Confirmation",
+        "Voulez-vous vraiment supprimer cette offre ?",
+        [
+          { text: "Annuler", style: "cancel" },
+          {
+            text: "Supprimer",
+            style: "destructive",
+            onPress: () => handleSupprimer(item.id_offre)
+          }
+        ]
+      );
+    };
+  
+    const confirmerMasquage = () => {
+      Alert.alert(
+        "Masquer l'offre",
+        "Cette offre sera masquée de votre liste. Continuer ?",
+        [
+          { text: "Annuler", style: "cancel" },
+          {
+            text: "Masquer",
+            onPress: () => handleMasquer(item.id_offre)
+          }
+        ]
+      );
+    };
+  
+    return (
+      <View style={styles.offreCard}>
+        <Text style={styles.offreTitle}>{item.titre}</Text>
+        <Text>Profession : {item.type_professionnel}</Text>
+        <Text>Date : {moment(item.date_mission).format("DD MMMM YYYY")}</Text>
+        <Text>Heure début : {moment(item.heure_debut).format("HH:mm")}</Text>
+        <Text>Heure fin : {moment(item.heure_fin).format("HH:mm")}</Text>
+        <Text>Description : {item.descript}</Text>
+        <Text>Exigences : {item.competences_requises}</Text>
+        <Text>Salaire : {item.remuneration} $</Text>
+        {item.acceptedBy && (
+          <Text style={{ fontWeight: "bold", marginTop: 5 }}>
+            Acceptée par {item.acceptedBy}
+          </Text>
+        )}
+  
+        {/* Bouton Supprimer */}
+        <TouchableOpacity
+          onPress={confirmerSuppression}
+          style={styles.supprimeroffre}
+        >
+          <Text style={styles.supprimeroffreText}>Supprimer</Text>
+        </TouchableOpacity>
+  
+        {/* Bouton Masquer si passé + acceptée */}
+        {item.acceptedBy && isPasse && (
+          <TouchableOpacity
+            onPress={confirmerMasquage}
+            style={[styles.supprimeroffre, { backgroundColor: "#888", marginTop: 5 }]}
+          >
+            <Text style={styles.supprimeroffreText}>Masquer</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
+  
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
-        
         <View style={styles.rightIcons}>
-          <TextInput style={styles.searchInput} placeholder="Recherche..." placeholderTextColor="#999"/>
+          <TextInput style={styles.searchInput} placeholder="Recherche..." placeholderTextColor="#999" />
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('MessageListeScreen')}>
             <AntDesign style={styles.iconText} name="message1" />
           </TouchableOpacity>
@@ -64,34 +137,18 @@ export default function Mesoffres({ navigation, route }) {
         </View>
       </View>
 
-      {/* Page content */}
       <View style={styles.container2}>
         <Text style={styles.titleoffre}>Mes Offres</Text>
 
         <FlatList
           data={offres}
-          keyExtractor={(item) => item.id || String(Math.random())}
-          renderItem={({ item }) => (
-            <View style={styles.offreCard}>
-              <Text style={styles.offreTitle}>{item.titre}</Text>
-              <Text>Profession : {item.profession}</Text>
-              <Text>Date : {item.date}</Text>
-              <Text>Heure de début : {item.heureDebut}</Text>
-              <Text>Heure de fin : {item.heureFin}</Text>
-              <Text>Description : {item.description}</Text>
-              <Text>Exigences : {item.exigences}</Text>
-              <Text>Salaire : {item.remuneration}</Text>
-
-              <TouchableOpacity onPress={() => supprimerOffre(item.id)} style={styles.supprimeroffre}>
-                <Text style={styles.supprimeroffreText}>Supprimer</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          keyExtractor={(item) => item.id_offre.toString()}
+          renderItem={renderOffre}
           ListEmptyComponent={<Text style={styles.emptyText}>Aucune offre pour le moment.</Text>}
         />
 
-        <TouchableOpacity 
-          style={styles.addButton} 
+        <TouchableOpacity
+          style={styles.addButton}
           onPress={() => navigation.navigate("CreationOffre")}
         >
           <AntDesign name="plus" size={24} color="white" />
@@ -99,50 +156,25 @@ export default function Mesoffres({ navigation, route }) {
         </TouchableOpacity>
       </View>
 
-      {/* Barre de tâche */}
+      {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("Mesoffres")}
-        >
-          <AntDesign name="calendar" size={24} color="black"   />
-
-          <Text
-            style={[
-              styles.footerTextClick,
-              activePage === "Mesoffres" && styles.activeButtonText,
-            ]}
-          >
+        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("Mesoffres")}>
+          <AntDesign name="calendar" size={24} color="black" />
+          <Text style={[styles.footerTextClick, activePage === "Mesoffres" && styles.activeButtonText]}>
             Mes offres
           </Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("CreationOffre")}
-        >
-          <Ionicons style={styles.footerIcon} name="create-outline" /> 
-          <Text
-            style={[
-              styles.footerText,
-              activePage === "CreationOffre" && styles.activeButtonText,
-            ]}
-          >
+
+        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("CreationOffre")}>
+          <Ionicons style={styles.footerIcon} name="create-outline" />
+          <Text style={[styles.footerText, activePage === "CreationOffre" && styles.activeButtonText]}>
             Création d'une offre
           </Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("AccueilMoreCli")}
-        >
+
+        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("AccueilMoreCli")}>
           <AntDesign style={styles.footerIcon} name="ellipsis1" />
-          <Text
-            style={[
-              styles.footerText,
-              activePage === "AccueilMore" && styles.activeButtonText,
-            ]}
-          >
+          <Text style={[styles.footerText, activePage === "AccueilMore" && styles.activeButtonText]}>
             More
           </Text>
         </TouchableOpacity>

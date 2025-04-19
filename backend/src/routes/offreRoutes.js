@@ -10,6 +10,7 @@ const {
 } = require('../models');
 const protect = require('../middlewares/authMiddleware');
 const { creerNotification } = require('../controllers/notificationController');
+const { Op } = require('sequelize'); 
 
 // Fonction de calcul de distance en km
 function calculerDistanceKm(lat1, lon1, lat2, lon2) {
@@ -31,10 +32,13 @@ router.get('/', protect, async (req, res) => {
     const utilisateur = await User.findByPk(req.user.id_utilisateur);
 
     let offres = await Offre.findAll({
+      include: [
+        { model: Candidature },
+        { model: CliniqueDentaire } 
+      ],
       order: [['date_publication', 'DESC']]
     });
 
-    // Si l'utilisateur est un professionnel, appliquer les filtres
     if (utilisateur && utilisateur.type_utilisateur === 'professionnel') {
       const professionnel = await ProfessionnelDentaire.findOne({
         where: { id_utilisateur: utilisateur.id_utilisateur }
@@ -44,13 +48,17 @@ router.get('/', protect, async (req, res) => {
         return res.status(400).json({ message: "Professionnel introuvable." });
       }
 
-      const rayonKm = parseFloat(req.query.rayon) || null;         // ?rayon=15
-      const type = req.query.type || null;                         // ?type=hygiéniste
-      const salaireMin = parseFloat(req.query.salaire_min) || null; // ?salaire_min=40
+      const rayonKm = parseFloat(req.query.rayon) || null;
+      const type = req.query.type || null;
+      const salaireMin = parseFloat(req.query.salaire_min) || null;
 
+      // Exclure les offres déjà acceptées par un autre professionnel
       offres = offres.filter(offre => {
-        const correspondanceType =
-          !type || offre.type_professionnel === type;
+        const hasOtherAcceptedCandidature = offre.Candidatures?.some(c =>
+          c.statut === 'acceptee' && c.id_professionnel !== professionnel.id_professionnel
+        );
+
+        const correspondanceType = !type || offre.type_professionnel === type;
 
         const correspondanceDistance =
           !rayonKm || (offre.latitude && offre.longitude &&
@@ -61,10 +69,9 @@ router.get('/', protect, async (req, res) => {
               offre.longitude
             ) <= rayonKm);
 
-        const correspondanceSalaire =
-          !salaireMin || (offre.remuneration >= salaireMin);
+        const correspondanceSalaire = !salaireMin || (offre.remuneration >= salaireMin);
 
-        return correspondanceType && correspondanceDistance && correspondanceSalaire;
+        return !hasOtherAcceptedCandidature && correspondanceType && correspondanceDistance && correspondanceSalaire;
       });
     }
 
@@ -74,6 +81,7 @@ router.get('/', protect, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
 
 
 // ✅ Créer une offre de travail (réservé aux cliniques)
@@ -114,11 +122,15 @@ router.post('/creer', protect, async (req, res) => {
       est_urgent,
       statut,
       competences_requises,
-      latitude,
-      longitude,
-      adresse_complete,
+    
+      // 🔥 Ces champs sont remplis automatiquement avec les infos de la clinique
+      latitude: clinique.latitude,
+      longitude: clinique.longitude,
+      adresse_complete: clinique.adresse_complete,
+    
       date_modification
     });
+    
 
     res.status(201).json(nouvelleOffre);
   } catch (error) {
@@ -280,5 +292,108 @@ router.put('/refuser/:id', protect, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
+// ✅ Obtenir les offres de la clinique connectée (non archivées)
+router.get('/mes-offres', protect, async (req, res) => {
+  try {
+    const utilisateur = await User.findByPk(req.user.id_utilisateur);
+
+    if (!utilisateur || utilisateur.type_utilisateur !== 'clinique') {
+      return res.status(403).json({ message: "Seules les cliniques peuvent voir leurs offres." });
+    }
+
+    const clinique = await CliniqueDentaire.findOne({
+      where: { id_utilisateur: utilisateur.id_utilisateur }
+    });
+
+    if (!clinique) {
+      return res.status(404).json({ message: "Clinique introuvable." });
+    }
+
+    const offres = await Offre.findAll({
+      where: {
+        id_clinique: clinique.id_clinique,
+        statut: { [Op.ne]: 'archivée' }
+      },
+      order: [['date_mission', 'DESC']],
+      include: [
+        {
+          model: Candidature,
+          where: { statut: 'acceptee' },
+          required: false,
+          include: [{
+            model: ProfessionnelDentaire,
+            include: [{ model: User }]
+          }]
+        }
+      ]
+    });
+
+    const offresAvecProfessionnel = offres.map(offre => {
+      const offreJson = offre.toJSON();
+
+      if (offreJson.Candidatures?.length > 0) {
+        const pro = offreJson.Candidatures[0].ProfessionnelDentaire?.User;
+        if (pro) {
+          offreJson.acceptedBy = `${pro.prenom} ${pro.nom}`;
+        }
+      }
+
+      // On garde le reste intact, y compris latitude, longitude, adresse, etc.
+      return offreJson;
+    });
+
+    res.json(offresAvecProfessionnel);
+  } catch (error) {
+    console.error('❌ Erreur récupération mes offres :', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ✅ Supprimer ou archiver une offre (selon contraintes)
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const utilisateur = await User.findByPk(req.user.id_utilisateur);
+
+    if (!utilisateur || utilisateur.type_utilisateur !== 'clinique') {
+      return res.status(403).json({ message: "Seules les cliniques peuvent supprimer des offres." });
+    }
+
+    const offre = await Offre.findByPk(req.params.id);
+
+    if (!offre) {
+      return res.status(404).json({ message: "Offre non trouvée" });
+    }
+
+    const clinique = await CliniqueDentaire.findOne({
+      where: { id_utilisateur: utilisateur.id_utilisateur }
+    });
+
+    if (!clinique || offre.id_clinique !== clinique.id_clinique) {
+      return res.status(403).json({ message: "Cette offre ne vous appartient pas." });
+    }
+
+    try {
+      await offre.destroy();
+      return res.json({ message: "Offre supprimée avec succès" });
+    } catch (error) {
+      if (error.name === 'SequelizeForeignKeyConstraintError') {
+        // Si la suppression échoue à cause de contraintes, on archive
+        offre.statut = 'archivée';
+        await offre.save();
+        return res.json({
+          message: "Offre liée à d'autres données. Elle a été archivée à la place."
+        });
+      } else {
+        throw error;
+      }
+    }
+  } catch (error) {
+    console.error("Erreur suppression offre :", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+
 
 module.exports = router;

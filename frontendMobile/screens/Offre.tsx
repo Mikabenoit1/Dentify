@@ -1,223 +1,142 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, RefreshControl } from 'react-native';
-import { AntDesign, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import { useAppContext } from '../utils/AppContext';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, RefreshControl, Alert } from 'react-native';
+import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getOffresDisponibles, accepterOffre, getCandidaturesPro, annulerCandidature } from '../api/offreApi';
 
-const Offre = ({ navigation }) => {
-  const { offers, acceptOffer, reloadOffers } = useAppContext();
-  const [refreshing, setRefreshing] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [visibleOffers, setVisibleOffers] = React.useState(3);
-  const [activePage, setActivePage] = React.useState("Offre");
+export default function Offre({ navigation }) {
+  const [offers, setOffers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [candidatures, setCandidatures] = useState([]);
 
-  const filteredOffers = offers.filter(offer =>
-    offer.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    offer.clinic.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const fetchOffers = async () => {
+    try {
+      const [offresData, candidaturesData] = await Promise.all([
+        getOffresDisponibles(),
+        getCandidaturesPro()
+      ]);
+
+      setOffers(offresData);
+      setCandidatures(candidaturesData);
+    } catch (error) {
+      console.error('Erreur récupération offres/candidatures :', error);
+    }
+  };
+
+  const acceptOffer = async (id_offre) => {
+    try {
+      await accepterOffre(id_offre);
+      Alert.alert("Succès", "Offre acceptée avec succès !");
+      fetchOffers();
+    } catch (error) {
+      console.error("Erreur acceptation :", error);
+      Alert.alert("Erreur", error.message || "Impossible d'accepter l'offre");
+    }
+  };
+
+  const cancelOffer = (id_offre) => {
+    Alert.alert(
+      "Confirmation",
+      "Es-tu sûr de vouloir annuler ton acceptation de cette offre?",
+      [
+        { text: "Non", style: "cancel" },
+        {
+          text: "Oui", onPress: async () => {
+            try {
+              await annulerCandidature(id_offre);
+              Alert.alert("Annulation", "Votre acceptation a été annulée.");
+              fetchOffers();
+            } catch (error) {
+              console.error("Erreur annulation :", error);
+              Alert.alert("Erreur", error.message || "Impossible d'annuler l'acceptation");
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const isOfferAccepted = (id_offre) => {
+    return candidatures.some(
+      (c) => c.id_offre === id_offre && c.statut === 'acceptee'
+    );
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await reloadOffers();
+    await fetchOffers();
     setRefreshing(false);
   };
 
-  const loadMoreOffers = () => {
-    setVisibleOffers(prev => prev + 3);
-  };
-
-  const handleNavigation = (page) => {
-    setActivePage(page);
-    navigation.navigate(page);
-  };
+  useEffect(() => {
+    fetchOffers();
+  }, []);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-  <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
-  
-  <View style={styles.rightIcons}>
-    <TextInput 
-      style={styles.searchInput} 
-      placeholder="Recherche..." 
-      placeholderTextColor="#999"
-      value={searchQuery}
-      onChangeText={setSearchQuery}
-    />
-    <TouchableOpacity onPress={() => navigation.navigate('Notification')}>
-      <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => navigation.navigate('MessageListeScreen')}>
-      <AntDesign name="message1" size={22} color="white" />
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => navigation.navigate('Profil')}>
-      <MaterialCommunityIcons name="account-circle-outline" size={24} color="white" />
-    </TouchableOpacity>
-  </View>
-</View>
+        <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
+        <View style={styles.rightIcons}>
+          <TextInput style={styles.searchInput} placeholder="Recherche..." value={searchQuery} onChangeText={setSearchQuery} />
+          <TouchableOpacity onPress={() => navigation.navigate('Notification')}>
+            <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('MessageListeScreen')}>
+            <AntDesign name="message1" size={22} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Profil')}>
+            <MaterialCommunityIcons name="account-circle-outline" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={['#6a9174']}
-            tintColor="#6a9174"
-          />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#6a9174']} />}
       >
         <Text style={styles.mainTitle}>Offres disponibles</Text>
-        
-        {filteredOffers.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <MaterialIcons name="search-off" size={50} color="#6a9174" />
-            <Text style={styles.emptyText}>
-              {searchQuery ? 'Aucun résultat trouvé' : 'Aucune offre disponible'}
-            </Text>
-            <TouchableOpacity 
-              style={styles.reloadButton}
-              onPress={onRefresh}
-            >
-              <AntDesign name="reload1" size={20} color="#6a9174" />
-              <Text style={styles.reloadText}>Recharger les offres</Text>
-            </TouchableOpacity>
-          </View>
+
+        {offers.length === 0 ? (
+          <Text style={styles.emptyText}>Aucune offre disponible.</Text>
         ) : (
-          <>
-            <View style={styles.subtitleContainer}>
-              <Text style={styles.subtitle}>Toutes</Text>
-              <Text style={[styles.subtitle, styles.activeSubtitle]}>• Proches</Text>
-            </View>
+          offers.map((offer) => {
+            const accepted = isOfferAccepted(offer.id_offre);
 
-            {filteredOffers.slice(0, visibleOffers).map((offer) => (
-              <View key={offer.id} style={styles.offerCard}>
-                <Text style={styles.offerTitle}>{offer.title}</Text>
-                <Text style={styles.offerPrice}>{offer.price}</Text>
-                
-                <View style={styles.clinicInfo}>
-                  <Text style={styles.clinicName}>{offer.clinic}</Text>
-                  <View style={styles.ratingContainer}>
-                    <AntDesign name="star" size={16} color="#f39c12" />
-                    <Text style={styles.ratingText}>{offer.rating}</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.detailsRow}>
-                  <View style={styles.detailItem}>
-                    <MaterialIcons name="access-time" size={16} color="#7f8c8d" />
-                    <Text style={styles.detailText}>{offer.duration}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <MaterialCommunityIcons name="map-marker-distance" size={16} color="#7f8c8d" />
-                    <Text style={styles.detailText}>{offer.distance}</Text>
-                  </View>
-                </View>
+            return (
+              <View key={offer.id_offre} style={styles.offerCard}>
+                <Text style={styles.offerTitle}>{offer.titre}</Text>
+                <Text style={styles.offerPrice}>{offer.remuneration} $ /h</Text>
+                <Text style={styles.offerDetail}>Clinique : {offer.CliniqueDentaire?.nom || 'Inconnue'}</Text>
+                <Text style={styles.offerDetail}>Adresse : {offer.adresse_complete}, {offer.CliniqueDentaire?.ville || ''}</Text>
+                <Text style={styles.offerDetail}>Type recherché : {offer.type_professionnel}</Text>
+                <Text style={styles.offerDetail}>Description : {offer.descript}</Text>
+                <Text style={styles.offerDetail}>Date : {new Date(offer.date_mission).toLocaleDateString()}</Text>
+                <Text style={styles.offerDetail}>Heure : {offer.heure_debut?.slice(11, 16)} à {offer.heure_fin?.slice(11, 16)}</Text>
 
-                <TouchableOpacity 
-                  style={[
-                    styles.reserveButton, 
-                    offer.accepted && styles.acceptedButton
-                  ]} 
-                  onPress={() => acceptOffer(offer.id)}
-                  disabled={offer.accepted}
+                {accepted && (
+                  <Text style={styles.acceptedText}>✔️ Offre déjà acceptée</Text>
+                )}
+
+                <TouchableOpacity
+                  style={[styles.reserveButton, accepted && styles.acceptedButton]}
+                  onPress={() => accepted ? cancelOffer(offer.id_offre) : acceptOffer(offer.id_offre)}
                 >
                   <Text style={styles.reserveButtonText}>
-                    {offer.accepted ? (
-                      <>
-                        <AntDesign name="checkcircle" size={16} color="white" /> Accepté
-                      </>
-                    ) : (
-                      'Accepter cette offre'
-                    )}
+                    {accepted ? "Annuler l'acceptation" : "Accepter cette offre"}
                   </Text>
                 </TouchableOpacity>
               </View>
-            ))}
-
-            {visibleOffers < filteredOffers.length && (
-              <TouchableOpacity 
-                style={styles.discoverButton}
-                onPress={loadMoreOffers}
-              >
-                <Text style={styles.discoverText}>Voir plus d'offres</Text>
-                <AntDesign name="arrowright" size={16} color="#3498db" />
-              </TouchableOpacity>
-            )}
-          </>
+            );
+          })
         )}
       </ScrollView>
-
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("Horaire")}
-        >
-          <AntDesign name="profile" size={24} color="white" />
-          <Text
-            style={[
-              styles.footerText,
-              activePage === "Horaire" && styles.activeButtonText,
-            ]}
-          >
-            Horaire
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("Offre")}
-        >
-          <MaterialIcons name="work-outline" size={24} color="black" />
-          <Text
-            style={[
-              styles.footerTextClick,
-              activePage === "Offre" && styles.activeButtonText,
-            ]}
-          >
-            Offre
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("Calendrier")}
-        >
-          <AntDesign name="calendar" size={24} color="white" />
-          <Text
-            style={[
-              styles.footerText,
-              activePage === "Calendrier" && styles.activeButtonText,
-            ]}
-          >
-            Calendrier
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("AccueilMore")}
-        >
-          <MaterialIcons name="more-horiz" size={24} color="white" />
-          <Text
-            style={[
-              styles.footerText,
-              activePage === "AccueilMore" && styles.activeButtonText,
-            ]}
-          >
-            Plus
-          </Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "space-between",
-    backgroundColor: "#fbf2e8",
-  },
+  container: { flex: 1, backgroundColor: '#fbf2e8' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -225,16 +144,8 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: '#6a9174',
   },
-  logo: {
-    width: 100,
-    height: 50,
-    resizeMode: 'contain',
-  },
-  rightIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
-  },
+  logo: { width: 100, height: 50 },
+  rightIcons: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   searchInput: {
     width: 120,
     borderWidth: 1,
@@ -244,32 +155,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     fontSize: 14,
   },
-  iconButton: {
-    marginLeft: 15,
-  },
-  scrollContent: {
-    padding: 15,
-    paddingBottom: 100,
-  },
-  mainTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 15,
-  },
-  subtitleContainer: {
-    flexDirection: 'row',
-    marginVertical: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#7f8c8d',
-    marginRight: 15,
-  },
-  activeSubtitle: {
-    fontWeight: 'bold',
-    color: '#2c3e50',
-  },
+  scrollContent: { padding: 15, paddingBottom: 100 },
+  mainTitle: { fontSize: 24, fontWeight: 'bold', color: '#2c3e50', marginBottom: 15 },
   offerCard: {
     backgroundColor: 'white',
     borderRadius: 10,
@@ -281,129 +168,20 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  offerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-  },
-  offerPrice: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginVertical: 8,
-  },
-  clinicInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  clinicName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#3498db',
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingText: {
-    fontSize: 14,
-    color: '#f39c12',
-    marginLeft: 5,
-  },
-  detailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  detailText: {
-    fontSize: 14,
-    color: '#7f8c8d',
-    marginLeft: 5,
-  },
+  offerTitle: { fontSize: 18, fontWeight: 'bold', color: '#2c3e50' },
+  offerPrice: { fontSize: 20, fontWeight: 'bold', color: '#6a9174', marginVertical: 5 },
+  offerDetail: { fontSize: 14, color: '#34495e', marginVertical: 1 },
   reserveButton: {
     backgroundColor: '#6a9174',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 10,
   },
   acceptedButton: {
     backgroundColor: '#4CAF50',
   },
-  reserveButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  discoverButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 15,
-    padding: 10,
-  },
-  discoverText: {
-    fontSize: 16,
-    color: '#3498db',
-    fontWeight: 'bold',
-    marginRight: 5,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  emptyText: {
-    fontSize: 18,
-    color: '#2c3e50',
-    marginTop: 15,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  reloadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#6a9174',
-    borderRadius: 20,
-  },
-  reloadText: {
-    marginLeft: 5,
-    color: '#6a9174',
-    fontWeight: 'bold',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 15,
-    backgroundColor: '#6a9174',
-    borderTopWidth: 1,
-    borderTopColor: '#ccc',
-  },
-  footerButton: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  footerText: {
-    fontSize: 12,
-    color: 'white',
-    marginTop: 5,
-  },
-  footerTextClick: {
-    fontSize: 12,
-    color: 'black',
-    marginTop: 5,
-  },
-  activeButtonText: {
-    textDecorationLine: "underline",
-  },
+  reserveButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  emptyText: { textAlign: 'center', marginTop: 20, color: '#7f8c8d', fontSize: 16 },
+  acceptedText: { color: '#2c3e50', fontStyle: 'italic', marginTop: 5 },
 });
-
-export default Offre;

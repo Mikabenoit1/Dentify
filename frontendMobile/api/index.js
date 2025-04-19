@@ -11,7 +11,7 @@ if (Platform.OS === "web") {
     : `https://371b-142-137-176-156.ngrok-free.app/api/users`; // NGROK pour le web déployé
 } else {
   // Sur mobile physique ou simulateur
-  BASE_URL = "http://172.20.10.6:4000/api/users";
+  BASE_URL = "http://172.16.8.102:4000/api/users";
 }
 
 // Fonction générique
