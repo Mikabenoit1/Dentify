@@ -80,4 +80,36 @@ router.get('/professionnel/:id', async (req, res) => {
   }
 });
 
+// ✅ GET : Voir les candidatures de l'utilisateur connecté
+router.get('/moi', protect, async (req, res) => {
+  try {
+    const utilisateurId = req.user.id_utilisateur;
+
+    const professionnel = await ProfessionnelDentaire.findOne({
+      where: { id_utilisateur: utilisateurId }
+    });
+
+    if (!professionnel) {
+      return res.status(403).json({ message: 'Accès réservé aux professionnels.' });
+    }
+
+    const candidatures = await Candidature.findAll({
+      where: { id_professionnel: professionnel.id_professionnel },
+      include: [
+        {
+          model: Offre,
+          include: [CliniqueDentaire]
+        }
+      ],
+      order: [['date_candidature', 'DESC']]
+    });
+
+    res.status(200).json(candidatures);
+  } catch (error) {
+    console.error('❌ Erreur lors de la récupération des candidatures :', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+
 module.exports = router;

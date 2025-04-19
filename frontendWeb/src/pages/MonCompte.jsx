@@ -302,6 +302,10 @@ const handleEdit = () => {
     try {
       // Envoyer les données au serveur via l'API
       const apiData = transformComponentDataToApiFormat(editedProfile);
+      if (editedProfile.coordinates) {
+        apiData.latitude = editedProfile.coordinates.lat;
+        apiData.longitude = editedProfile.coordinates.lng;
+      }
       setLoading(true);
       await updateUserProfile(apiData);
       setProfile({...editedProfile});

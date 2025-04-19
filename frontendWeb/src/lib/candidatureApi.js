@@ -31,3 +31,30 @@ export const postulerOffre = async (offerId) => {
       throw error;
     }
   };
+
+  export const fetchUserCandidatures = async () => {
+    return await apiFetch('/candidatures/moi');
+  };
+
+  export const postulerAOffre = async (offreId) => {
+    try {
+      const response = await apiFetch(`/offres/postuler/${offreId}`, {
+        method: 'POST'
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  };
+  export const retirerCandidatureAPI = async (id) => {
+    try {
+      return await apiFetch(`/offres/candidatures/${id}`, {
+        method: 'DELETE'
+      });
+    } catch (error) {
+      throw error;
+    }
+  };
+  
+
+  

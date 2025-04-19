@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { createOffer, updateOffer, deleteOffer, fetchOfferById } from '../lib/offerApi';
 import '../styles/CliniqueCree.css';
 
+
+
 // Formate une heure "HH:MM" proprement
 const formatHeure = (heureStr) => {
   if (!heureStr || !heureStr.includes(':')) return 'Heure invalide';
@@ -14,7 +16,7 @@ const CliniqueCree = () => {
   const [previewMode, setPreviewMode] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams(); // Pour l'édition
-  const addressInputRef = useRef(null);
+  const addressRef = useRef(null);
   
   // État pour le formulaire de création d'offre avec heures
   const [newOffer, setNewOffer] = useState({
@@ -210,93 +212,119 @@ const CliniqueCree = () => {
 
   // Soumission du formulaire avec validation
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  const requiredFields = {
-    title: newOffer.title,
-    startDate: newOffer.startDate,
-    endDate: newOffer.endDate,
-    startTime: newOffer.startTime,
-    endTime: newOffer.endTime,
-    description: newOffer.description,
-    compensation: newOffer.compensation,
-    location: newOffer.location
-  };
-
-  const emptyFields = Object.entries(requiredFields)
-    .filter(([_, value]) => !value || value.trim() === '')
-    .map(([key]) => key);
-
-  if (emptyFields.length > 0) {
-    alert(`Veuillez remplir tous les champs obligatoires avant de publier l'offre: ${emptyFields.join(', ')}`);
-    return;
-  }
-
-  const coordinates = newOffer.coordinates || { lat: 45.2538, lng: -74.1334 };
-
-  const calculateDuration = (start, end) => {
-    const [startH, startM] = start.split(':').map(Number);
-    const [endH, endM] = end.split(':').map(Number);
-    return (endH + endM / 60) - (startH + startM / 60);
-  };
-
-  if (!newOffer.startDate || !newOffer.startTime || !newOffer.endTime) {
-    alert("Heures ou dates manquantes — impossible de soumettre l'offre.");
-    return;
-  }
-
-  // Nouvelle fonction pour conserver les heures exactes sans conversion de fuseau horaire
-  const createTimeString = (timeStr) => {
-    // Formatter pour garantir HH:MM
-    const [hours, minutes] = timeStr.split(':');
-    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
-  };
-
-  // Création des dates sans conversion de fuseau horaire
-  const heureDebutStr = createTimeString(newOffer.startTime);
-  const heureFinStr = createTimeString(newOffer.endTime);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
   
-  // Format complet ISO sans conversion automatique
-  const heureDebutDatetime = `${newOffer.startDate}T${heureDebutStr}`;
-  const heureFinDatetime = `${newOffer.startDate}T${heureFinStr}`;
-
-  const offerPayload = {
-    titre: newOffer.title,
-    descript: newOffer.description,
-    type_professionnel: newOffer.profession,
-    date_mission: newOffer.startDate,
-    date_debut: newOffer.startDate,  
-    date_fin: newOffer.endDate, 
-    heure_debut: heureDebutDatetime,
-    heure_fin: heureFinDatetime,
-    duree_heures: calculateDuration(newOffer.startTime, newOffer.endTime),
-    remuneration: parseFloat(newOffer.compensation),
-    est_urgent: false,
-    statut: 'pending',
-    competences_requises: newOffer.requirements,
-    latitude: coordinates.lat,
-    longitude: coordinates.lng,
-    adresse_complete: newOffer.location,
-    date_modification: new Date().toISOString()
-  };
+    const requiredFields = {
+      title: newOffer.title,
+      startDate: newOffer.startDate,
+      endDate: newOffer.endDate,
+      startTime: newOffer.startTime,
+      endTime: newOffer.endTime,
+      description: newOffer.description,
+      compensation: newOffer.compensation,
+      location: newOffer.location
+    };
   
-  try {
-    if (id) {
-      await updateOffer(id, offerPayload);
-      alert("✅ Offre mise à jour avec succès !");
-    } else {
-      await createOffer(offerPayload);
-      alert("✅ Offre créée avec succès !");
+    const emptyFields = Object.entries(requiredFields)
+      .filter(([_, value]) => !value || value.trim() === '')
+      .map(([key]) => key);
+  
+    if (emptyFields.length > 0) {
+      alert(`Veuillez remplir tous les champs obligatoires avant de publier l'offre: ${emptyFields.join(', ')}`);
+      return;
     }
-
-    navigate('/clinique-offres');
-  } catch (error) {
-    console.error("❌ Erreur lors de la soumission de l'offre :", error);
-    alert("Erreur lors de la publication de l'offre. Veuillez réessayer.");
-  }
-};
   
+    const coordinates = newOffer.coordinates || { lat: 45.2538, lng: -74.1334 };
+  
+    const calculateDuration = (start, end) => {
+      const [startH, startM] = start.split(':').map(Number);
+      const [endH, endM] = end.split(':').map(Number);
+      return (endH + endM / 60) - (startH + startM / 60);
+    };
+  
+    if (!newOffer.startDate || !newOffer.startTime || !newOffer.endTime) {
+      alert("Heures ou dates manquantes — impossible de soumettre l'offre.");
+      return;
+    }
+  
+    // Format heure comme string HH:MM:SS pour éviter les conversions timezone
+    const heureDebutDatetime = newOffer.startTime + ':00';
+    const heureFinDatetime = newOffer.endTime + ':00';
+  
+    const offerPayload = {
+      titre: newOffer.title,
+      descript: newOffer.description,
+      type_professionnel: newOffer.profession,
+      date_mission: newOffer.startDate,
+      date_debut: newOffer.startDate,  
+      date_fin: newOffer.endDate, 
+      heure_debut: heureDebutDatetime,
+      heure_fin: heureFinDatetime,
+      duree_heures: calculateDuration(newOffer.startTime, newOffer.endTime),
+      remuneration: parseFloat(newOffer.compensation),
+      est_urgent: false,
+      statut: 'pending',
+      competences_requises: newOffer.requirements,
+      latitude: coordinates.lat,
+      longitude: coordinates.lng,
+      adresse_complete: newOffer.location,
+      date_modification: new Date().toISOString()
+    };
+  
+    try {
+      if (id) {
+        await updateOffer(id, offerPayload);
+        alert("✅ Offre mise à jour avec succès !");
+      } else {
+        await createOffer(offerPayload);
+        alert("✅ Offre créée avec succès !");
+      }
+  
+      navigate('/clinique-offres');
+    } catch (error) {
+      console.error("❌ Erreur lors de la soumission de l'offre :", error);
+      alert("Erreur lors de la publication de l'offre. Veuillez réessayer.");
+    }
+  };
+
+  const initializeAutocomplete = () => {
+    if (addressRef.current && window.google) {
+      const autocomplete = new window.google.maps.places.Autocomplete(addressRef.current, {
+        types: ['address'],
+        componentRestrictions: { country: ['ca'] } // adapte à ta localisation
+      });
+  
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place && place.formatted_address && place.geometry) {
+          setNewOffer((prev) => ({
+            ...prev,
+            location: place.formatted_address,
+            coordinates: {
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng()
+            }
+          }));
+        }
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!window.google) {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDpqnb3oy6kW0e3vybt6foVnTWF_9_NA30&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeAutocomplete;
+      document.body.appendChild(script);
+    } else {
+      initializeAutocomplete();
+    }
+  }, []);
+  
+
   return (
     <div className="clinique-cree-container">
       <div className="create-offer-section">
@@ -472,9 +500,9 @@ const handleSubmit = async (e) => {
                     id="location"
                     name="location"
                     value={newOffer.location}
-                    onChange={handleInputChange}
+                    onChange={(e) => setNewOffer({ ...newOffer, location: e.target.value })}
                     placeholder="Entrez l'adresse du cabinet"
-                    ref={addressInputRef}
+                    ref={addressRef}
                     required
                   />
                   <small className="help-text">

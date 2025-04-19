@@ -118,6 +118,8 @@ const updateProfile = async (req, res) => {
         pro.description = req.body.description ?? pro.description;
         pro.vehicule = req.body.vehicule ?? pro.vehicule;
         pro.regions = req.body.regions ?? pro.regions;
+        pro.latitude = req.body.latitude ?? pro.latitude;
+        pro.longitude = req.body.longitude ?? pro.longitude;
         pro.date_debut_dispo = req.body.date_debut_dispo ?? pro.date_debut_dispo;
         pro.date_fin_dispo = req.body.date_fin_dispo ?? pro.date_fin_dispo;
         pro.jours_disponibles = req.body.jours_disponibles ?? pro.jours_disponibles;
@@ -207,7 +209,9 @@ if (user.type_utilisateur === "clinique") {
 const profil = {
   ...user.toJSON(),
   ...(pro?.toJSON?.() || {}),
-  ...(clinique?.toJSON?.() || {})
+  ...(clinique?.toJSON?.() || {}),
+  latitude: pro?.latitude ?? null,
+  longitude: pro?.longitude ?? null
 };
 
 

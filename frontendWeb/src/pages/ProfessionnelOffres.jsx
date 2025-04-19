@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchNearbyOffersAPI } from '../lib/offerApi';
+import { fetchNearbyOffers } from '../lib/offerApi';
 import { fetchAllCliniques } from '../lib/clinicApi';
-import { postulerOffre } from '../lib/candidatureApi';
+import { fetchUserProfile } from '../lib/userApi';
+import { postulerOffre, postulerAOffre } from '../lib/candidatureApi';
 import '../styles/ProfessionnelOffres.css';
 
 const ProfessionnelOffres = () => {
@@ -24,8 +25,9 @@ const ProfessionnelOffres = () => {
   const [sortBy, setSortBy] = useState('date_desc');
   const [activeTab, setActiveTab] = useState('all');
 
-  const [userLocation, setUserLocation] = useState("Valleyfield, QC");
-  const [userCoordinates, setUserCoordinates] = useState({ lat: 45.2538, lng: -74.1334 });
+  const [userLocation, setUserLocation] = useState('');
+  const [userCoordinates, setUserCoordinates] = useState(null);
+  
   const [useProfileMobility, setUseProfileMobility] = useState(true);
 
   const addressInputRef = useRef(null);
@@ -88,23 +90,37 @@ const ProfessionnelOffres = () => {
     fetchCliniques();
   }, []);
 
-  // Récupérer les offres
   useEffect(() => {
-    const fetchOffers = async () => {
+    const loadUserCoordinatesFromProfile = async () => {
       try {
-        setLoading(true);
-        const data = await fetchNearbyOffersAPI(userCoordinates, filterDistance);
-        setOffers(data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Erreur lors du chargement des offres:", error);
-        setError("Erreur de chargement.");
-        setLoading(false);
+        const profile = await fetchUserProfile(); // API GET /me
+  
+        // Vérification des coordonnées GPS dans l'objet retourné
+        const lat = profile?.latitude || profile?.mobilite?.latitude;
+        const lng = profile?.longitude || profile?.mobilite?.longitude;
+        const adresse = profile?.adresse_complete || profile?.mobilite?.adresse_principale;
+  
+        if (lat && lng) {
+          setUserCoordinates({ lat, lng });
+          setUserLocation(adresse || "Adresse inconnue");
+        } else {
+          console.warn("⚠️ Coordonnées manquantes dans le profil utilisateur.");
+          // 🔁 Fallback temporaire (Montréal centre)
+          setUserCoordinates({ lat: 45.5019, lng: -73.5674 });
+          setUserLocation("Montréal, QC");
+        }
+      } catch (err) {
+        console.error("❌ Erreur chargement coordonnées du profil:", err);
       }
     };
-
-    fetchOffers();
-  }, [userCoordinates, filterDistance]);
+  
+    if (useProfileMobility) {
+      loadUserCoordinatesFromProfile();
+    }
+  }, [useProfileMobility]);
+  
+  
+  
 
   // Filtrer les offres
   useEffect(() => {
@@ -113,10 +129,11 @@ const ProfessionnelOffres = () => {
 
   const filterOffers = () => {
     let result = [...offers];
-
+  
+    // 🔍 Recherche texte
     if (searchTerm) {
       result = result.filter(offer => {
-        const cliniqueName = getClinicName(offer.id_clinique);
+        const cliniqueName = getClinicName?.(offer.id_clinique) || '';
         return (
           offer.titre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           offer.descript?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -125,11 +142,14 @@ const ProfessionnelOffres = () => {
         );
       });
     }
-
+    
+  
+    // 🎯 Filtre par profession
     if (filterProfession !== 'toutes') {
       result = result.filter(offer => offer.type_professionnel === filterProfession);
     }
-
+  
+    // 📅 Filtrer par jours disponibles
     if (filterJours.length > 0) {
       result = result.filter(offer => {
         const date = new Date(offer.date_debut);
@@ -138,11 +158,13 @@ const ProfessionnelOffres = () => {
         return filterJours.includes(dayName);
       });
     }
-
+  
+    // 🔖 Offres sauvegardées
     if (activeTab === 'saved') {
       result = result.filter(offer => savedOffers.includes(offer.id_offre));
     }
-
+  
+    // ⏱ Tri
     if (sortBy === 'date_desc') {
       result.sort((a, b) => new Date(b.date_publication) - new Date(a.date_publication));
     } else if (sortBy === 'date_asc') {
@@ -152,19 +174,22 @@ const ProfessionnelOffres = () => {
     } else if (sortBy === 'salary_asc') {
       result.sort((a, b) => a.remuneration - b.remuneration);
     }
-
+  
     setFilteredOffers(result);
   };
-
-  const handleApply = async (e, id_offre) => {
-    e.stopPropagation();
   
+  const handleApply = async (e, id) => {
+    e.stopPropagation();
     try {
-      await postulerOffre(id_offre);
+      await postulerAOffre(id);
       alert("✅ Candidature envoyée !");
     } catch (err) {
-      console.error("❌ Erreur lors de la candidature :", err);
-      alert("❌ Une erreur est survenue lors de la candidature.");
+      if (err.message.includes('déjà postulé')) {
+        alert("⚠️ Vous avez déjà postulé à cette offre.");
+      } else {
+        console.error(err);
+        alert("❌ Une erreur est survenue lors de la postulation.");
+      }
     }
   };
 

@@ -1,101 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useOffers } from '../components/OffersContext';
+import { fetchUserCandidatures, retirerCandidatureAPI } from '../lib/candidatureApi';
 import '../styles/ProfessionnelApplique.css';
 
 const ProfessionnelApplique = () => {
   const navigate = useNavigate();
-  const { offers, candidates, loading, error } = useOffers();
-  
-  // États pour les filtres et les candidatures
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('date_desc');
   const [candidatures, setCandidatures] = useState([]);
   const [filteredCandidatures, setFilteredCandidatures] = useState([]);
-  
-  // Charger les données à partir du contexte
+
   useEffect(() => {
-    if (offers && candidates) {
-      // Transformer les candidats du contexte en format adapté à ce composant
-      const candidaturesList = candidates.map(candidate => {
-        // Trouver l'offre associée
-        const relatedOffer = offers.find(offer => offer.id === candidate.offerId);
-        
-        // Déterminer le statut
-        let statut, statutLabel;
-        switch(candidate.status) {
-          case 'selected':
-            statut = 'entretien';
-            statutLabel = 'Entretien prévu';
-            break;
-          case 'accepted':
-            statut = 'acceptée';
-            statutLabel = 'Offre acceptée';
-            break;
-          case 'pending':
-            statut = 'examen';
-            statutLabel = 'En cours d\'examen';
-            break;
-          case 'rejected':
-            statut = 'refusée';
-            statutLabel = 'Non retenu';
-            break;
-          default:
-            statut = 'reçue';
-            statutLabel = 'Candidature reçue';
-        }
-        
-        return {
-          id: candidate.id,
-          titre: relatedOffer ? relatedOffer.title : 'Offre non disponible',
-          clinique: relatedOffer ? relatedOffer.cliniqueName : 'Clinique inconnue',
-          lieu: relatedOffer ? relatedOffer.location : '',
-          logo: relatedOffer ? relatedOffer.cliniqueName.charAt(0) : 'X',
-          dateCandidature: candidate.applicationDate,
-          statut,
-          statutLabel,
-          dateDébut: relatedOffer ? relatedOffer.startDate : '',
-          dateFin: relatedOffer ? relatedOffer.endDate : '',
-          dateEntretien: candidate.status === 'selected' ? 
-            new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '',
-          heureEntretien: '14:00',
-          typeEntretien: 'video',
-          salaire: relatedOffer ? relatedOffer.compensation : '',
-          notes: candidate.notes || 'Aucune note disponible'
-        };
-      });
-      
-      setCandidatures(candidaturesList);
-      setFilteredCandidatures(candidaturesList);
-    }
-  }, [offers, candidates]);
-  
-  // Filtrer les candidatures
+    const loadCandidatures = async () => {
+      try {
+        const response = await fetchUserCandidatures();
+
+        const candidaturesList = response.map((c) => ({
+          id: c.id_candidature,
+          titre: c.Offre?.titre || 'Offre non disponible',
+          clinique: c.Offre?.Clinique?.nom || 'Clinique inconnue',
+          lieu: c.Offre?.adresse_complete || '',
+          logo: c.Offre?.Clinique?.nom?.charAt(0) || 'X',
+          dateCandidature: c.date_candidature,
+          statut: c.statut || 'reçue',
+          statutLabel: c.statut === 'accepted' ? 'Offre acceptée'
+                      : c.statut === 'selected' ? 'Entretien prévu'
+                      : c.statut === 'rejected' ? 'Non retenu'
+                      : c.statut === 'pending' ? 'En cours d\'examen'
+                      : 'Candidature reçue',
+          dateDébut: c.Offre?.date_debut,
+          dateFin: c.Offre?.date_fin,
+          salaire: c.Offre?.remuneration,
+          dateEntretien: '',
+          heureEntretien: '',
+          typeEntretien: '',
+          notes: c.notes || ''
+        }));
+
+        setCandidatures(candidaturesList);
+        setFilteredCandidatures(candidaturesList);
+      } catch (error) {
+        console.error('Erreur lors du chargement des candidatures:', error);
+      }
+    };
+
+    loadCandidatures();
+  }, []);
+
   useEffect(() => {
     let result = [...candidatures];
-    
-    // Filtrer par recherche
+
     if (searchTerm) {
-      result = result.filter(candidature => 
+      result = result.filter(candidature =>
         candidature.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         candidature.clinique.toLowerCase().includes(searchTerm.toLowerCase()) ||
         candidature.lieu.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
-    // Filtrer par statut
+
     if (filterStatus !== 'all') {
       result = result.filter(candidature => candidature.statut === filterStatus);
     }
-    
-    // Tri
+
     if (sortBy === 'date_desc') {
       result.sort((a, b) => new Date(b.dateCandidature) - new Date(a.dateCandidature));
     } else if (sortBy === 'date_asc') {
       result.sort((a, b) => new Date(a.dateCandidature) - new Date(b.dateCandidature));
     } else if (sortBy === 'statut') {
-      // Ordre personnalisé des statuts
       const ordreStatuts = {
         'entretien': 1,
         'acceptée': 2,
@@ -103,55 +76,50 @@ const ProfessionnelApplique = () => {
         'reçue': 4,
         'refusée': 5
       };
-      
+
       result.sort((a, b) => ordreStatuts[a.statut] - ordreStatuts[b.statut]);
     }
-    
+
     setFilteredCandidatures(result);
   }, [candidatures, searchTerm, filterStatus, sortBy]);
-  
-  // Formater les dates
+
   const formatDate = (dateString) => {
     if (!dateString) return 'Non spécifié';
-    
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('fr-CA', options);
   };
-  
-  // Navigation vers le détail d'une offre
+
   const navigateToDetail = (id) => {
     navigate(`/applique/${id}`);
   };
-  
-  // Retirer une candidature
-  const retirerCandidature = (id, e) => {
+
+  const retirerCandidature = async (id, e) => {
     e.stopPropagation();
     if (window.confirm('Êtes-vous sûr de vouloir retirer cette candidature?')) {
-      setCandidatures(candidatures.filter(candidature => candidature.id !== id));
+      try {
+        await retirerCandidatureAPI(id);
+        setCandidatures(candidatures.filter(c => c.id !== id));
+        alert('✅ Candidature retirée avec succès.');
+      } catch (err) {
+        console.error(err);
+        alert('❌ Erreur lors du retrait de la candidature.');
+      }
     }
   };
-  
-  // Préparation à l'entretien
+
   const preparerEntretien = (id, e) => {
     e.stopPropagation();
     navigate(`/preparer-entretien/${id}`);
   };
-  
-  // Couleur de statut
+
   const getStatusColor = (statut) => {
     switch (statut) {
-      case 'entretien':
-        return 'status-interview';
-      case 'acceptée':
-        return 'status-accepted';
-      case 'examen':
-        return 'status-review';
-      case 'reçue':
-        return 'status-received';
-      case 'refusée':
-        return 'status-rejected';
-      default:
-        return '';
+      case 'entretien': return 'status-interview';
+      case 'acceptée': return 'status-accepted';
+      case 'examen': return 'status-review';
+      case 'reçue': return 'status-received';
+      case 'refusée': return 'status-rejected';
+      default: return '';
     }
   };
   
@@ -212,31 +180,23 @@ const ProfessionnelApplique = () => {
       </div>
 
       <div className="candidatures-results">
-        <p className="results-count">
-          {loading ? 'Chargement des candidatures...' : 
-           `${filteredCandidatures.length} candidature(s) trouvée(s)`}
-        </p>
+      <p className="results-count">
+  {filteredCandidatures.length} candidature(s) trouvée(s)
+</p>
         
-        {error && (
-          <div className="error-message">
-            <i className="fa-solid fa-exclamation-triangle"></i>
-            <p>Une erreur est survenue lors du chargement des candidatures</p>
-          </div>
-        )}
-        
-        {!loading && filteredCandidatures.length === 0 ? (
-          <div className="no-results">
-            <i className="fa-solid fa-folder-open"></i>
-            <h3>Aucune candidature pour le moment</h3>
-            <p>Commencez à postuler à des offres pour voir vos candidatures ici</p>
-            <button 
-              className="explore-button"
-              onClick={() => navigate('/offres')}
-            >
-              <i className="fa-solid fa-search"></i> Explorer les offres
-            </button>
-          </div>
-        ) : (
+{filteredCandidatures.length === 0 ? (
+  <div className="no-results">
+    <i className="fa-solid fa-folder-open"></i>
+    <h3>Aucune candidature pour le moment</h3>
+    <p>Commencez à postuler à des offres pour voir vos candidatures ici</p>
+    <button 
+      className="explore-button"
+      onClick={() => navigate('/offres')}
+    >
+      <i className="fa-solid fa-search"></i> Explorer les offres
+    </button>
+  </div>
+) : (
           <div className="candidatures-list">
             {filteredCandidatures.map(candidature => (
               <div 

@@ -195,6 +195,9 @@ export const transformComponentDataToApiFormat = (componentData) => {
     specialites: componentData.specialites || [],
     
     // Site web si présent
-    site_web: componentData.site_web || ''
+    site_web: componentData.site_web || '',
+
+    latitude: componentData.coordinates?.lat || null,
+    longitude: componentData.coordinates?.lng || null,
   };
 };

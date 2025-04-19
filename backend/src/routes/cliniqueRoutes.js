@@ -16,6 +16,17 @@ router.post('/', async (req, res) => {
   }
 });
 
+// 🔹 Récupérer toutes les cliniques (pour associer aux offres)
+router.get('/', async (req, res) => {
+  try {
+    const cliniques = await CliniqueDentaire.findAll();
+    res.status(200).json(cliniques);
+  } catch (error) {
+    console.error("Erreur lors du GET /api/cliniques :", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
 // ✅ Récupérer la clinique liée à l'utilisateur connecté
 router.get('/profile', protect, async (req, res) => {
   try {

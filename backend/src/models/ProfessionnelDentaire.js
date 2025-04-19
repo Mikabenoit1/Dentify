@@ -20,6 +20,8 @@ jours_disponibles: { type: DataTypes.JSON },
 competences: { type: DataTypes.JSON },
 langues: { type: DataTypes.JSON },
 specialites: { type: DataTypes.JSON },
+latitude: { type: DataTypes.FLOAT },
+longitude: { type: DataTypes.FLOAT },
   id_utilisateur: {
     type: DataTypes.INTEGER,
     allowNull: false,

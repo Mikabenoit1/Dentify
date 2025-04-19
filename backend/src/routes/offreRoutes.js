@@ -381,4 +381,68 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
+// ✅ Postuler à une offre (professionnel uniquement, une seule fois)
+router.post('/postuler/:id', protect, async (req, res) => {
+  try {
+    const utilisateur = await User.findByPk(req.user.id_utilisateur);
+    if (!utilisateur || utilisateur.type_utilisateur !== 'professionnel') {
+      return res.status(403).json({ message: "Seuls les professionnels peuvent postuler." });
+    }
+
+    const offre = await Offre.findByPk(req.params.id);
+    if (!offre) {
+      return res.status(404).json({ message: "Offre introuvable." });
+    }
+
+    const professionnel = await ProfessionnelDentaire.findOne({
+      where: { id_utilisateur: utilisateur.id_utilisateur }
+    });
+
+    if (!professionnel) {
+      return res.status(403).json({ message: "Professionnel introuvable." });
+    }
+
+    const dejaPostule = await Candidature.findOne({
+      where: {
+        id_professionnel: professionnel.id_professionnel,
+        id_offre: offre.id_offre
+      }
+    });
+
+    if (dejaPostule) {
+      return res.status(400).json({ message: "Vous avez déjà postulé à cette offre." });
+    }
+
+    const nouvelleCandidature = await Candidature.create({
+      id_professionnel: professionnel.id_professionnel,
+      id_offre: offre.id_offre,
+      date_candidature: new Date(),
+      statut: 'pending'
+    });
+
+    res.status(201).json({ message: "✅ Candidature envoyée", candidature: nouvelleCandidature });
+  } catch (error) {
+    console.error("❌ Erreur lors de la postulation :", error);
+    res.status(500).json({ message: "Erreur serveur lors de la postulation." });
+  }
+});
+
+router.delete('/candidatures/:id', protect, async (req, res) => {
+  try {
+    const candidature = await Candidature.findByPk(req.params.id);
+
+    if (!candidature) {
+      return res.status(404).json({ message: "Candidature introuvable." });
+    }
+
+    await candidature.destroy();
+
+    res.status(200).json({ message: "Candidature retirée avec succès." });
+  } catch (error) {
+    console.error("Erreur lors du retrait de la candidature :", error);
+    res.status(500).json({ message: "Erreur serveur lors du retrait de la candidature." });
+  }
+});
+
+
 module.exports = router;
