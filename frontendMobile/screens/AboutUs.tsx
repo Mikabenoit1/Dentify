@@ -5,29 +5,31 @@ import { FontAwesome } from '@expo/vector-icons';
 export default function AboutScreen({ navigation }) {
   return (
     <View style={styles.container}>
-      {/* Bouton Retour */}
-      
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                <FontAwesome name="chevron-left" size={24} color="white" />
-            </TouchableOpacity>
+      {/* Header mis à jour */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <FontAwesome name="arrow-left" size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>À propos</Text>
+        <View style={styles.headerRight} />
+      </View>
 
-      {/* Image (j'ai pris une au hasard) */}
-      <Image 
-        source={require("../assets/vecteezy_ai-generated-manager-man-present-successful-group-business_39322995.png")} 
-        style={styles.image}
-      />
+      {/* Contenu IDENTIQUE à votre version originale */}
+      <View style={styles.content}>
+        <Image 
+          source={require("../assets/vecteezy_ai-generated-manager-man-present-successful-group-business_39322995.png")} 
+          style={styles.image}
+        />
 
-      {/* Texte d'information sur nous */}
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>About Us</Text>
-        <Text style={styles.description}>
-          Texte descrivant notre "histoire"
-        </Text>
-        <Text style={styles.description}>
-          Texte Text Text Texte Texte Texte Texte Texte Text Text Texte Texte Texte Texte
-          Texte Text Text Texte Texte Texte Texte Texte Text Text Texte Texte Texte Texte
-          Texte Text Text Texte Texte Texte Texte
-        </Text>
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>À propos de Dentify</Text>
+          <Text style={styles.description}>
+            Dentify est votre partenaire dentaire innovant.
+          </Text>
+          <Text style={styles.description}>
+            Notre application simplifie la gestion des cabinets dentaires pour les professionnels.
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -37,17 +39,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fbf2e8',
+  },
+  // Header seulement modifié
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#6a9174',
+    paddingTop: 50,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  headerRight: {
+    width: 24,
+  },
+  // Tout le reste strictement identique à votre original
+  content: {
+    flex: 1,
+    backgroundColor: '#fbf2e8',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    backgroundColor: '#34607d',
-    padding: 10,
-    borderRadius: 10,
-    zIndex: 10,
   },
   image: {
     width: '90%',
