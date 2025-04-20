@@ -23,7 +23,9 @@ export default function AccueilMoreCli({ navigation }) {
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('MessageListeScreen')}>
             <AntDesign name="message1" size={22} color="white" />
           </TouchableOpacity>
-          {/* L'icône de profil a été retirée du header */}
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate("ProfilClinique")}>
+            <MaterialCommunityIcons style={styles.iconText} name="account-circle-outline" />
+          </TouchableOpacity>        
         </View>
       </View>
 
@@ -86,7 +88,7 @@ export default function AccueilMoreCli({ navigation }) {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Compte</Text>
+          <Text style={styles.sectionTitle}>COMPTE</Text>
 
           <View style={styles.sectionContent}>
             {/* L'option "Mon profil" a été retirée */}
@@ -108,25 +110,37 @@ export default function AccueilMoreCli({ navigation }) {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("Horaire")}>
-          <AntDesign name="profile" size={24} color={activePage === "Horaire" ? "black" : "white"} />
-          <Text style={[styles.footerText, activePage === "Horaire" && styles.footerTextClick]}>Horaire</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("Offre")}>
-          <MaterialIcons name="work-outline" size={24} color={activePage === "Offre" ? "black" : "white"} />
-          <Text style={[styles.footerText, activePage === "Offre" && styles.footerTextClick]}>Offre</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("Calendrier")}>
-          <AntDesign name="calendar" size={24} color={activePage === "Calendrier" ? "black" : "white"} />
-          <Text style={[styles.footerText, activePage === "Calendrier" && styles.footerTextClick]}>Calendrier</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("AccueilMore")}>
-          <MaterialIcons name="more-horiz" size={24} color={activePage === "AccueilMore" ? "black" : "white"} />
-          <Text style={[styles.footerText, activePage === "AccueilMore" && styles.footerTextClick]}>Plus</Text>
-        </TouchableOpacity>
+        <TouchableOpacity 
+                  style={styles.footerButton}
+                  onPress={() => navigation.navigate('Mesoffres')}
+                >
+          <AntDesign name="profile" size={24} color="white" />
+                  <Text style={styles.footerText}>Offres publiés</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.footerButton}
+                  onPress={() => navigation.navigate('CreationOffre')}
+                >
+                  <Ionicons name="create-outline" color={"white"} size={24} />
+                  <Text style={styles.footerText}>Création d'une offre</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.footerButton}
+                  onPress={() => navigation.navigate('CalendrierCli')}
+                >
+                  <AntDesign name="calendar" style={styles.footerIcon} />
+                  <Text style={styles.footerText}>Calendrier</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.footerButton}
+                  onPress={() => navigation.navigate('AccueilMoreCli')}
+                >
+                  <MaterialIcons name="more-horiz" size={24} color="black" />
+                  <Text style={styles.footerTextClick}>Plus</Text>
+                </TouchableOpacity>
       </View>
     </View>
   );
@@ -155,6 +169,10 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     marginLeft: 15,
+  },
+  iconText: {
+    fontSize: 24,
+    color: 'white',
   },
   content: {
     flex: 1,
@@ -210,6 +228,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#ccc',
   },
+  footerIcon: {
+    fontSize: 24,
+    color: 'white',
+  },
   footerButton: {
     alignItems: 'center',
     flex: 1,
@@ -218,10 +240,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'white',
     marginTop: 5,
+    textAlign: 'center',
   },
   footerTextClick: {
     fontSize: 12,
     color: 'black',
     marginTop: 5,
+    textAlign: 'center',
   },
 });
