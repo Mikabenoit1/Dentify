@@ -18,8 +18,9 @@ LocaleConfig.defaultLocale = 'fr';
 const Calendrier = ({ navigation }) => {
   const { appointments, offers, cancelAppointment } = useAppContext();
   
-  // Date actuelle fixe (3 avril 2025)
-  const currentDate = '2025-04-03';
+  // Date actuelle dynamique
+  const today = new Date();
+  const currentDate = today.toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = React.useState(currentDate);
 
   // Formatage de la date avec +1 jour pour l'affichage seulement
@@ -66,13 +67,17 @@ const Calendrier = ({ navigation }) => {
     [currentDate]: {
       selected: true,
       selectedColor: '#6a9174',
-      marked: false
+      selectedTextColor: '#ffffff',
+      marked: true,
+      dotColor: '#ffffff'
     },
     ...Object.keys(allAppointments).reduce((acc, date) => {
-      acc[date] = { 
-        marked: true, 
-        dotColor: date < currentDate ? '#f39c12' : '#6a9174'
-      };
+      if (date !== currentDate) {
+        acc[date] = { 
+          marked: true, 
+          dotColor: date < currentDate ? '#f39c12' : '#6a9174'
+        };
+      }
       return acc;
     }, {})
   };
