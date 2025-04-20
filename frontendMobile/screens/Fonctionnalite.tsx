@@ -1,53 +1,32 @@
 import React from 'react';
-import { Image, StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
-
+import { View, ScrollView, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { ThemedText } from '../utils/ThemedText';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { MaterialIcons, FontAwesome, Entypo } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-
-export default function Fonctionnalite({navigation}) {
-  
-  
+export default function Fonctionnalite({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('Indexx')}>
-          <Image
-            source={require('../assets/dentify_logo_noir.png')}
-            style={{ width: 90, height: 50 }}
-            resizeMode="contain"
-          />
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <FontAwesome name="arrow-left" size={24} color="white" />
         </TouchableOpacity>
-        <View style={styles.linksContainer}>
-          <ThemedText variant="subtitle1">
-            <TouchableOpacity onPress={() => navigation.navigate('Connexions')}>
-              <ThemedText>Connexion</ThemedText>
-            </TouchableOpacity>
-          </ThemedText>
-          <ThemedText variant="subtitle1">
-            <TouchableOpacity onPress={() => navigation.navigate('menu')}>
-              <ThemedText>Menu</ThemedText>
-            </TouchableOpacity>
-          </ThemedText>
-        </View>
+        <Text style={styles.headerTitle}>Fonctionnalités</Text>
+        <View style={styles.headerRight} />
       </View>
 
       <ScrollView style={styles.body}>
         <View style={styles.center}>
-        <ThemedText variant="headline">
-          Nos Fonctionnalités
-        </ThemedText>
-        <ThemedText variant="caption"/>
-        <ThemedText variant="body2">
-          Pour les Professionnels Dentaires
-        </ThemedText>
+          <ThemedText variant="headline">
+            Nos Fonctionnalités
+          </ThemedText>
+          <ThemedText variant="body2">
+            Pour les Professionnels Dentaires
+          </ThemedText>
         </View>
 
-        {/* Section pour les professionnels dentaires */}
         <View style={styles.iconSection}>
           <View style={styles.iconWrapper}>
-            <Entypo name="calendar" size={48} color="#6a9174" />
+            <MaterialIcons name="calendar-today" size={48} color="#6a9174" />
             <ThemedText variant="body2" style={styles.iconText}>
               Gestion des disponibilités
             </ThemedText>
@@ -57,7 +36,7 @@ export default function Fonctionnalite({navigation}) {
           </View>
 
           <View style={styles.iconWrapper}>
-            <Entypo name="message" size={48} color="#6a9174" />
+            <MaterialIcons name="message" size={48} color="#6a9174" />
             <ThemedText variant="body2" style={styles.iconText}>
               Messagerie intégrée
             </ThemedText>
@@ -67,7 +46,7 @@ export default function Fonctionnalite({navigation}) {
           </View>
 
           <View style={styles.iconWrapper}>
-            <Entypo name="bell" size={48} color="#6a9174" />
+            <MaterialIcons name="notifications" size={48} color="#6a9174" />
             <ThemedText variant="body2" style={styles.iconText}>
               Notifications intelligentes
             </ThemedText>
@@ -77,7 +56,7 @@ export default function Fonctionnalite({navigation}) {
           </View>
 
           <View style={styles.iconWrapper}>
-            <Entypo name="text-document" size={48} color="#6a9174" />
+            <MaterialCommunityIcons name="account-details" size={48} color="#6a9174" />
             <ThemedText variant="body2" style={styles.iconText}>
               Profil professionnel
             </ThemedText>
@@ -87,16 +66,15 @@ export default function Fonctionnalite({navigation}) {
           </View>
         </View>
 
-        {/* Section pour les cliniques dentaires */}
         <View style={styles.center}>
-        <ThemedText variant="body2">
-          Pour les Cliniques Dentaires
-        </ThemedText>
+          <ThemedText variant="body2">
+            Pour les Cliniques Dentaires
+          </ThemedText>
         </View>
 
         <View style={styles.iconSection}>
           <View style={styles.iconWrapper}>
-            <Entypo name="folder" size={48} color="#6a9174" />
+            <MaterialIcons name="folder" size={48} color="#6a9174" />
             <ThemedText variant="body2" style={styles.iconText}>
               Gestion des offres de remplacement
             </ThemedText>
@@ -106,7 +84,7 @@ export default function Fonctionnalite({navigation}) {
           </View>
 
           <View style={styles.iconWrapper}>
-            <Icon name="account-search" size={48} color="#6a9174" />
+            <MaterialCommunityIcons name="account-search" size={48} color="#6a9174" />
             <ThemedText variant="body2" style={styles.iconText}>
               Sélection des candidats
             </ThemedText>
@@ -116,7 +94,7 @@ export default function Fonctionnalite({navigation}) {
           </View>
 
           <View style={styles.iconWrapper}>
-            <Icon name="history" size={48} color="#6a9174" />
+            <MaterialIcons name="history" size={48} color="#6a9174" />
             <ThemedText variant="body2" style={styles.iconText}>
               Historique et évaluation
             </ThemedText>
@@ -137,27 +115,28 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
+    alignItems: 'center',
+    padding: 20,
     backgroundColor: '#6a9174',
+    paddingTop: 50,
   },
-  linksContainer: {
-    flexDirection: 'row',
-    gap: 16,
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  headerRight: {
+    width: 24,
   },
   body: {
     flex: 1,
     padding: 16,
-    
   },
-
   center: {
     alignItems: 'center',
     marginBottom: 24,
   },
- 
-
   iconSection: {
     marginBottom: 24,
   },
@@ -177,5 +156,4 @@ const styles = StyleSheet.create({
     color: '#6a9174',
     paddingHorizontal: 16,
   },
- 
 });
