@@ -62,7 +62,12 @@ export const deleteOffer = async (offerId) => {
     return await apiFetch('/offres/mes-offres'); // ou '/offres/creer' si c’est le bon endpoint
   };
   
-  export const fetchNearbyOffers = async ({ latitude, longitude, radius }) => {
-    return await apiFetch(`/offres/proches?lat=${latitude}&lng=${longitude}&rayon=${radius}`);
-  };
+  export const fetchNearbyOffers = async (coordinates, distance) => {
+    const params = new URLSearchParams({
+      lat: coordinates.lat,
+      lng: coordinates.lng,
+      rayon: distance
+    });
   
+    return await apiFetch(`/offres/proches?${params.toString()}`);
+  };

@@ -119,6 +119,23 @@ const ProfessionnelOffres = () => {
     }
   }, [useProfileMobility]);
   
+  useEffect(() => {
+    const fetchOffersNearby = async () => {
+      if (!userCoordinates) return;
+      try {
+        setLoading(true);
+        const data = await fetchNearbyOffers(userCoordinates, filterDistance);
+        setOffers(data); // ← ça alimente `offers` !
+        setLoading(false);
+      } catch (err) {
+        console.error("Erreur fetchNearbyOffers:", err);
+        setError("Impossible de charger les offres.");
+        setLoading(false);
+      }
+    };
+  
+    fetchOffersNearby();
+  }, [userCoordinates, filterDistance]);
   
   
 
@@ -443,7 +460,7 @@ const ProfessionnelOffres = () => {
               <div className="offre-content" onClick={() => navigateToDetail(offer.id_offre)}>
                 <h2 className="offre-title">{offer.titre}</h2>
                 <p className="offre-clinique">
-                  <i className="fa-solid fa-hospital"></i> {getClinicName(offer.id_clinique)}
+                <i className="fa-solid fa-hospital"></i> {offer.CliniqueDentaire?.nom_clinique || "Clinique inconnue"}
                 </p>
                 <p className="offre-lieu">
                   <i className="fa-solid fa-location-dot"></i> {offer.adresse_complete}

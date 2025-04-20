@@ -72,21 +72,36 @@ const getOffresProches = async (req, res) => {
     const longitude = parseFloat(lng);
     const distanceKm = parseFloat(rayon);
 
-    // Formule de Haversine pour calcul de distance entre 2 points
+    // Récupérer toutes les offres AVEC les cliniques associées
     const offres = await Offre.findAll({
-      where: literal(`(
-        6371 * acos(
-          cos(radians(${latitude})) *
-          cos(radians(latitude)) *
-          cos(radians(longitude) - radians(${longitude})) +
-          sin(radians(${latitude})) *
-          sin(radians(latitude))
-        )
-      ) <= ${distanceKm}`),
+      include: [{ model: CliniqueDentaire }],
       order: [['date_publication', 'DESC']]
     });
 
-    res.json(offres);
+    // Filtrer manuellement avec la formule de Haversine
+    const filtered = offres.filter((offre) => {
+      const lat2 = offre.latitude;
+      const lng2 = offre.longitude;
+
+      if (lat2 == null || lng2 == null) return false;
+
+      const toRad = deg => deg * Math.PI / 180;
+      const R = 6371;
+      const dLat = toRad(lat2 - latitude);
+      const dLng = toRad(lng2 - longitude);
+
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(latitude)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = R * c;
+
+      return distance <= distanceKm;
+    });
+
+    res.json(filtered);
   } catch (error) {
     console.error("Erreur récupération offres proches:", error);
     res.status(500).json({ message: "Erreur serveur." });
