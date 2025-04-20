@@ -73,7 +73,7 @@ const Notification = ({ navigation }) => {
             onPress={clearAllNotifications}
             disabled={notifications.length === 0}
           >
-        <AntDesign name="delete" size={22} color="white" paddingRight ={10} />
+            <AntDesign name="delete" size={22} color="white" style={{ paddingRight: 10 }} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('Profil')}>
             <MaterialCommunityIcons name="account-circle-outline" size={24} color="white" />
@@ -141,14 +141,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  clearText: {
-    color: 'white',
-    marginRight: 15,
-    fontWeight: 'bold',
-  },
-  disabledText: {
-    opacity: 0.5,
-  },
   content: {
     padding: 15,
   },
@@ -168,7 +160,6 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
