@@ -154,6 +154,7 @@ export const transformApiDataToComponentFormat = (apiData) => {
     // Formations et expériences
     educations: apiData.formations || [],
     experiences: apiData.experiences || []
+    
   };
 };
 

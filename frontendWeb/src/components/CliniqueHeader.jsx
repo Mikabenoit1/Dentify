@@ -1,8 +1,33 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/CliniqueHeader.css';
+import { useEffect, useState } from 'react';
 
 const CliniqueHeader = () => {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadNotifications = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user?.id) return;
+        const response = await fetch(`http://localhost:4000/api/notifications/${user.id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        const data = await response.json();
+        const unread = data.notifications.filter(n => n.est_lue !== 'Y');
+        setUnreadCount(unread.length);
+      } catch (error) {
+        console.error("Erreur chargement des notifications :", error);
+      }
+    };
+
+    fetchUnreadNotifications();
+  }, []);
+
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -40,7 +65,7 @@ const CliniqueHeader = () => {
           <button className="clinique-notifications-button" onClick={goToNotifications}>
             <i className="fa-solid fa-bell"></i>
             <span>Notifications</span>
-            <span className="notification-badge">3</span>
+            {unreadCount > 0 && (<span className="notification-badge">{unreadCount}</span>)}
           </button>
           <button className="clinique-settings-button" onClick={goToParameters}>
             <i className="fa-solid fa-gear"></i>

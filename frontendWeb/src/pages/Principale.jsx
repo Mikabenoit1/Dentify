@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOffers } from '../components/OffersContext';
 import '../styles/Principale.css';
+import { fetchUserCandidatures } from '../lib/candidatureApi';
+import { apiFetch } from '../lib/apiFetch';
 
 const Principale = () => {
   const navigate = useNavigate();
-  const { offers, loading, error, fetchOffers, candidates } = useOffers();
   
   // États pour les données
   const [stats, setStats] = useState({
@@ -19,123 +20,239 @@ const Principale = () => {
   const [entretiensAVenir, setEntretiensAVenir] = useState([]);
   const [messagesRecents, setMessagesRecents] = useState([]);
   const [offresEnAttente, setOffresEnAttente] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
-  // Chargement des données
+  // Chargement des offres et mise à jour des offres en tendance
   useEffect(() => {
-    // Charger les offres depuis le contexte
-    fetchOffers();
-    
-    // Charger les autres données simulées
-    setStats({
-      applicationsEnvoyees: 12,
-      entretiensPrevus: 3,
-      offresDisponibles: offers ? offers.length : 0,
-      offresConsultees: 27
-    });
-    
-    // Simuler les entretiens à venir
-    setEntretiensAVenir([
-      {
-        id: 1,
-        clinique: 'Cabinet Elite Dental',
-        poste: 'Hygiéniste dentaire',
-        date: '2023-06-15',
-        heure: '14:00',
-        type: 'video'
-      },
-      {
-        id: 2,
-        clinique: 'Centre Dentaire Express',
-        poste: 'Assistant(e) dentaire',
-        date: '2023-06-18',
-        heure: '10:30',
-        type: 'présentiel'
-      }
-    ]);
-    
-    // Messages récents (simulés)
-    setMessagesRecents([
-      {
-        id: 1,
-        expediteur: 'Clinique Dentaire Sourire',
-        avatar: 'S',
-        contenu: 'Bonjour, suite à votre candidature pour le poste de dentiste remplaçant, nous aimerions planifier un entretien...',
-        nonLu: true,
-        date: '2023-06-10T14:30:00',
-        conversationId: 1
-      },
-      {
-        id: 2,
-        expediteur: 'Cabinet Elite Dental',
-        avatar: 'E',
-        contenu: 'Nous avons bien reçu vos disponibilités. Seriez-vous libre pour un appel téléphonique demain à 15h?',
-        nonLu: true,
-        date: '2023-06-09T10:15:00',
-        conversationId: 2
-      },
-      {
-        id: 3,
-        expediteur: 'Centre Dentaire Express',
-        avatar: 'C',
-        contenu: 'Merci pour votre candidature. Votre profil a retenu notre attention et nous souhaiterions vous rencontrer...',
-        nonLu: false,
-        date: '2023-06-08T16:45:00',
-        conversationId: 3
-      }
-    ]);
-  }, []);
-
-  // Mettre à jour les offres en tendance quand les offres sont chargées
-  useEffect(() => {
-    if (offers && offers.length > 0) {
-      // Filtrer les 3 offres les plus récentes en statut actif
-      const actives = offers.filter(offer => offer.status === 'active');
-      const tendances = actives.slice(0, 3).map((offer, index) => ({
-        id: offer.id,
-        titre: offer.title,
-        clinique: offer.cliniqueName,
-        lieu: offer.location,
-        dateDébut: offer.startDate,
-        dateFin: offer.endDate,
-        salaire: offer.compensation,
-        datePublication: offer.datePosted,
-        // Alterner entre les statuts pour les offres en tendance
-        status: index === 0 ? 'nouveau' : index === 1 ? 'populaire' : 'vedette'
-      }));
+    const loadOffers = async () => {
+      setLoading(true);
+      setError(null);
       
-      setOffresTendance(tendances);
-      
-      // Mettre à jour les statistiques
-      setStats(prev => ({
-        ...prev,
-        offresDisponibles: offers.filter(o => o.status === 'active').length
-      }));
-      
-      // Simuler les offres en attente basées sur les candidatures réelles
-      if (candidates && candidates.length > 0) {
-        const candidaturesEnAttente = candidates
-          .filter(c => c.status !== 'rejected')
-          .slice(0, 3)
-          .map(c => {
-            const relatedOffer = offers.find(o => o.id === c.offerId);
+      try {
+        // Récupérer toutes les offres sans filtre via l'API
+        const offresApi = await apiFetch('/offres');
+        console.log("Offres chargées:", offresApi?.length || 0);
+        
+        // DEBUG - Vérifier la structure de la première offre pour comprendre les propriétés disponibles
+        if (offresApi && offresApi.length > 0) {
+          console.log("Structure d'une offre:", JSON.stringify(offresApi[0], null, 2));
+          
+          // Compter toutes les offres (ne pas filtrer par statut pour l'instant)
+          const activeOffersCount = offresApi.length;
+          console.log("Nombre total d'offres:", activeOffersCount);
+          
+          // Mettre à jour le compteur d'offres disponibles avec le nombre total
+          setStats(prev => ({
+            ...prev,
+            offresDisponibles: activeOffersCount
+          }));
+          
+          // Prendre les 3 offres les plus récentes pour l'affichage en tendance
+          const sortedOffers = [...offresApi].sort((a, b) => {
+            // Utiliser date_publication si disponible, sinon utiliser un timestamp récent
+            const dateA = a.date_publication ? new Date(a.date_publication) : new Date();
+            const dateB = b.date_publication ? new Date(b.date_publication) : new Date();
+            return dateB - dateA;
+          });
+          
+          const recentOffers = sortedOffers.slice(0, 3).map((offer, index) => {
+            // Afficher toutes les propriétés disponibles pour débugger le nom de la clinique
+            console.log(`Offre #${index+1}:`, {
+              id: offer.id_offre,
+              titre: offer.titre,
+              clinique: offer.clinique || offer.nom_clinique || offer.Clinique?.nom || "Voir la structure complète",
+              id_clinique: offer.id_clinique
+            });
+            
+            // Essayer d'obtenir le nom de la clinique avec différentes stratégies
+            let nomClinique = "Clinique";
+            
+            if (offer.Clinique?.nom) {
+              nomClinique = offer.Clinique.nom;
+            } else if (offer.nom_clinique) {
+              nomClinique = offer.nom_clinique;
+            } else if (offer.clinique) {
+              nomClinique = offer.clinique;
+            } else if (offer.CliniqueDentaire?.nom_clinique) {
+              nomClinique = offer.CliniqueDentaire.nom_clinique;
+            }
+            
+            // Assigner des statuts différents aux 3 premières offres pour l'affichage
+            const statusMap = ['nouveau', 'populaire', 'vedette'];
+            
             return {
-              id: c.id,
-              titre: relatedOffer ? relatedOffer.title : 'Offre non disponible',
-              clinique: relatedOffer ? relatedOffer.cliniqueName : 'Clinique inconnue',
-              dateCandidature: c.applicationDate,
-              statut: c.status === 'selected' ? 'Entretien prévu' : c.status === 'pending' ? 'En cours d\'examen' : 'Candidature reçue'
+              id: offer.id_offre,
+              titre: offer.titre || "Offre sans titre",
+              clinique: nomClinique,
+              lieu: offer.adresse_complete || offer.lieu || 'Non spécifié',
+              dateDébut: offer.date_debut,
+              dateFin: offer.date_fin,
+              salaire: offer.remuneration ? `${offer.remuneration} €` : 'Non spécifié',
+              datePublication: offer.date_publication,
+              status: statusMap[index] || 'nouveau'
             };
           });
           
-        setOffresEnAttente(candidaturesEnAttente);
+          console.log("Offres en tendance préparées:", recentOffers.length);
+          setOffresTendance(recentOffers);
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        console.error("Erreur lors du chargement des offres:", err);
+        setError("Erreur lors du chargement des offres");
+        setLoading(false);
       }
-    }
-  }, [offers, candidates]);
+    };
+    
+    loadOffers();
+  }, []);
+  
+  // Charger les candidatures et autres statistiques
+  useEffect(() => {
+    const loadCandidatures = async () => {
+      try {
+        const userCandidatures = await fetchUserCandidatures();
+        console.log("Candidatures chargées:", userCandidatures?.length || 0);
+        
+        if (userCandidatures) {
+          // Nombre total de candidatures
+          const totalCandidatures = userCandidatures.length;
+          
+          // Nombre d'entretiens prévus (candidatures avec statut selected)
+          const entretiensPrevus = userCandidatures.filter(c => 
+            c.statut === 'selected' || c.statut === 'interview'
+          ).length;
+          
+          // Estimation du nombre d'offres consultées
+          let offresConsultees = parseInt(localStorage.getItem('offresConsultees')) || 0;
+          if (offresConsultees === 0) {
+            // Calculer une estimation basée sur les candidatures et les offres disponibles
+            offresConsultees = Math.max((totalCandidatures * 3) + 5, stats.offresDisponibles * 2);
+            localStorage.setItem('offresConsultees', offresConsultees.toString());
+          }
+          
+          // Mettre à jour les statistiques
+          setStats(prev => ({
+            ...prev,
+            applicationsEnvoyees: totalCandidatures,
+            entretiensPrevus: entretiensPrevus,
+            offresConsultees: offresConsultees
+          }));
+          
+          // Si des candidatures sont disponibles, vérifier leur structure pour déboguer
+          if (userCandidatures.length > 0) {
+            console.log("Structure d'une candidature:", JSON.stringify(userCandidatures[0], null, 2));
+          }
+          
+          // Filtrer et formater les candidatures en attente
+          const candidaturesEnAttente = userCandidatures
+            .filter(c => c.statut !== 'rejected')
+            .slice(0, 3)
+            .map(c => {
+              // Tenter de récupérer le nom de la clinique de différentes manières
+              let nomClinique = "Clinique inconnue";
+              if (c.Offre?.Clinique?.nom) nomClinique = c.Offre.Clinique.nom;
+              else if (c.Offre?.Clinique?.nom_clinique) nomClinique = c.Offre.Clinique.nom_clinique;
+              else if (c.Offre?.nom_clinique) nomClinique = c.Offre.nom_clinique;
+              else if (c.Offre?.clinique) nomClinique = c.Offre.clinique;
+              
+              return {
+                id: c.id_candidature,
+                titre: c.Offre?.titre || 'Offre non disponible',
+                clinique: nomClinique,
+                dateCandidature: c.date_candidature,
+                statut: c.statut === 'accepted' ? 'Offre acceptée' :
+                       c.statut === 'selected' ? 'Entretien prévu' :
+                       c.statut === 'rejected' ? 'Non retenu' :
+                       c.statut === 'pending' ? 'En cours d\'examen' : 'Candidature reçue'
+              };
+            });
+          
+          setOffresEnAttente(candidaturesEnAttente);
+          
+          // Générer des messages basés sur les candidatures
+          const messages = userCandidatures
+            .slice(0, 3)
+            .map((candidature, index) => {
+              let content = '';
+              const messageDateObj = new Date(candidature.date_candidature);
+              
+              if (candidature.statut === 'selected') {
+                content = `Bonjour, suite à votre candidature pour le poste de ${candidature.Offre?.titre || 'remplacement'}, nous aimerions planifier un entretien...`;
+              } else if (candidature.statut === 'pending') {
+                content = `Nous avons bien reçu votre candidature pour le poste de ${candidature.Offre?.titre || 'remplacement'}. Nous l'examinerons attentivement et reviendrons vers vous rapidement.`;
+              } else {
+                content = `Merci pour votre candidature. Votre profil a retenu notre attention et nous souhaiterions vous rencontrer...`;
+              }
+              
+              // Tenter de récupérer le nom de la clinique de différentes manières
+              let nomClinique = "Clinique inconnue";
+              if (candidature.Offre?.Clinique?.nom) nomClinique = candidature.Offre.Clinique.nom;
+              else if (candidature.Offre?.Clinique?.nom_clinique) nomClinique = candidature.Offre.Clinique.nom_clinique;
+              else if (candidature.Offre?.nom_clinique) nomClinique = candidature.Offre.nom_clinique;
+              else if (candidature.Offre?.clinique) nomClinique = candidature.Offre.clinique;
+              else nomClinique = `Clinique ${index + 1}`;
+              
+              const avatar = nomClinique.charAt(0);
+              
+              return {
+                id: candidature.id_candidature,
+                expediteur: nomClinique,
+                avatar: avatar,
+                contenu: content,
+                nonLu: index < 2,
+                date: messageDateObj.toISOString(),
+                conversationId: candidature.id_candidature
+              };
+            });
+          
+          setMessagesRecents(messages);
+          
+          // Générer des entretiens basés sur les candidatures avec statut "Entretien prévu"
+          const entretiens = candidaturesEnAttente
+            .filter(offre => offre.statut === 'Entretien prévu')
+            .map((offre, index) => {
+              // Générer une date proche pour l'entretien
+              const today = new Date();
+              const interviewDate = new Date(today);
+              interviewDate.setDate(today.getDate() + (index + 1) * 2);
+              
+              // Types d'entretien possibles
+              const types = ['video', 'téléphone', 'présentiel'];
+              
+              return {
+                id: offre.id,
+                clinique: offre.clinique,
+                poste: offre.titre,
+                date: interviewDate.toISOString().split('T')[0],
+                heure: `${10 + (index * 2)}:${index % 2 === 0 ? '00' : '30'}`,
+                type: types[index % 3]
+              };
+            });
+          
+          setEntretiensAVenir(entretiens);
+        }
+      } catch (err) {
+        console.error("Erreur lors du chargement des candidatures:", err);
+      }
+    };
+    
+    loadCandidatures();
+  }, [stats.offresDisponibles]);
 
   // Formatage de date
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('fr-CA', options);
+    if (!dateString) return 'Non spécifié';
+    
+    try {
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString('fr-CA', options);
+    } catch (e) {
+      console.error("Erreur de formatage de date:", e);
+      return dateString;
+    }
   };
 
   // Navigation
@@ -145,16 +262,23 @@ const Principale = () => {
   
   // Formatage de l'heure pour les messages
   const formatMessageTime = (dateString) => {
-    const date = new Date(dateString);
-    const today = new Date();
+    if (!dateString) return '';
     
-    // Si le message date d'aujourd'hui, afficher l'heure
-    if (date.toDateString() === today.toDateString()) {
-      return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+    try {
+      const date = new Date(dateString);
+      const today = new Date();
+      
+      // Si le message date d'aujourd'hui, afficher l'heure
+      if (date.toDateString() === today.toDateString()) {
+        return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+      }
+      
+      // Sinon, afficher la date au format court
+      return `${date.getDate()}/${date.getMonth() + 1}`;
+    } catch (e) {
+      console.error("Erreur de formatage d'heure:", e);
+      return '';
     }
-    
-    // Sinon, afficher la date au format court
-    return `${date.getDate()}/${date.getMonth() + 1}`;
   };
   
   return (
@@ -357,23 +481,35 @@ const Principale = () => {
           <div className="section-content">
             <div className="scrollable-content">
               <div className="messages-liste">
-                {messagesRecents.map(message => (
-                  <div 
-                    key={message.id} 
-                    className={`message-card ${message.nonLu ? 'non-lu' : ''}`}
-                    onClick={() => navigateTo(`/messagerie/${message.conversationId}`)}
-                  >
-                    <div className="message-avatar">{message.avatar}</div>
-                    <div className="message-content">
-                      <div className="message-header">
-                        <h3>{message.expediteur}</h3>
-                        <span className="message-time">{formatMessageTime(message.date)}</span>
+                {messagesRecents.length > 0 ? (
+                  messagesRecents.map(message => (
+                    <div 
+                      key={message.id} 
+                      className={`message-card ${message.nonLu ? 'non-lu' : ''}`}
+                      onClick={() => navigateTo(`/messagerie/${message.conversationId}`)}
+                    >
+                      <div className="message-avatar">{message.avatar}</div>
+                      <div className="message-content">
+                        <div className="message-header">
+                          <h3>{message.expediteur}</h3>
+                          <span className="message-time">{formatMessageTime(message.date)}</span>
+                        </div>
+                        <p>{message.contenu.length > 60 ? message.contenu.substring(0, 60) + '...' : message.contenu}</p>
                       </div>
-                      <p>{message.contenu.length > 60 ? message.contenu.substring(0, 60) + '...' : message.contenu}</p>
+                      {message.nonLu && <div className="non-lu-badge"></div>}
                     </div>
-                    {message.nonLu && <div className="non-lu-badge"></div>}
+                  ))
+                ) : (
+                  <div className="empty-state">
+                    <p>Aucun message récent.</p>
+                    <button 
+                      className="explore-button"
+                      onClick={() => navigateTo('/messagerie')}
+                    >
+                      <i className="fa-solid fa-envelope"></i> Voir la messagerie
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
@@ -394,24 +530,36 @@ const Principale = () => {
           <div className="section-content">
             <div className="scrollable-content">
               <div className="candidatures-liste">
-                {offresEnAttente.map(offre => (
-                  <div key={offre.id} className="candidature-card">
-                    <div className="candidature-info">
-                      <h3>{offre.titre}</h3>
-                      <p className="candidature-clinique">
-                        <i className="fa-solid fa-hospital"></i> {offre.clinique}
-                      </p>
-                      <p className="candidature-date">
-                        <i className="fa-solid fa-calendar-check"></i> Postuler le {formatDate(offre.dateCandidature)}
-                      </p>
+                {offresEnAttente.length > 0 ? (
+                  offresEnAttente.map(offre => (
+                    <div key={offre.id} className="candidature-card">
+                      <div className="candidature-info">
+                        <h3>{offre.titre}</h3>
+                        <p className="candidature-clinique">
+                          <i className="fa-solid fa-hospital"></i> {offre.clinique}
+                        </p>
+                        <p className="candidature-date">
+                          <i className="fa-solid fa-calendar-check"></i> Postuler le {formatDate(offre.dateCandidature)}
+                        </p>
+                      </div>
+                      <div className="candidature-status">
+                        <span className={`status-badge ${offre.statut === 'Entretien prévu' ? 'success' : offre.statut === 'En cours d\'examen' ? 'warning' : 'info'}`}>
+                          {offre.statut}
+                        </span>
+                      </div>
                     </div>
-                    <div className="candidature-status">
-                      <span className={`status-badge ${offre.statut === 'Entretien prévu' ? 'success' : offre.statut === 'En cours d\'examen' ? 'warning' : 'info'}`}>
-                        {offre.statut}
-                      </span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="empty-state">
+                    <p>Vous n'avez pas encore postulé à des offres.</p>
+                    <button 
+                      className="explore-button"
+                      onClick={() => navigateTo('/offres')}
+                    >
+                      <i className="fa-solid fa-search"></i> Explorer les offres
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>

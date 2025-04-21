@@ -10,60 +10,36 @@ const Notifications = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('toutes');
   
-  // Simuler le chargement des notifications
   useEffect(() => {
-    // Dans un cas réel, vous feriez un appel API ici
-    setTimeout(() => {
-      setNotifications([
-        {
-          id: 1,
-          type: 'offre',
-          title: 'Nouvelle offre disponible',
-          message: 'Une nouvelle offre correspondant à votre profil est disponible',
-          date: '2023-11-15T10:30:00',
-          isRead: false,
-          link: '/offre/123'
-        },
-        {
-          id: 2,
-          type: 'candidature',
-          title: 'Candidature acceptée',
-          message: 'Votre candidature a été acceptée par Cabinet Dentaire Saint-Michel',
-          date: '2023-11-14T09:15:00',
-          isRead: true,
-          link: '/candidature/456'
-        },
-        {
-          id: 3,
-          type: 'message',
-          title: 'Nouveau message',
-          message: 'Vous avez reçu un nouveau message de Dr. Martin',
-          date: '2023-11-13T14:45:00',
-          isRead: false,
-          link: '/messages/789'
-        },
-        {
-          id: 4,
-          type: 'systeme',
-          title: 'Mise à jour de profil',
-          message: 'Votre profil a été mis à jour avec succès',
-          date: '2023-11-10T16:20:00',
-          isRead: true,
-          link: '/profil'
-        },
-        {
-          id: 5,
-          type: 'offre',
-          title: 'Offre expirée',
-          message: 'Une offre à laquelle vous avez postulé a expiré',
-          date: '2023-11-05T11:00:00',
-          isRead: true,
-          link: '/historique-offres'
-        }
-      ]);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+    const loadNotifications = async () => {
+      try {
+        const response = await fetch(`http://localhost:4000/api/notifications/${user.id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+  
+        const data = await response.json();
+        const notifs = data.notifications.map(n => ({
+          id: n.id_notification,
+          type: n.type_notification,
+          title: n.type_notification.charAt(0).toUpperCase() + n.type_notification.slice(1),
+          message: n.contenu,
+          date: n.date_creation,
+          isRead: n.est_lue === 'Y',
+          link: n.lien_action || '/'
+        }));
+  
+        setNotifications(notifs);
+      } catch (err) {
+        console.error("Erreur chargement des notifications :", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    loadNotifications();
+  }, []);  
   
   // Filtrer les notifications selon l'onglet actif
   const filteredNotifications = notifications.filter(notification => {
@@ -73,13 +49,24 @@ const Notifications = () => {
   });
   
   // Marquer une notification comme lue
-  const markAsRead = (id) => {
-    setNotifications(prevNotifications => 
-      prevNotifications.map(notif => 
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
-  };
+  const markAsRead = async (id) => {
+    try {
+      await fetch(`http://localhost:4000/api/notifications/${id}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+  
+      setNotifications(prev =>
+        prev.map(notif =>
+          notif.id === id ? { ...notif, isRead: true } : notif
+        )
+      );
+    } catch (err) {
+      console.error("Erreur lors du marquage comme lu :", err);
+    }
+  };  
   
   // Marquer toutes les notifications comme lues
   const markAllAsRead = () => {

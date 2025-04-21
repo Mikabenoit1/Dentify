@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createOffer, updateOffer, deleteOffer, fetchOfferById } from '../lib/offerApi';
+import { fetchClinicProfile } from '../lib/clinicApi'; // Importation de la fonction
 import '../styles/CliniqueCree.css';
 
 
@@ -34,6 +35,32 @@ const CliniqueCree = () => {
     isSingleDay: false  // Offre d'une journée
   });
 
+  // Récupérer l'adresse de la clinique au chargement initial
+  useEffect(() => {
+    const loadClinicAddress = async () => {
+      try {
+        // Uniquement si nous ne sommes pas en mode édition et que l'adresse est vide
+        if (!id && !newOffer.location) {
+          const clinicProfile = await fetchClinicProfile();
+          
+          // Vérifier si nous avons une adresse complète ou des coordonnées
+          if (clinicProfile.adresse_complete || clinicProfile.adresse) {
+            setNewOffer(prev => ({
+              ...prev,
+              location: clinicProfile.adresse_complete || clinicProfile.adresse,
+              coordinates: clinicProfile.coordinates || { lat: 45.2538, lng: -74.1334 }
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement de l'adresse de la clinique:", error);
+        // En cas d'erreur, on ne fait rien - l'utilisateur devra saisir l'adresse
+      }
+    };
+    
+    loadClinicAddress();
+  }, []); // Exécuté uniquement au montage du composant
+  
   // Charger l'offre existante si en mode édition
   useEffect(() => {
     const loadOffer = async () => {
@@ -374,8 +401,8 @@ const CliniqueCree = () => {
             
             <div className="preview-section">
               <h4>Rémunération</h4>
-              <p>{newOffer.compensation || "Non spécifiée"}</p>
-            </div>
+              <p>{newOffer.compensation ? `${newOffer.compensation} $ CAD` : "Non spécifiée"}</p>
+              </div>
             
             <div className="preview-actions">
               <button className="cancel-button" onClick={togglePreview}>
@@ -500,13 +527,13 @@ const CliniqueCree = () => {
                     id="location"
                     name="location"
                     value={newOffer.location}
-                    onChange={(e) => setNewOffer({ ...newOffer, location: e.target.value })}
+                    onChange={handleInputChange}
                     placeholder="Entrez l'adresse du cabinet"
                     ref={addressRef}
                     required
                   />
                   <small className="help-text">
-                    Vous pouvez saisir directement l'adresse complète de votre cabinet
+                    L'adresse de votre clinique est pré-remplie. Vous pouvez la modifier si nécessaire.
                   </small>
                 </div>
               </div>
@@ -547,7 +574,7 @@ const CliniqueCree = () => {
                     name="compensation"
                     value={newOffer.compensation}
                     onChange={handleInputChange}
-                    placeholder="Ex: 350€/jour, pourcentage sur le chiffre d'affaires..."
+                    placeholder="Ex: 350$/jour, pourcentage sur le chiffre d'affaires..."
                     required
                   />
                 </div>

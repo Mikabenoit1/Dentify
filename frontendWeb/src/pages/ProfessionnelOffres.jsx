@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchNearbyOffers } from '../lib/offerApi';
 import { fetchAllCliniques } from '../lib/clinicApi';
 import { fetchUserProfile } from '../lib/userApi';
-import { postulerOffre, postulerAOffre } from '../lib/candidatureApi';
+import { fetchUserCandidatures, postulerAOffre } from '../lib/candidatureApi';
 import '../styles/ProfessionnelOffres.css';
 
 const ProfessionnelOffres = () => {
@@ -14,7 +14,6 @@ const ProfessionnelOffres = () => {
   const [cliniquesMap, setCliniquesMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filterLieu, setFilterLieu] = useState('tous');
   const [filterDurée, setFilterDurée] = useState('toutes');
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,6 +21,7 @@ const ProfessionnelOffres = () => {
   const [filterDistance, setFilterDistance] = useState(50);
   const [savedOffers, setSavedOffers] = useState([]);
   const [filterJours, setFilterJours] = useState([]);
+  const [appliedOfferIds, setAppliedOfferIds] = useState([]);
   const [sortBy, setSortBy] = useState('date_desc');
   const [activeTab, setActiveTab] = useState('all');
 
@@ -90,7 +90,21 @@ const ProfessionnelOffres = () => {
     fetchCliniques();
   }, []);
 
-  useEffect(() => {
+  
+useEffect(() => {
+  const loadUserApplications = async () => {
+    try {
+      const candidatures = await fetchUserCandidatures();
+      const ids = candidatures.map(c => c.id_offre);
+      setAppliedOfferIds(ids);
+    } catch (err) {
+      console.error("Erreur lors du chargement des candidatures :", err);
+    }
+  };
+
+  loadUserApplications();
+}, []);
+useEffect(() => {
     const loadUserCoordinatesFromProfile = async () => {
       try {
         const profile = await fetchUserProfile(); // API GET /me
@@ -125,7 +139,7 @@ const ProfessionnelOffres = () => {
       try {
         setLoading(true);
         const data = await fetchNearbyOffers(userCoordinates, filterDistance);
-        setOffers(data); // ← ça alimente `offers` !
+        setOffers(data);
         setLoading(false);
       } catch (err) {
         console.error("Erreur fetchNearbyOffers:", err);
@@ -137,12 +151,10 @@ const ProfessionnelOffres = () => {
     fetchOffersNearby();
   }, [userCoordinates, filterDistance]);
   
-  
-
   // Filtrer les offres
   useEffect(() => {
     filterOffers();
-  }, [offers, searchTerm, filterProfession, filterJours, sortBy, activeTab, savedOffers, cliniquesMap]);
+  }, [offers, searchTerm, filterProfession, filterJours, filterDurée, sortBy, activeTab, savedOffers, cliniquesMap]);
 
   const filterOffers = () => {
     let result = [...offers];
@@ -160,19 +172,44 @@ const ProfessionnelOffres = () => {
       });
     }
     
-  
     // 🎯 Filtre par profession
     if (filterProfession !== 'toutes') {
       result = result.filter(offer => offer.type_professionnel === filterProfession);
     }
   
-    // 📅 Filtrer par jours disponibles
+    // 📅 Filtre par jours disponibles
     if (filterJours.length > 0) {
       result = result.filter(offer => {
         const date = new Date(offer.date_debut);
         const dayOfWeek = date.getDay();
         const dayName = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'][dayOfWeek];
         return filterJours.includes(dayName);
+      });
+    }
+    
+    // ⏱ Filtre par durée
+    if (filterDurée !== 'toutes') {
+      result = result.filter(offer => {
+        if (!offer.date_debut || !offer.date_fin) return false;
+        
+        // Calculer la durée en jours
+        const start = new Date(offer.date_debut);
+        const end = new Date(offer.date_fin);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        switch (filterDurée) {
+          case 'journee':
+            return diffDays === 0 || offer.date_debut === offer.date_fin;
+          case 'court':
+            return diffDays > 0 && diffDays < 30;
+          case 'moyen':
+            return diffDays >= 30 && diffDays <= 90;
+          case 'long':
+            return diffDays > 90;
+          default:
+            return true;
+        }
       });
     }
   
@@ -183,32 +220,36 @@ const ProfessionnelOffres = () => {
   
     // ⏱ Tri
     if (sortBy === 'date_desc') {
-      result.sort((a, b) => new Date(b.date_publication) - new Date(a.date_publication));
+      result.sort((a, b) => new Date(b.date_publication || 0) - new Date(a.date_publication || 0));
     } else if (sortBy === 'date_asc') {
-      result.sort((a, b) => new Date(a.date_publication) - new Date(b.date_publication));
+      result.sort((a, b) => new Date(a.date_publication || 0) - new Date(b.date_publication || 0));
     } else if (sortBy === 'salary_desc') {
-      result.sort((a, b) => b.remuneration - a.remuneration);
+      result.sort((a, b) => (b.remuneration || 0) - (a.remuneration || 0));
     } else if (sortBy === 'salary_asc') {
-      result.sort((a, b) => a.remuneration - b.remuneration);
+      result.sort((a, b) => (a.remuneration || 0) - (b.remuneration || 0));
     }
   
     setFilteredOffers(result);
   };
   
   const handleApply = async (e, id) => {
-    e.stopPropagation();
-    try {
-      await postulerAOffre(id);
-      alert("✅ Candidature envoyée !");
-    } catch (err) {
-      if (err.message.includes('déjà postulé')) {
-        alert("⚠️ Vous avez déjà postulé à cette offre.");
-      } else {
-        console.error(err);
-        alert("❌ Une erreur est survenue lors de la postulation.");
+  e.stopPropagation();
+  try {
+    await postulerAOffre(id);
+    alert("✅ Candidature envoyée !");
+    setAppliedOfferIds(prev => [...prev, id]);
+  } catch (err) {
+    if (err.message.includes('déjà postulé')) {
+      alert("⚠️ Vous avez déjà postulé à cette offre.");
+      if (!appliedOfferIds.includes(id)) {
+        setAppliedOfferIds(prev => [...prev, id]);
       }
+    } else {
+      console.error(err);
+      alert("❌ Une erreur est survenue lors de la postulation.");
     }
-  };
+  }
+};
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -243,25 +284,25 @@ const ProfessionnelOffres = () => {
   
   return (
     <div className="professionnel-offres-container">
-    <div className="offres-header">
-      <h1>Offres de remplacement</h1>
-      <p>Trouvez le remplacement idéal parmi nos offres disponibles</p>
-    </div>
+      <div className="offres-header">
+        <h1>Offres de remplacement</h1>
+        <p>Trouvez le remplacement idéal parmi nos offres disponibles</p>
+      </div>
 
-    <div className="offres-tabs">
-      <button 
-        className={`tab-button ${activeTab === 'all' ? 'active' : ''}`}
-        onClick={() => setActiveTab('all')}
-      >
-        Toutes les offres
-      </button>
-      <button 
-        className={`tab-button ${activeTab === 'saved' ? 'active' : ''}`}
-        onClick={() => setActiveTab('saved')}
-      >
-        <i className="fa-solid fa-bookmark"></i> Offres sauvegardées ({savedOffers.length})
-      </button>
-    </div>
+      <div className="offres-tabs">
+        <button 
+          className={`tab-button ${activeTab === 'all' ? 'active' : ''}`}
+          onClick={() => setActiveTab('all')}
+        >
+          Toutes les offres
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'saved' ? 'active' : ''}`}
+          onClick={() => setActiveTab('saved')}
+        >
+          <i className="fa-solid fa-bookmark"></i> Offres sauvegardées ({savedOffers.length})
+        </button>
+      </div>
 
       <div className="filter-container">
         <div className="search-bar">
@@ -293,21 +334,6 @@ const ProfessionnelOffres = () => {
               <option value="dentiste">Dentiste</option>
               <option value="hygieniste">Hygiéniste</option>
               <option value="assistant">Assistant(e)</option>
-            </select>
-          </div>
-          
-          <div className="filter-group">
-            <label>Lieu</label>
-            <select
-              value={filterLieu}
-              onChange={(e) => setFilterLieu(e.target.value)}
-            >
-              <option value="tous">Tous</option>
-              <option value="Paris">Paris</option>
-              <option value="Lyon">Lyon</option>
-              <option value="Marseille">Marseille</option>
-              <option value="Bordeaux">Bordeaux</option>
-              <option value="Lille">Lille</option>
             </select>
           </div>
           
@@ -413,102 +439,103 @@ const ProfessionnelOffres = () => {
       </div>
 
       <div className="offres-results">
-      <p className="results-count">
-        {loading ? 'Chargement des offres...' : `${filteredOffers.length} offre(s) trouvée(s)`}
-      </p>
+        <p className="results-count">
+          {loading ? 'Chargement des offres...' : `${filteredOffers.length} offre(s) trouvée(s)`}
+        </p>
 
-      {error && (
-        <div className="error-message">
-          <i className="fa-solid fa-exclamation-triangle"></i>
-          <p>Une erreur est survenue lors du chargement des offres. Veuillez réessayer plus tard.</p>
-        </div>
-      )}
+        {error && (
+          <div className="error-message">
+            <i className="fa-solid fa-exclamation-triangle"></i>
+            <p>Une erreur est survenue lors du chargement des offres. Veuillez réessayer plus tard.</p>
+          </div>
+        )}
 
-      {!loading && filteredOffers.length === 0 ? (
-        <div className="no-results">
-          <i className="fa-solid fa-face-sad-tear"></i>
-          <h3>Aucune offre ne correspond à vos critères</h3>
-          <p>Essayez de modifier vos filtres ou d'élargir votre recherche</p>
-        </div>
-      ) : (
-        <div className="offres-grid">
-          {filteredOffers.map((offer) => (
-            <div key={offer.id_offre} className="offre-card">
-              <div className="offre-header">
-                <div className="offre-tags">
-                  {offer.statut === 'active' && (
-                    <span className="offre-tag nouveau">Actif</span>
-                  )}
-                  {offer.statut === 'pending' && (
-                    <span className="offre-tag attente">En attente</span>
-                  )}
-                  {offer.date_debut === offer.date_fin && (
-                    <span className="offre-tag journee">1 jour</span>
-                  )}
-                </div>
-                <button 
-                  className={`save-button ${savedOffers.includes(offer.id_offre) ? 'saved' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSaveOffer(offer.id_offre);
-                  }}
-                >
-                  <i className={`fa-${savedOffers.includes(offer.id_offre) ? 'solid' : 'regular'} fa-bookmark`}></i>
-                </button>
-              </div>
-                
-              <div className="offre-content" onClick={() => navigateToDetail(offer.id_offre)}>
-                <h2 className="offre-title">{offer.titre}</h2>
-                <p className="offre-clinique">
-                <i className="fa-solid fa-hospital"></i> {offer.CliniqueDentaire?.nom_clinique || "Clinique inconnue"}
-                </p>
-                <p className="offre-lieu">
-                  <i className="fa-solid fa-location-dot"></i> {offer.adresse_complete}
-                </p>
-                <p className="offre-salaire">
-                  <i className="fa-solid fa-money-bill-wave"></i> {offer.remuneration} €
-                </p>
-                <p className="offre-date">
-                  <i className="fa-solid fa-calendar"></i>
-                  {offer.date_debut === offer.date_fin
-                    ? `Le ${formatDate(offer.date_debut)}`
-                    : `Du ${formatDate(offer.date_debut)} au ${formatDate(offer.date_fin)}`}
-                </p>
-                <p className="offre-durée">
-                  <i className="fa-solid fa-clock"></i> Durée: {calculerDurée(offer.date_debut, offer.date_fin)}
-                </p>
-                <p className="offre-description">
-                  {offer.descript?.length > 150
-                    ? offer.descript.substring(0, 150) + '...'
-                    : offer.descript}
-                </p>
-              </div>
-                
-              <div className="offre-footer">
-                <span className="offre-date-publication">
-                  Publié le {formatDate(offer.date_publication)}
-                </span>
-                <div className="offre-buttons">
+        {!loading && filteredOffers.length === 0 ? (
+          <div className="no-results">
+            <i className="fa-solid fa-face-sad-tear"></i>
+            <h3>Aucune offre ne correspond à vos critères</h3>
+            <p>Essayez de modifier vos filtres ou d'élargir votre recherche</p>
+          </div>
+        ) : (
+          <div className="offres-grid">
+            {filteredOffers.map((offer) => (
+              <div key={offer.id_offre} className="offre-card">
+                <div className="offre-header">
+                  <div className="offre-tags">
+                    {offer.statut === 'active' && (
+                      <span className="offre-tag nouveau">Actif</span>
+                    )}
+                    {offer.statut === 'pending' && (
+                      <span className="offre-tag attente">En attente</span>
+                    )}
+                    {offer.date_debut === offer.date_fin && (
+                      <span className="offre-tag journee">1 jour</span>
+                    )}
+                  </div>
                   <button 
-                    className="details-button"
-                    onClick={() => navigateToDetail(offer.id_offre)}
+                    className={`save-button ${savedOffers.includes(offer.id_offre) ? 'saved' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSaveOffer(offer.id_offre);
+                    }}
                   >
-                    Voir détails
-                  </button>
-                  <button 
-                    className="apply-button"
-                    onClick={(e) => handleApply(e, offer.id_offre)}
-                  >
-                    Postuler
+                    <i className={`fa-${savedOffers.includes(offer.id_offre) ? 'solid' : 'regular'} fa-bookmark`}></i>
                   </button>
                 </div>
+                  
+                <div className="offre-content" onClick={() => navigateToDetail(offer.id_offre)}>
+                  <h2 className="offre-title">{offer.titre}</h2>
+                  <p className="offre-clinique">
+                    <i className="fa-solid fa-hospital"></i> {offer.CliniqueDentaire?.nom_clinique || getClinicName(offer.id_clinique) || "Clinique inconnue"}
+                  </p>
+                  <p className="offre-lieu">
+                    <i className="fa-solid fa-location-dot"></i> {offer.adresse_complete}
+                  </p>
+                  <p className="offre-salaire">
+                    <i className="fa-solid fa-money-bill-wave"></i> {offer.remuneration} $ CAD
+                  </p>
+                  <p className="offre-date">
+                    <i className="fa-solid fa-calendar"></i>
+                    {offer.date_debut === offer.date_fin
+                      ? `Le ${formatDate(offer.date_debut)}`
+                      : `Du ${formatDate(offer.date_debut)} au ${formatDate(offer.date_fin)}`}
+                  </p>
+                  <p className="offre-durée">
+                    <i className="fa-solid fa-clock"></i> Durée: {calculerDurée(offer.date_debut, offer.date_fin)}
+                  </p>
+                  <p className="offre-description">
+                    {offer.descript?.length > 150
+                      ? offer.descript.substring(0, 150) + '...'
+                      : offer.descript}
+                  </p>
+                </div>
+                  
+                <div className="offre-footer">
+                  <span className="offre-date-publication">
+                    Publié le {formatDate(offer.date_publication)}
+                  </span>
+                  <div className="offre-buttons">
+                    <button 
+                      className="details-button"
+                      onClick={() => navigateToDetail(offer.id_offre)}
+                    >
+                      Voir détails
+                    </button>
+                    <button 
+                      className="apply-button"
+                      onClick={(e) => handleApply(e, offer.id_offre)}
+                      disabled={appliedOfferIds.includes(offer.id_offre)}
+                    >
+                      {appliedOfferIds.includes(offer.id_offre) ? "Déjà postulé" : "Postuler"}
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
-  </div>
   );
 };
 

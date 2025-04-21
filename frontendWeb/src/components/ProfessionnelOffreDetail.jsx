@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchOfferById } from '../lib/offerApi';
 import { fetchCliniqueById } from '../lib/clinicApi';
-import { postulerOffre } from '../lib/candidatureApi';
 import '../styles/ProfessionnelOffreDetail.css';
 
 const ProfessionnelOffreDetail = () => {
@@ -13,10 +12,6 @@ const ProfessionnelOffreDetail = () => {
   const [clinique, setClinique] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [messagePersonnalise, setMessagePersonnalise] = useState('');
-  const [showApplicationForm, setShowApplicationForm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasApplied, setHasApplied] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -93,24 +88,6 @@ const ProfessionnelOffreDetail = () => {
     } catch (error) {
       console.error('Erreur de formatage d\'heure:', error);
       return 'Heure invalide';
-    }
-  };
-
-  // Fonction pour postuler à l'offre
-  const handleApply = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      await postulerOffre(id, messagePersonnalise);
-      setHasApplied(true);
-      setShowApplicationForm(false);
-      setIsSubmitting(false);
-      alert("✅ Votre candidature a été envoyée avec succès !");
-    } catch (error) {
-      console.error("Erreur lors de la candidature:", error);
-      setIsSubmitting(false);
-      alert("❌ Une erreur est survenue lors de l'envoi de votre candidature.");
     }
   };
 
@@ -196,16 +173,6 @@ const ProfessionnelOffreDetail = () => {
         </button>
       </div>
       
-      {hasApplied && (
-        <div className="application-success-banner">
-          <i className="fa-solid fa-check-circle"></i>
-          Vous avez postulé à cette offre. Vous pouvez suivre l'état de votre candidature dans la section "Mes candidatures".
-          <button onClick={() => navigate('/applique')}>
-            Voir mes candidatures
-          </button>
-        </div>
-      )}
-      
       <div className="offer-detail-card">
         <div className="offer-status-header">
           <h2>{offer.titre}</h2>
@@ -289,8 +256,7 @@ const ProfessionnelOffreDetail = () => {
               </div>
               <div className="detail-content">
                 <h4>Rémunération</h4>
-                <p>{offer.remuneration ? `${offer.remuneration}€` : 'Non spécifiée'}</p>
-              </div>
+                <p>{offer.remuneration ? `${offer.remuneration} $ CAD` : 'Non spécifiée'}</p>                </div>
             </div>
             
             <div className="detail-item">
@@ -322,61 +288,12 @@ const ProfessionnelOffreDetail = () => {
         )}
         
         <div className="offer-action-section">
-          {!hasApplied ? (
-            showApplicationForm ? (
-              <form className="application-form" onSubmit={handleApply}>
-                <h3>Postuler à cette offre</h3>
-                <div className="form-group">
-                  <label htmlFor="message">Message personnalisé (optionnel)</label>
-                  <textarea
-                    id="message"
-                    rows="5"
-                    placeholder="Présentez-vous brièvement et expliquez pourquoi vous êtes intéressé(e) par cette offre..."
-                    value={messagePersonnalise}
-                    onChange={(e) => setMessagePersonnalise(e.target.value)}
-                  ></textarea>
-                </div>
-                
-                <div className="form-actions">
-                  <button 
-                    type="button" 
-                    className="cancel-button"
-                    onClick={() => setShowApplicationForm(false)}
-                    disabled={isSubmitting}
-                  >
-                    Annuler
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="submit-button"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Envoi en cours...' : 'Envoyer ma candidature'}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <button 
-                className="apply-button primary-button"
-                onClick={() => setShowApplicationForm(true)}
-              >
-                <i className="fa-solid fa-paper-plane"></i> Postuler à cette offre
-              </button>
-            )
-          ) : (
-            <p className="already-applied-message">
-              <i className="fa-solid fa-check-circle"></i> Vous avez déjà postulé à cette offre
-            </p>
-          )}
-          
-          <div className="other-actions">
-            <button className="save-button secondary-button">
-              <i className="fa-regular fa-bookmark"></i> Sauvegarder
-            </button>
-            <button className="share-button secondary-button">
-              <i className="fa-solid fa-share"></i> Partager
-            </button>
-          </div>
+          <button 
+            className="back-button primary-button"
+            onClick={() => navigate('/offres')}
+          >
+            <i className="fa-solid fa-arrow-left"></i> Retour à la liste des offres
+          </button>
         </div>
       </div>
     </div>

@@ -1,0 +1,33 @@
+
+.pro-notifications-page {
+    padding: 1rem;
+    font-family: Arial, sans-serif;
+  }
+  
+  .pro-notifications-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .pro-notification-item {
+    padding: 1rem;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+  }
+  
+  .pro-notification-item.unread {
+    background-color: #f5f9ff;
+    font-weight: bold;
+  }
+  
+  .pro-notification-item:hover {
+    background-color: #e6f0ff;
+  }
+  
+  .pro-date {
+    display: block;
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.3rem;
+  }
+  

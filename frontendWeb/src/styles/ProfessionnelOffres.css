@@ -425,3 +425,8 @@
     text-align: center;
   }
 }
+.apply-button:disabled {
+  background-color: #933838;
+  cursor: not-allowed;
+  opacity: 0.7;
+}

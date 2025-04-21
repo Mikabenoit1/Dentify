@@ -33,6 +33,7 @@ import ProfessionnelMessagerie from "./pages/ProfessionnelMessagerie";
 import "./styles/index.css";
 
 function App() {
+  const user = JSON.parse(localStorage.getItem('user')) || {};
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarProOpen, setSidebarProOpen] = useState(true);
   const [sidebarCliOpen, setSidebarCliOpen] = useState(true);
