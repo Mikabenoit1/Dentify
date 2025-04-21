@@ -46,6 +46,7 @@ export const postulerOffre = async (offerId) => {
       throw error;
     }
   };
+  
   export const retirerCandidatureAPI = async (id) => {
     try {
       return await apiFetch(`/offres/candidatures/${id}`, {
@@ -56,5 +57,39 @@ export const postulerOffre = async (offerId) => {
     }
   };
   
-
+  export const fetchCandidaturesByOffre = async (offreId) => {
+    try {
+      const response = await apiFetch(`/offres/${offreId}/candidatures`);
+      return response;
+    } catch (error) {
+      console.error(`Erreur lors de la récupération des candidatures pour l'offre ${offreId}:`, error);
+      throw error;
+    }
+  };
   
+  export const accepterCandidature = async (candidatureId) => {
+    try {
+      const response = await apiFetch(`/offres/accepter/${candidatureId}`, {
+        method: 'PUT'
+      });
+      return response;
+    } catch (error) {
+      console.error(`Erreur lors de l'acceptation de la candidature:`, error);
+      throw error;
+    }
+  };
+  
+  export const refuserCandidature = async (candidatureId, motif) => {
+    try {
+      const response = await apiFetch(`/offres/refuser/${candidatureId}`, {
+        method: 'PUT',
+        body: {
+          message_reponse: motif || undefined
+        }
+      });
+      return response;
+    } catch (error) {
+      console.error(`Erreur lors du refus de la candidature:`, error);
+      throw error;
+    }
+  };

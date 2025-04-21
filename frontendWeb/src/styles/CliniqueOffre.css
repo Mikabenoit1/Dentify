@@ -3,7 +3,7 @@
 .clinique-offre-container {
   max-width: 1200px;
   margin: 30px auto;
-  margin-top: 100px;
+  margin-top: 400px;
   padding: 20px;
   font-family: 'Poppins', sans-serif;
   display: flex;
@@ -493,4 +493,271 @@
   background-color: #1976D2 !important;
   color: white !important;
   border-color: #1976D2 !important;
+}
+/* Ajoutez ces styles à votre fichier CliniqueOffre.css */
+
+/* Rendre le conteneur principal défilant */
+.clinique-offre-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  height: 100%;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fixer l'en-tête pour qu'il reste toujours visible */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 10;
+  padding: 15px 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Conteneur wrapper pour permettre le défilement */
+.offer-detail-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px; /* Espace pour la barre de défilement */
+}
+
+/* Style pour la carte de détail de l'offre */
+.offer-detail-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 25px;
+  margin-bottom: 20px;
+}
+
+/* Style pour les sections de détail */
+.offer-detail-section {
+  margin-bottom: 30px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 20px;
+}
+
+.offer-detail-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Améliorer l'espacement des lignes de détails */
+.detail-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+  gap: 20px;
+}
+
+.detail-item {
+  flex: 1;
+  min-width: 250px;
+}
+
+/* Rendre les boutons d'action fixes en bas */
+.offer-detail-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+/* Style pour afficher une barre de défilement élégante */
+.offer-detail-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.offer-detail-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.offer-detail-wrapper::-webkit-scrollbar-thumb {
+  background: #cecece;
+  border-radius: 10px;
+}
+
+.offer-detail-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #b3b3b3;
+}
+
+/* Styles responsives pour les écrans mobiles */
+@media (max-width: 768px) {
+  .clinique-offre-container {
+    padding: 10px;
+    height: auto;
+    max-height: none;
+  }
+  
+  .offer-detail-wrapper {
+    overflow-y: visible;
+    padding-right: 0;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .detail-item {
+    min-width: 100%;
+  }
+  
+  .offer-detail-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .edit-button, .delete-button {
+    width: 100%;
+  }
+  
+  .sticky-header {
+    position: relative;
+  }
+}
+
+/* Styles supplémentaires pour les statistiques de candidatures */
+.candidatures-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.candidature-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.candidature-stat.pending {
+  background-color: #fff8e1;
+}
+
+.candidature-stat.accepted {
+  background-color: #e8f5e9;
+}
+
+.candidature-stat.rejected {
+  background-color: #ffebee;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Style pour la bannière de candidature acceptée */
+.candidature-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.candidature-status-banner.accepted {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-left: 4px solid #2e7d32;
+}
+
+.candidature-status-banner i {
+  font-size: 20px;
+}
+
+/* Style pour le bouton de gestion des candidatures */
+.view-candidatures-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 12px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.view-candidatures-button:hover {
+  background-color: #3367d6;
+}
+
+/* Style pour améliorer la lisibilité du contenu */
+.offer-detail-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: #333;
+}
+
+.offer-detail-section p {
+  margin: 0;
+  line-height: 1.6;
+  color: #444;
+}
+
+.detail-label {
+  font-weight: bold;
+  color: #555;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.detail-value {
+  color: #333;
+}
+
+.urgent-notice {
+  background-color: #fff8e1;
+  border-left: 4px solid #ffb300;
+  padding: 15px;
+  border-radius: 4px;
+}
+
+.urgent-notice h3 {
+  color: #f57c00;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 0;
+}
+
+.urgent-notice i {
+  color: #f57c00;
+}
+
+/* Animation subtile pour rendre l'interface plus dynamique */
+.offer-detail-card {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

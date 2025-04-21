@@ -126,7 +126,7 @@ router.post('/creer', protect, async (req, res) => {
 
     res.status(201).json(nouvelleOffre);
   } catch (error) {
-    console.error('❌ Erreur lors de la création de l’offre :', error);
+    console.error("❌ Erreur lors de la création de l'offre :", error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
@@ -178,7 +178,7 @@ router.put('/:id', protect, async (req, res) => {
 
     res.json({ message: 'Offre mise à jour avec succès', offre });
   } catch (error) {
-    console.error('❌ Erreur lors de la modification de l’offre :', error);
+    console.error("❌ Erreur lors de la modification de l'offre :", error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
@@ -207,7 +207,7 @@ router.patch('/:id/archive', protect, async (req, res) => {
 
     res.json({ message: 'Offre archivée avec succès', offre });
   } catch (error) {
-    console.error('❌ Erreur lors de l\'archivage de l\'offre :', error);
+    console.error("❌ Erreur lors de l'archivage de l'offre :", error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
@@ -233,7 +233,7 @@ router.put('/accepter/:id', protect, async (req, res) => {
       await creerNotification({
         id_destinataire: utilisateurPro.id_utilisateur,
         type: "offre",
-        contenu: `Votre candidature à l’offre "${offre.titre}" a été acceptée !`
+        contenu: `Votre candidature à l'offre "${offre.titre}" a été acceptée !`
       });
 
       await Message.create({
@@ -247,7 +247,7 @@ router.put('/accepter/:id', protect, async (req, res) => {
 
     res.json({ message: 'Candidature acceptée avec succès', candidature });
   } catch (error) {
-    console.error('Erreur lors de l’acceptation de la candidature :', error);
+    console.error("Erreur lors de l'acceptation de la candidature :", error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
@@ -263,7 +263,7 @@ router.put('/refuser/:id', protect, async (req, res) => {
 
     candidature.statut = 'refusee';
     candidature.date_reponse = new Date();
-    candidature.message_reponse = message_reponse || "Votre candidature n’a malheureusement pas été retenue.";
+    candidature.message_reponse = message_reponse || "Votre candidature n'a malheureusement pas été retenue.";
     await candidature.save();
 
     const professionnel = await ProfessionnelDentaire.findByPk(candidature.id_professionnel);
@@ -271,7 +271,7 @@ router.put('/refuser/:id', protect, async (req, res) => {
     const offre = await Offre.findByPk(candidature.id_offre);
 
     if (utilisateurPro && offre) {
-      const messageFinal = message_reponse || `Votre candidature à l’offre "${offre.titre}" n’a malheureusement pas été retenue.`;
+      const messageFinal = message_reponse || `Votre candidature à l'offre "${offre.titre}" n'a malheureusement pas été retenue.`;
 
       await creerNotification({
         id_utilisateur: utilisateurPro.id_utilisateur,
@@ -290,8 +290,72 @@ router.put('/refuser/:id', protect, async (req, res) => {
 
     res.json({ message: 'Candidature refusée avec succès', candidature });
   } catch (error) {
-    console.error('Erreur lors du refus de la candidature :', error);
+    console.error("Erreur lors du refus de la candidature :", error);
     res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ✅ Récupérer les candidatures pour une offre spécifique
+router.get('/:id/candidatures', protect, async (req, res) => {
+  try {
+    const utilisateur = await User.findByPk(req.user.id_utilisateur);
+    
+    if (!utilisateur || utilisateur.type_utilisateur !== 'clinique') {
+      return res.status(403).json({ message: "Seules les cliniques peuvent voir les candidatures de leurs offres." });
+    }
+    
+    const offre = await Offre.findByPk(req.params.id);
+    if (!offre) {
+      return res.status(404).json({ message: "Offre non trouvée." });
+    }
+    
+    const clinique = await CliniqueDentaire.findOne({
+      where: { id_utilisateur: utilisateur.id_utilisateur }
+    });
+    
+    if (!clinique || offre.id_clinique !== clinique.id_clinique) {
+      return res.status(403).json({ message: "Vous ne pouvez pas accéder aux candidatures de cette offre." });
+    }
+    
+    // Récupérer les candidatures avec les informations du professionnel
+    const candidatures = await Candidature.findAll({
+      where: { id_offre: offre.id_offre },
+      include: [
+        {
+          model: ProfessionnelDentaire,
+          attributes: ['id_professionnel', 'type_profession', 'annees_experience', 'specialites', 'competences'],
+          include: [
+            {
+              model: User,
+              attributes: ['id_utilisateur', 'nom', 'prenom', 'courriel', 'telephone', 'photo_profil']
+            }
+          ]
+        }
+      ],
+      order: [['date_candidature', 'DESC']]
+    });
+    
+    // Formater les données pour inclure le nom complet du professionnel
+    const formattedCandidatures = candidatures.map(candidature => {
+      const candiData = candidature.toJSON();
+      
+      // Si le professionnel existe, ajouter le nom complet
+      if (candiData.ProfessionnelDentaire && candiData.ProfessionnelDentaire.User) {
+        candiData.ProfessionnelDentaire.nom_complet = 
+          `${candiData.ProfessionnelDentaire.User.prenom} ${candiData.ProfessionnelDentaire.User.nom}`;
+        
+        candiData.ProfessionnelDentaire.email = candiData.ProfessionnelDentaire.User.courriel;
+        candiData.ProfessionnelDentaire.telephone = candiData.ProfessionnelDentaire.User.telephone;
+      }
+      
+      return candiData;
+    });
+    
+    res.json(formattedCandidatures);
+    
+  } catch (error) {
+    console.error("Erreur lors de la récupération des candidatures:", error);
+    res.status(500).json({ message: "Erreur serveur" });
   }
 });
 
