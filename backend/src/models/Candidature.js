@@ -17,4 +17,20 @@ const Candidature = sequelize.define('Candidature', {
   timestamps: false
 });
 
+const ProfessionnelDentaire = require('./ProfessionnelDentaire');
+const Utilisateur = require('./User');
+
+// Une candidature appartient à un professionnel
+Candidature.belongsTo(ProfessionnelDentaire, {
+  foreignKey: 'id_professionnel',
+  as: 'ProfessionnelDentaire'
+});
+
+// Un professionnel appartient à un utilisateur (déjà fait dans ProfessionnelDentaire.js)
+ProfessionnelDentaire.belongsTo(Utilisateur, {
+  foreignKey: 'id_utilisateur',
+  as: 'Utilisateur'
+});
+
+
 module.exports = Candidature;

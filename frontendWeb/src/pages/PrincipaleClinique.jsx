@@ -31,6 +31,15 @@ const PrincipaleClinique = () => {
         // 1. Charger le profil de la clinique
         const profileData = await fetchClinicProfile();
         setClinique(profileData);
+
+        // 3. Charger les candidatures reçues (via nouvelle route)
+        let candidaturesData = [];
+        try {
+          candidaturesData = await apiFetch(`/candidatures/clinique/${profileData.id_clinique}`);
+        } catch (err) {
+          console.error("Impossible de charger les candidatures de la clinique:", err);
+        }
+
         
         // 2. Charger les offres de la clinique
         const offersData = await fetchOffersForClinic();
@@ -102,9 +111,10 @@ const PrincipaleClinique = () => {
           setStats({
             activeOffers,
             pendingOffers,
-            totalApplications,
+            totalApplications: candidaturesData.length, // ← Utilise les données récupérées
             pendingMeetings: meetings.length
           });
+          
         }
         
         setLoading(false);

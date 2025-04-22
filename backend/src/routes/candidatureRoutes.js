@@ -36,6 +36,12 @@ router.post('/', protect, async (req, res) => {
       est_confirmee: 'N'
     });
 
+    const offreAssociee = await Offre.findByPk(id_offre);
+      if (offreAssociee && offreAssociee.statut === 'pending') {
+        offreAssociee.statut = 'active';
+        await offreAssociee.save();
+      }
+
     // 💬 Créer un message automatique + notification
     const offre = await Offre.findByPk(id_offre);
     if (offre) {
@@ -110,6 +116,56 @@ router.get('/moi', protect, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
+// ✅ GET : Voir les candidatures d'une offre avec détails complet du professionnel
+router.get('/offres/:id/candidatures', async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const candidatures = await Candidature.findAll({
+      where: { id_offre: id },
+      include: [
+        {
+          model: ProfessionnelDentaire,
+          as: 'ProfessionnelDentaire',
+          include: [
+            {
+              model: require('../models').User,
+              as: 'Utilisateur',
+              attributes: ['nom', 'prenom', 'courriel', 'telephone', 'photo_profil']
+            }
+          ]
+        }
+      ],
+      order: [['date_candidature', 'DESC']]
+    });
+
+    res.json(candidatures);
+  } catch (error) {
+    console.error('❌ Erreur récupération candidatures offre:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ✅ GET : Récupérer toutes les candidatures reçues par une clinique
+router.get('/clinique/:id', protect, async (req, res) => {
+  try {
+    const id_clinique = req.params.id;
+
+    const candidatures = await Candidature.findAll({
+      include: {
+        model: Offre,
+        where: { id_clinique } // Filtrer les candidatures par les offres de la clinique
+      }
+    });
+
+    res.status(200).json(candidatures);
+  } catch (error) {
+    console.error('❌ Erreur lors de la récupération des candidatures de la clinique :', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 
 
 module.exports = router;

@@ -182,6 +182,65 @@ const loginUser = async (req, res) => {
   }
 };
 
+const Utilisateur = require("../models/User"); // C'est ton modèle Sequelize "Utilisateur"
+
+const getProfessionnelById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const professionnel = await ProfessionnelDentaire.findByPk(id, {
+      include: [
+        {
+          model: Utilisateur,
+          as: 'Utilisateur', // Important si tu as défini une alias dans les associations
+          attributes: [
+            'nom',
+            'prenom',
+            'adresse',
+            'ville',
+            'province',
+            'code_postal',
+            'photo_profil',
+            'courriel',
+            'telephone'
+          ]
+        }
+      ]
+    });
+
+    if (!professionnel) {
+      return res.status(404).json({ message: "Professionnel non trouvé" });
+    }
+
+    const documents = await Document.findAll({
+      where: { id_utilisateur: professionnel.id_utilisateur }
+    });
+
+    const docMap = {};
+    documents.forEach(doc => {
+      docMap[doc.type_document] = doc.nom_fichier;
+    });
+
+    const profilData = {
+      ...professionnel.toJSON(),
+      documents: docMap
+    };
+
+    res.json(profilData);
+
+  } catch (error) {
+    console.error("❌ Erreur lors de la récupération du profil professionnel :", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+
+// Exporter la fonction
+module.exports = {
+  // ... autres exports
+  getProfessionnelById
+};
+
 // ✅ PROFIL UTILISATEUR
 const getProfile = async (req, res) => {
   console.log("📥 Route /profile atteinte !");
@@ -275,5 +334,6 @@ module.exports = {
   registerUser,
   loginUser,
   getProfile,
-  updateProfile
+  updateProfile,
+  getProfessionnelById
 };
