@@ -12,7 +12,17 @@ const Message = sequelize.define('Message', {
   est_modifie: { type: DataTypes.BOOLEAN, defaultValue: false },
   type_message: { type: DataTypes.STRING, defaultValue: 'normal' },
   fichier_joint: { type: DataTypes.STRING, allowNull: true },
-  id_offre: { type: DataTypes.INTEGER }
+  id_offre: { type: DataTypes.INTEGER },
+  id_entretien: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Entretien',
+      key: 'id_entretien'
+    },
+    onDelete: 'SET NULL'
+  }
+  
 }, {
   tableName: 'Message',
   timestamps: false

@@ -166,3 +166,13 @@ export const uploadClinicPhoto = async (formData) => {
 
   return response.json(); // { photoUrl: "/uploads/logos/..." }
 };
+
+
+export const fetchClinicOffers = async () => {
+  return await apiFetch('/offres/mes-offres'); // ou autre selon ta route
+};
+
+export const fetchApplicantsByOffer = async (offreId) => {
+  return await apiFetch(`/offres/${offreId}/candidatures`);
+};
+

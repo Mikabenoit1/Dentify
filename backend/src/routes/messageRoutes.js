@@ -3,6 +3,7 @@ const router = express.Router();
 const { Message, User } = require('../models');
 const protect = require('../middlewares/authMiddleware');
 const { Op } = require('sequelize');
+const messageController = require('../controllers/messageController');
 const { creerNotification } = require('../controllers/notificationController');
 
 // ✅ Envoyer un message

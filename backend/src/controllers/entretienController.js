@@ -110,4 +110,14 @@ exports.supprimerEntretien = async (req, res) => {
     console.error("Erreur suppression entretien :", err);
     res.status(500).json({ message: "Erreur suppression entretien", error: err.message });
   }
+
+  await Message.create({
+    expediteur_id: id_clinique,               // l’utilisateur clinique qui crée l’entretien
+    destinataire_id: id_professionnel,        // le professionnel concerné
+    contenu: `📅 Un entretien a été planifié pour le ${date} de ${heure_debut} à ${heure_fin} (${type}). Merci de confirmer votre présence.`,
+    id_offre,
+    id_entretien: nouvelEntretien.id_entretien, // on associe l’entretien
+    date_envoi: new Date(),
+    est_lu: false
+  });
 };

@@ -1,714 +1,571 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useOffers } from '../components/OffersContext';
-import { useParams } from 'react-router-dom'; // Import pour récupérer le paramètre de l'URL
+import { useParams } from 'react-router-dom';
 import ScheduleMeeting from '../components/ScheduleMeeting';
+import { useOffers } from '../components/OffersContext';
+import {
+  fetchConversations,
+  fetchMessagesByConversation,
+  sendMessage,
+  deleteMessage,
+  updateMessage,
+  markAsRead
+} from '../lib/messageApi';
+import { fetchClinicProfile, fetchClinicOffers, fetchApplicantsByOffer } from '../lib/clinicApi';
 import '../styles/CliniqueMessagerie.css';
 
-const CliniqueMessagerie = () => {
-  const { conversationId } = useParams(); // Récupération de l'ID de conversation depuis l'URL
-  const { offers, addMeeting, deleteMeeting } = useOffers();
-  const [message, setMessage] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const messagesEndRef = useRef(null);
-  
-  // État pour la modal de planification
-  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  
-  // État pour afficher une notification
-  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+function CliniqueMessagerie() {
+  const { conversationId } = useParams();
 
-  // État pour édition de message
-  const [editingMessage, setEditingMessage] = useState(null);
-
-  // État pour les menus d'options de message
-  const [messageActionsOpen, setMessageActionsOpen] = useState(null);
-
-  // Données fictives pour la démonstration
-  const [conversations, setConversations] = useState([
-    {
-      id: 1,
-      candidatId: 101,
-      candidatName: 'Dr. Leslie Labrecque',
-      candidatProfession: 'dentiste',
-      offerId: 1,
-      offerTitle: 'Remplacement dentiste été 2023',
-      lastMessage: "Bonjour, je suis intéressée par votre offre de remplacement pour l'été. Pouvez-vous me donner plus de détails sur les équipements disponibles dans votre cabinet ?",
-      lastMessageDate: '2023-06-10T14:30:00',
-      unread: true,
-      messages: [
-        {
-          id: 1,
-          senderId: 101,
-          senderName: 'Dr. Leslie Labrecque',
-          content: "Bonjour, je suis intéressée par votre offre de remplacement pour l'été. Pouvez-vous me donner plus de détails sur les équipements disponibles dans votre cabinet ?",
-          timestamp: '2023-06-10T14:30:00',
-          read: false
-        }
-      ]
-    },
-    {
-      id: 2,
-      candidatId: 102,
-      candidatName: 'Thomas Simard',
-      candidatProfession: 'assistant',
-      offerId: 2,
-      offerTitle: 'Recherche assistant(e) dentaire',
-      lastMessage: "Merci pour les informations. Je voudrais savoir si le poste peut évoluer vers un CDI après la période de remplacement ?",
-      lastMessageDate: '2023-06-09T10:15:00',
-      unread: false,
-      messages: [
-        {
-          id: 1,
-          senderId: 'clinic',
-          senderName: 'Votre Clinique',
-          content: "Bonjour Thomas Simard, nous avons bien reçu votre candidature pour le poste d'assistant dentaire. Pourriez-vous nous préciser vos disponibilités ?",
-          timestamp: '2023-06-08T09:45:00',
-          read: true
-        },
-        {
-          id: 2,
-          senderId: 102,
-          senderName: 'Thomas Simard',
-          content: "Bonjour, je suis disponible du lundi au vendredi, de 8h à 18h. J'ai 5 ans d'expérience en tant qu'assistant dentaire.",
-          timestamp: '2023-06-09T08:30:00',
-          read: true
-        },
-        {
-          id: 3,
-          senderId: 'clinic',
-          senderName: 'Votre Clinique',
-          content: "Parfait, merci pour ces précisions. Notre offre concerne un remplacement de 3 mois, avec possibilité de prolongation selon les besoins du cabinet.",
-          timestamp: '2023-06-09T09:20:00',
-          read: true
-        },
-        {
-          id: 4,
-          senderId: 102,
-          senderName: 'Thomas Simard',
-          content: "Merci pour les informations. Je voudrais savoir si le poste peut évoluer vers un CDI après la période de remplacement ?",
-          timestamp: '2023-06-09T10:15:00',
-          read: true
-        }
-      ]
-    },
-    {
-      id: 3,
-      candidatId: 103,
-      candidatName: 'Marie Curie',
-      candidatProfession: 'hygieniste',
-      offerId: 3,
-      offerTitle: 'Remplacement hygiéniste dentaire',
-      lastMessage: "Bonjour, suite à notre entretien téléphonique, je vous confirme mon intérêt pour le poste. Quelles seraient les prochaines étapes ?",
-      lastMessageDate: '2023-06-05T16:45:00',
-      unread: true,
-      messages: [
-        {
-          id: 1,
-          senderId: 103,
-          senderName: 'Marie Curie',
-          content: "Bonjour, je me permets de vous contacter au sujet de votre annonce pour un remplacement d'hygiéniste dentaire. J'ai 7 ans d'expérience et je serais disponible aux dates mentionnées.",
-          timestamp: '2023-06-04T11:30:00',
-          read: true
-        },
-        {
-          id: 2,
-          senderId: 'clinic',
-          senderName: 'Votre Clinique',
-          content: "Bonjour Mme Curie, merci pour votre intérêt. Nous serions ravis d'échanger avec vous par téléphone pour discuter de vos expériences précédentes. Seriez-vous disponible demain entre 14h et 16h ?",
-          timestamp: '2023-06-04T14:20:00',
-          read: true
-        },
-        {
-          id: 3,
-          senderId: 103,
-          senderName: 'Marie Curie',
-          content: "Bonjour, je serai disponible demain à 15h. Vous pouvez me joindre au 06 XX XX XX XX.",
-          timestamp: '2023-06-04T15:10:00',
-          read: true
-        },
-        {
-          id: 4,
-          senderId: 103,
-          senderName: 'Marie Curie',
-          content: "Bonjour, suite à notre entretien téléphonique, je vous confirme mon intérêt pour le poste. Quelles seraient les prochaines étapes ?",
-          timestamp: '2023-06-05T16:45:00',
-          read: false
-        }
-      ]
-    }
-  ]);
-  
-  // ID de la conversation active
+  const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
-  
-  // Conversation active (dérivée de l'ID et de l'état des conversations)
-  const activeConversation = conversations.find(conv => conv.id === activeConversationId) || null;
+  const [searchTerm, setSearchTerm] = useState('');
+  const [message, setMessage] = useState('');
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [messageActionsOpen, setMessageActionsOpen] = useState(null);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [newMessageMode, setNewMessageMode] = useState(false);
+  const [clinicOffers, setClinicOffers] = useState([]);
+  const [selectedOfferId, setSelectedOfferId] = useState(null);
+  const [applicants, setApplicants] = useState([]);
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const { offers } = useOffers();
+  const [selectedOffer, setSelectedOffer] = useState(null);
+  const [selectedCandidateId, setSelectedCandidateId] = useState(null);
 
-  // Sélectionner la conversation en fonction de l'ID dans l'URL
+
+  const messagesEndRef = useRef(null);
+
+  const activeConversation = conversations.find(c => c.id === activeConversationId);
+
+  // Charger le profil de la clinique connectée
   useEffect(() => {
-    if (conversationId) {
-      // Convertir en nombre si c'est une chaîne
-      const targetId = parseInt(conversationId, 10);
-      const foundConversation = conversations.find(conv => conv.id === targetId);
-      
-      if (foundConversation) {
-        setActiveConversationId(targetId);
-      } else if (conversations.length > 0) {
-        // Si la conversation n'est pas trouvée, utilisez la première
-        setActiveConversationId(conversations[0].id);
+    const loadCurrentUser = async () => {
+      try {
+        const profile = await fetchClinicProfile();
+        setCurrentUserId(profile.id_utilisateur || profile.id);
+      } catch (err) {
+        console.error("Erreur lors du chargement du profil clinique :", err);
       }
-    } else if (conversations.length > 0 && !activeConversationId) {
-      // Si aucun ID n'est fourni, utilisez la première conversation
-      setActiveConversationId(conversations[0].id);
-    }
-  }, [conversationId, conversations]);
-
-  // Format de date français
-  const formatFrenchDate = (date) => {
-    const joursSemaine = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-    const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-    
-    const jour = joursSemaine[date.getDay()];
-    const numeroDuJour = date.getDate();
-    const nomDuMois = mois[date.getMonth()];
-    const annee = date.getFullYear();
-    
-    return `${jour} ${numeroDuJour} ${nomDuMois} ${annee}`;
-  };
-
-  // Fonction pour formater la date d'un message (suite)
-  const formatMessageDate = (dateString) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    // Si le message est d'aujourd'hui, afficher l'heure
-    if (date.toDateString() === today.toDateString()) {
-      return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
-    }
-    // Si le message est d'hier, afficher "Hier"
-    else if (date.toDateString() === yesterday.toDateString()) {
-      return `Hier`;
-    }
-    // Sinon, afficher la date courte
-    else {
-      return `${date.getDate()}/${date.getMonth() + 1}`;
-    }
-  };
-
-  // Filtrer les conversations selon la recherche
-  const filteredConversations = conversations.filter(conv => {
-    return conv.candidatName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           conv.offerTitle.toLowerCase().includes(searchTerm.toLowerCase());
-  });
-
-  // Fonction pour marquer une conversation comme lue
-  const markAsRead = (conversationId) => {
-    setConversations(prevConversations => 
-      prevConversations.map(conv => {
-        if (conv.id === conversationId) {
-          // Marquer tous les messages comme lus
-          const updatedMessages = conv.messages.map(msg => ({
-            ...msg,
-            read: true
-          }));
-          
-          return {
-            ...conv,
-            unread: false,
-            messages: updatedMessages
-          };
-        }
-        return conv;
-      })
-    );
-  };
-
-  // Gérer l'envoi d'un nouveau message
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    
-    if (message.trim() === '' || !activeConversation) return;
-    
-    // Si on est en mode édition, on modifie le message existant
-    if (editingMessage) {
-      handleUpdateMessage(editingMessage.id, message);
-      setEditingMessage(null);
-      setMessage('');
-      return;
-    }
-    
-    // Créer le nouveau message
-    const newMessage = {
-      id: Date.now(),
-      senderId: 'clinic',
-      senderName: 'Votre Clinique',
-      content: message,
-      timestamp: new Date().toISOString(),
-      read: true
     };
-    
-    // Mettre à jour les conversations
-    setConversations(prevConversations => 
-      prevConversations.map(conv => {
-        if (conv.id === activeConversationId) {
-          return {
-            ...conv,
-            lastMessage: message,
-            lastMessageDate: new Date().toISOString(),
-            messages: [...conv.messages, newMessage]
-          };
+    loadCurrentUser();
+  }, []);
+
+  // Charger les conversations disponibles
+  useEffect(() => {
+    const loadConversations = async () => {
+      try {
+        const data = await fetchConversations(); // conversations côté clinique
+        setConversations(data);
+
+        if (conversationId) {
+          setActiveConversationId(parseInt(conversationId));
+        } else if (data.length > 0) {
+          setActiveConversationId(data[0].id);
         }
-        return conv;
-      })
-    );
-    
-    setMessage('');
-    
-    // Faire défiler automatiquement vers le nouveau message
-    setTimeout(() => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        console.error("Erreur lors du chargement des conversations :", err);
       }
-    }, 100);
-  };
+    };
+    loadConversations();
+  }, [conversationId]);
 
-  // Fonction pour supprimer un message
-  const handleDeleteMessage = (messageId) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce message ?")) {
-      setConversations(prevConversations => 
-        prevConversations.map(conv => {
-          if (conv.id === activeConversationId) {
-            // Filtrer pour enlever le message à supprimer
-            const updatedMessages = conv.messages.filter(msg => msg.id !== messageId);
-            
-            // Mettre à jour le dernier message si nécessaire
-            const lastMessage = updatedMessages.length > 0 
-              ? updatedMessages[updatedMessages.length - 1] 
-              : null;
-            
-            return {
-              ...conv,
-              messages: updatedMessages,
-              lastMessage: lastMessage ? lastMessage.content : "Aucun message",
-              lastMessageDate: lastMessage ? lastMessage.timestamp : conv.lastMessageDate
-            };
-          }
-          return conv;
-        })
-      );
-      
-      // Afficher une notification
-      setNotification({
-        show: true,
-        message: 'Message supprimé',
-        type: 'warning'
-      });
-      // Masquer la notification après 3 secondes
-      setTimeout(() => {
-        setNotification({ show: false, message: '', type: 'warning' });
-      }, 3000);
-    }
-    
-    // Fermer le menu d'actions
-    setMessageActionsOpen(null);
-  };
+  // Charger les messages pour la conversation active
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!activeConversationId || !currentUserId) return;
 
-  // Mettre en mode édition un message
-  const handleEditMessage = (msg) => {
-    setEditingMessage(msg);
-    setMessage(msg.content);
-    
-    // Fermer le menu d'actions
-    setMessageActionsOpen(null);
-  };
+      const conv = conversations.find(c => c.id === activeConversationId);
+      if (!conv) return;
 
-  // Mettre à jour un message
-  const handleUpdateMessage = (messageId, newContent) => {
-    setConversations(prevConversations => 
-      prevConversations.map(conv => {
-        if (conv.id === activeConversationId) {
-          // Mettre à jour le message
-          const updatedMessages = conv.messages.map(msg => {
-            if (msg.id === messageId) {
-              return {
-                ...msg,
-                content: newContent,
-                edited: true // Ajouter un indicateur que le message a été édité
-              };
-            }
-            return msg;
-          });
-          
-          // Vérifier si le message modifié est le dernier
-          const lastMsg = conv.messages[conv.messages.length - 1];
-          const isLastMessage = lastMsg && lastMsg.id === messageId;
-          
-          return {
-            ...conv,
-            messages: updatedMessages,
-            // Mettre à jour lastMessage si nécessaire
-            lastMessage: isLastMessage ? newContent : conv.lastMessage
-          };
-        }
-        return conv;
-      })
-    );
-    
-    // Afficher une notification
-    setNotification({
-      show: true,
-      message: 'Message modifié',
-      type: 'success'
-    });
-    // Masquer la notification après 3 secondes
-    setTimeout(() => {
-      setNotification({ show: false, message: '', type: 'success' });
-    }, 3000);
-  };
+      try {
+        const messages = await fetchMessagesByConversation(conv.candidatId, conv.offreId);
+        setConversations(prev =>
+          prev.map(c =>
+            c.id === activeConversationId ? { ...c, messages } : c
+          )
+        );
 
-  // Annuler l'édition
-  const handleCancelEdit = () => {
-    setEditingMessage(null);
-    setMessage('');
-  };
+        // Marquer les messages comme lus s’ils sont destinés à la clinique
+        await Promise.all(messages.map(msg =>
+          !msg.read && msg.destinataire_id === currentUserId ? markAsRead(msg.id) : null
+        ));
+      } catch (err) {
+        console.error("Erreur lors du chargement des messages :", err);
+      }
+    };
 
-  // Faire défiler automatiquement vers le dernier message
+    loadMessages();
+  }, [activeConversationId, currentUserId]);
+
+  // Scroll automatique vers le bas des messages
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [activeConversation?.messages]);
 
-  // Marquer les messages comme lus lorsqu'une conversation est sélectionnée
-  useEffect(() => {
-    if (activeConversation?.unread) {
-      markAsRead(activeConversationId);
-    }
-  }, [activeConversation, activeConversationId]);
-
-  // Fermer le menu d'actions si on clique ailleurs
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (messageActionsOpen && !event.target.closest('.message-actions-menu') && 
-          !event.target.closest('.message-options-button')) {
-        setMessageActionsOpen(null);
+    // Envoyer un nouveau message ou modifier un message existant
+    const handleSendMessage = async (e) => {
+      e.preventDefault();
+      if (!message.trim() || !activeConversation) return;
+  
+      try {
+        if (editingMessage) {
+          await updateMessage(editingMessage.id, message);
+        } else {
+          await sendMessage({
+            contenu: message,
+            offre_id: activeConversation.offreId,
+            destinataire_id: activeConversation.candidatId // 👈 la clinique écrit au professionnel
+          });
+        }
+  
+        const updatedMessages = await fetchMessagesByConversation(activeConversation.candidatId, activeConversation.offreId);
+  
+        setConversations(prev =>
+          prev.map(c =>
+            c.id === activeConversationId
+              ? {
+                  ...c,
+                  messages: updatedMessages,
+                  lastMessage: updatedMessages.at(-1)?.contenu || '',
+                  lastMessageDate: updatedMessages.at(-1)?.date_envoi || ''
+                }
+              : c
+          )
+        );
+  
+        setMessage('');
+        setEditingMessage(null);
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  
+      } catch (error) {
+        console.error("Erreur lors de l'envoi ou de l'édition du message :", error);
       }
     };
-    
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
+  
+    // Passer un message en mode édition
+    const handleEditMessage = (msg) => {
+      setEditingMessage(msg);
+      setMessage(msg.contenu);
+      setMessageActionsOpen(null);
     };
-  }, [messageActionsOpen]);
-
-  // Ouvrir la modal de planification
-  const handleOpenScheduleModal = () => {
-    setIsScheduleModalOpen(true);
-  };
-
-  // Fonction pour gérer la planification d'un rendez-vous
-  const handleScheduleMeeting = (meetingData) => {
-    // Créer un nouveau rendez-vous
-    const newMeeting = addMeeting(meetingData);
-    
-    // Formater la date pour le message
-    const meetingDate = new Date(meetingData.date);
-    const formattedDate = formatFrenchDate(meetingDate);
-    
-    // Déterminer le type de rencontre pour le message
-    const meetingTypeText = 
-      meetingData.meetingType === 'video' ? 'une vidéoconférence' : 
-      meetingData.meetingType === 'phone' ? 'un appel téléphonique' : 
-      'une rencontre en personne';
-    
-    // Créer un message avec un format plus convivial et détaillé
-    const meetingMessage = {
-      id: Date.now(),
-      senderId: 'clinic',
-      senderName: 'Votre Clinique',
-      content: `📅 J'ai planifié ${meetingTypeText} pour le ${formattedDate} de ${meetingData.startTime} à ${meetingData.endTime}.\n\n${meetingData.notes ? `Notes: ${meetingData.notes}\n\n` : ''}Merci de confirmer votre disponibilité.`,
-      timestamp: new Date().toISOString(),
-      read: true,
-      isMeetingMessage: true,
-      meetingId: newMeeting.id
+  
+    // Supprimer un message existant
+    const handleDeleteMessage = async (messageId) => {
+      if (!window.confirm("Supprimer ce message ?")) return;
+  
+      try {
+        await deleteMessage(messageId);
+  
+        const updatedMessages = await fetchMessagesByConversation(
+          activeConversation.candidatId,
+          activeConversation.offreId
+        );
+  
+        setConversations(prev =>
+          prev.map(c =>
+            c.id === activeConversationId
+              ? {
+                  ...c,
+                  messages: updatedMessages,
+                  lastMessage: updatedMessages.at(-1)?.contenu || '',
+                  lastMessageDate: updatedMessages.at(-1)?.date_envoi || ''
+                }
+              : c
+          )
+        );
+  
+        setNotification({ show: true, message: 'Message supprimé', type: 'warning' });
+        setTimeout(() => setNotification({ show: false, message: '', type: 'warning' }), 3000);
+  
+      } catch (error) {
+        console.error("Erreur lors de la suppression du message :", error);
+      }
+  
+      setMessageActionsOpen(null);
     };
-    
-    // Mettre à jour les conversations
-    setConversations(prevConversations => 
-      prevConversations.map(conv => {
-        if (conv.id === activeConversationId) {
-          return {
-            ...conv,
-            lastMessage: meetingMessage.content.split('\n')[0], // Juste la première ligne pour l'aperçu
-            lastMessageDate: meetingMessage.timestamp,
-            messages: [...conv.messages, meetingMessage]
-          };
-        }
-        return conv;
-      })
-    );
-    
-    // Afficher une notification
-    setNotification({
-      show: true,
-      message: 'Rendez-vous planifié avec succès',
-      type: 'success'
-    });
-    
-    // Masquer la notification après 3 secondes
-    setTimeout(() => {
-      setNotification({ show: false, message: '', type: 'success' });
-    }, 3000);
-  };
+  
+    // Annuler l'édition d'un message
+    const handleCancelEdit = () => {
+      setEditingMessage(null);
+      setMessage('');
+    };
+  
+    // Afficher ou cacher le menu d'actions pour un message donné
+    const toggleMessageActions = (id) => {
+      setMessageActionsOpen(prev => (prev === id ? null : id));
+    };
+  
+    // Ouvrir la modale de planification d’entretien
+    const handleOpenScheduleModal = () => {
+      setIsScheduleModalOpen(true);
+    };
+  
 
-  // Annuler un rendez-vous depuis le chat
-  const handleCancelMeeting = (meetingId) => {
-    if (window.confirm("Êtes-vous sûr de vouloir annuler ce rendez-vous ?")) {
-      // Supprimer le rendez-vous
-      deleteMeeting(meetingId);
-      
-      // Ajouter un message d'annulation
-      const cancellationMessage = {
-        id: Date.now(),
-        senderId: 'clinic',
-        senderName: 'Votre Clinique',
-        content: "❌ Le rendez-vous a été annulé.",
-        timestamp: new Date().toISOString(),
-        read: true,
-        isCancellationMessage: true
-      };
-      
-      // Mettre à jour les conversations
-      setConversations(prevConversations => 
-        prevConversations.map(conv => {
-          if (conv.id === activeConversationId) {
-            return {
-              ...conv,
-              lastMessage: cancellationMessage.content,
-              lastMessageDate: cancellationMessage.timestamp,
-              messages: [...conv.messages, cancellationMessage]
-            };
-          }
-          return conv;
-        })
-      );
-      
-      // Afficher une notification
-      setNotification({
-        show: true,
-        message: 'Rendez-vous annulé',
-        type: 'warning'
-      });
-      // Masquer la notification après 3 secondes
-      setTimeout(() => {
-        setNotification({ show: false, message: '', type: 'warning' });
-      }, 3000);
+  // Formater l'affichage des dates des messages
+  const formatMessageDate = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return `${date.getHours()}h${String(date.getMinutes()).padStart(2, '0')}`;
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return "Hier";
+    } else {
+      return `${date.getDate()}/${date.getMonth() + 1}`;
     }
   };
 
-  // Basculer l'affichage du menu d'actions pour un message
-  const toggleMessageActions = (messageId) => {
-    setMessageActionsOpen(messageActionsOpen === messageId ? null : messageId);
+  // Filtrer les conversations selon la recherche clinique
+  const filteredConversations = conversations.filter(conv =>
+    conv.candidatName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    conv.offreTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    conv.lastMessage?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Gérer la planification d’un entretien
+const handleScheduleMeeting = (meetingData) => {
+  // Créer un message de confirmation dans la conversation
+  const meetingDate = new Date(meetingData.date);
+  const formattedDate = `${meetingDate.toLocaleDateString()} à ${meetingData.startTime}`;
+  const content = `📅 Un entretien a été planifié pour le ${formattedDate}.\n${meetingData.notes || ''}`;
+
+  const newMessage = {
+    id: Date.now(),
+    senderId: 'clinic',
+    senderName: 'Votre Clinique',
+    content: content.trim(),
+    timestamp: new Date().toISOString(),
+    read: true,
+    isMeetingMessage: true,
+    id_entretien: meetingData.id_entretien || null
   };
 
-  return (
-    <div className="clinique-messagerie-container">
-      {/* Panneau des conversations */}
-      <div className="conversations-panel">
-        <div className="conversations-header">
-          <h1>Messagerie</h1>
-          <button className="new-message-button">
+  setConversations(prev =>
+    prev.map(c =>
+      c.id === activeConversationId
+        ? {
+            ...c,
+            lastMessage: newMessage.content.split('\n')[0],
+            lastMessageDate: newMessage.timestamp,
+            messages: [...c.messages, newMessage]
+          }
+        : c
+    )
+  );
+
+  setNotification({ show: true, message: 'Entretien planifié avec succès', type: 'success' });
+  setTimeout(() => {
+    setNotification({ show: false, message: '', type: 'success' });
+  }, 3000);
+};
+
+useEffect(() => {
+  const fetchOffers = async () => {
+    try {
+      const data = await fetchClinicOffers(); // <-- tu dois avoir cette fonction dans clinicApi.js
+      setClinicOffers(data);
+    } catch (err) {
+      console.error("Erreur chargement des offres :", err);
+    }
+  };
+
+  if (newMessageMode) {
+    fetchOffers();
+    setSelectedOfferId(null);
+    setSelectedApplicant(null);
+    setMessage('');
+  }
+}, [newMessageMode]);
+
+useEffect(() => {
+  const fetchApplicants = async () => {
+    try {
+      // Appel de l'API pour fetch les postulants
+const data = await fetchApplicantsByOffer(selectedOffer?.id_offre || selectedOfferId);  // ✅ ici aussi
+// fonction à ajouter dans clinicApi.js
+      setApplicants(data);
+    } catch (err) {
+      console.error("Erreur chargement des candidats :", err);
+    }
+  };
+
+  if (selectedOfferId) {
+    fetchApplicants();
+  } else {
+    setApplicants([]);
+  }
+}, [selectedOfferId]);
+
+
+return (
+  <div className="clinique-messagerie-container">
+    {/* Panneau des conversations */}
+    <div className="conversations-panel">
+      <div className="conversations-header">
+        <h1>Messagerie</h1>
+        {newMessageMode ? (
+          <button className="cancel-new-message-button" onClick={() => setNewMessageMode(false)}>
+            <i className="fa-solid fa-arrow-left"></i>
+            <span>Annuler</span>
+          </button>
+        ) : (
+          <button className="new-message-button" onClick={() => setNewMessageMode(true)}>
             <i className="fa-solid fa-pen"></i>
           </button>
-        </div>
-        
-        <div className="search-bar">
-          <i className="fa-solid fa-search search-icon"></i>
-          <input
-            type="text"
-            placeholder="Rechercher une conversation..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-        <div className="conversations-list">
-          {filteredConversations.map(conv => (
-            <div 
-              key={conv.id} 
+        )}
+      </div>
+
+      <div className="search-bar">
+        <i className="fa-solid fa-search search-icon"></i>
+        <input
+          type="text"
+          placeholder="Rechercher une conversation..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      <div className="conversations-list">
+        {filteredConversations.map(conv => {
+          const hasScheduledMeeting = conv.messages?.some(msg => msg.id_entretien);
+          return (
+            <div
+              key={conv.id}
               className={`conversation-item ${activeConversationId === conv.id ? 'active' : ''} ${conv.unread ? 'unread' : ''}`}
-              onClick={() => setActiveConversationId(conv.id)}
+              onClick={() => {
+                setActiveConversationId(conv.id);
+                setNewMessageMode(false);
+              }}
             >
               <div className={`conversation-avatar ${conv.candidatProfession}`}>
-                {conv.candidatName.charAt(0).toUpperCase()}
+                {conv.candidatName?.charAt(0)?.toUpperCase() || '?'}
               </div>
-              
+
               <div className="conversation-info">
                 <div className="conversation-info-header">
                   <span className="conversation-name">{conv.candidatName}</span>
                   <span className="conversation-time">{formatMessageDate(conv.lastMessageDate)}</span>
                 </div>
-                
+
                 <div className="conversation-preview">
-                  {conv.lastMessage.length > 40 
-                    ? conv.lastMessage.substring(0, 40) + '...' 
+                  {conv.lastMessage.length > 40
+                    ? conv.lastMessage.substring(0, 40) + '...'
                     : conv.lastMessage}
                   {conv.unread && <div className="unread-badge"></div>}
                 </div>
+
+                {hasScheduledMeeting && (
+                  <div className="badge-entretien-prevu">📅 Entretien prévu</div>
+                )}
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
+
+        {filteredConversations.length === 0 && (
+          <div className="no-conversations">
+            <p>Aucune conversation trouvée</p>
+          </div>
+        )}
       </div>
-      
-      {/* Panneau des messages */}
-      <div className="messages-panel">
-        {activeConversation ? (
-          <>
-            <div className="messages-header">
-              <div className="contact-display">
-                <div className={`contact-avatar ${activeConversation.candidatProfession}`}>
-                  {activeConversation.candidatName.charAt(0).toUpperCase()}
-                </div>
-                <h3 className="contact-name-header">{activeConversation.candidatName}</h3>
-              </div>
-              
-              <div className="messages-header-actions">
-                <button className="schedule-button" onClick={handleOpenScheduleModal}>
-                  <i className="fa-solid fa-calendar-check"></i>
-                  <span>Planifier</span>
-                </button>
-                <button className="header-action-button">
-                  <i className="fa-solid fa-ellipsis-vertical"></i>
-                </button>
-              </div>
-            </div>
-            <div className="offer-title-bar">
-              {activeConversation.offerTitle}
-            </div>
-                        
-            <div className="messages-content">
-              {activeConversation.messages.map(msg => (
-                <div 
-                  key={msg.id} 
-                  className={`message ${msg.senderId === 'clinic' ? 'sent' : 'received'} ${msg.isMeetingMessage ? 'meeting-message' : ''} ${msg.isCancellationMessage ? 'cancellation-message' : ''}`}
-                >
-                  <div className="message-bubble">
-                    {msg.content}
-                    {msg.edited && <span className="message-edited">(modifié)</span>}
-                    <div className="message-time">
-                      {formatMessageDate(msg.timestamp)}
-                    </div>
-                    
-                    {/* Bouton d'options pour les messages de la clinique (non meetings) */}
-                    {msg.senderId === 'clinic' && !msg.isMeetingMessage && !msg.isCancellationMessage && (
-                      <button 
-                        className="message-options-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleMessageActions(msg.id);
-                        }}
-                      >
-                        <i className="fa-solid fa-ellipsis-vertical"></i>
-                      </button>
-                    )}
-                    
-                    {/* Menu d'actions pour les messages */}
-                    {messageActionsOpen === msg.id && (
-                      <div className="message-actions-menu">
-                        <button onClick={() => handleEditMessage(msg)}>
-                          <i className="fa-solid fa-edit"></i> Modifier
-                        </button>
-                        <button onClick={() => handleDeleteMessage(msg.id)}>
-                          <i className="fa-solid fa-trash"></i> Supprimer
-                        </button>
-                      </div>
-                    )}
-                    
-                    {msg.isMeetingMessage && (
-                      <div className="meeting-message-actions">
-                        <button 
-                          className="cancel-meeting-button"
-                          onClick={() => handleCancelMeeting(msg.meetingId)}
-                        >
-                          Annuler le rendez-vous
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-            
-            <form className="message-input-container" onSubmit={handleSendMessage}>
-              <button type="button" className="input-action-button">
-                <i className="fa-solid fa-paperclip"></i>
-              </button>
+    </div>
+
+    {/* Panneau des messages */}
+    <div className="messages-panel">
+      {newMessageMode ? (
+        <div className="new-message-form">
+          <div className="messages-header">
+            <h2 className="new-message-title">Nouveau message</h2>
+          </div>
+
+          {/* Sélecteur d'offre */}
+          <label htmlFor="offer-select">Offre :</label>
+          <select
+            id="offer-select"
+            value={selectedOfferId || ''}
+            onChange={(e) => {
+              const offerId = parseInt(e.target.value);
+              const offer = offers.find(o => o.id_offre === offerId);
+              setSelectedOfferId(offerId);      // ✅ corriger ici
+              setSelectedOffer(offer);
+              setSelectedCandidateId(null);
+            }}
+          >
+            <option value="">-- Sélectionner une offre --</option>
+            {offers.map(offer => (
+              <option key={offer.id_offre} value={offer.id_offre}>
+              {offer.titre || "Offre sans titre"}
+            </option>
+            ))}
+          </select>
+
+          {/* Sélecteur de candidat */}
+          {selectedOffer && (
+            <>
+              <label htmlFor="candidate-select">Candidat :</label>
+              <select
+                id="candidate-select"
+                value={selectedCandidateId || ''}
+                onChange={(e) => setSelectedCandidateId(parseInt(e.target.value))}
+              >
+                <option value="">-- Sélectionner un candidat --</option>
+                {Array.isArray(applicants) &&
+  applicants.map(applicant => (
+    <option key={applicant.id_utilisateur} value={applicant.id_utilisateur}>
+      {applicant.nom}
+    </option>
+))}
+
+              </select>
+            </>
+          )}
+
+          {/* Champ de message */}
+          {selectedCandidateId && (
+            <form className="message-input-container" onSubmit={handleSendNewMessage}>
               <div className="message-input-wrapper">
                 <input
                   type="text"
                   className="message-input"
-                  placeholder={editingMessage ? "Modifier votre message..." : "Écrivez votre message..."}
+                  placeholder="Écrivez votre message..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                 />
-                {editingMessage && (
-                  <div className="editing-indicator">
-                    <span>Modification en cours</span>
-                    <button type="button" onClick={handleCancelEdit} className="cancel-edit-button">
-                      <i className="fa-solid fa-times"></i>
-                    </button>
-                  </div>
-                )}
               </div>
-              <button 
-                type="submit" 
-                className="send-button"
-                disabled={!message.trim()}
-              >
+              <button type="submit" className="send-button" disabled={!message.trim()}>
                 <i className="fa-solid fa-paper-plane"></i>
               </button>
             </form>
-          </>
-        ) : (
-          <div className="no-conversation-selected">
-            <div className="empty-state">
-              <div className="empty-state-icon">
-                <i className="fa-regular fa-comments"></i>
+          )}
+        </div>
+      ) : activeConversation ? (
+        <>
+          <div className="messages-header">
+            <div className="contact-display">
+              <div className={`contact-avatar ${activeConversation.candidatProfession}`}>
+                {activeConversation.candidatName?.charAt(0)?.toUpperCase() || '?'}
               </div>
-              <h2 className="empty-state-title">Vos messages</h2>
-              <p className="empty-state-subtitle">
-                Sélectionnez une conversation pour afficher les messages ou commencez une nouvelle discussion.
-              </p>
+              <h3 className="contact-name-header">{activeConversation.candidatName}</h3>
+            </div>
+
+            <div className="messages-header-actions">
+              <button className="schedule-button" onClick={handleOpenScheduleModal}>
+                <i className="fa-solid fa-calendar-check"></i>
+                <span>Planifier</span>
+              </button>
             </div>
           </div>
-        )}
-      </div>
-      
-      {/* Modal de planification de rendez-vous */}
-      <ScheduleMeeting 
-        isOpen={isScheduleModalOpen}
-        onClose={() => setIsScheduleModalOpen(false)}
-        candidat={activeConversation ? {
-          id: activeConversation.candidatId,
-          name: activeConversation.candidatName,
-          profession: activeConversation.candidatProfession
-        } : null}
-        offerId={activeConversation?.offerId}
-        onSchedule={handleScheduleMeeting}
-      />
-      
-      {/* Notification */}
-      {notification.show && (
-        <div className={`notification ${notification.type}`}>
-          <i className={`fa-solid ${notification.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i> {notification.message}
+
+          <div className="offer-title-bar">
+            {activeConversation.offerTitle}
+            {activeConversation.messages?.some(msg => msg.id_entretien) && (
+              <span className="badge-entretien-inline">📅 Entretien prévu</span>
+            )}
+          </div>
+
+          <div className="messages-content">
+          {activeConversation?.messages?.map(msg => (
+
+              <div
+                key={msg.id}
+                className={`message ${msg.senderId === 'clinic' ? 'sent' : 'received'} ${msg.isMeetingMessage ? 'meeting-message' : ''} ${msg.isCancellationMessage ? 'cancellation-message' : ''}`}
+              >
+                <div className="message-bubble">
+                  {msg.content}
+                  {msg.edited && <span className="message-edited">(modifié)</span>}
+                  <div className="message-time">{formatMessageDate(msg.timestamp)}</div>
+
+                  {msg.senderId === 'clinic' && !msg.isMeetingMessage && !msg.isCancellationMessage && (
+                    <button className="message-options-button" onClick={(e) => {
+                      e.stopPropagation();
+                      toggleMessageActions(msg.id);
+                    }}>
+                      <i className="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                  )}
+
+                  {messageActionsOpen === msg.id && (
+                    <div className="message-actions-menu">
+                      <button onClick={() => handleEditMessage(msg)}>
+                        <i className="fa-solid fa-edit"></i> Modifier
+                      </button>
+                      <button onClick={() => handleDeleteMessage(msg.id)}>
+                        <i className="fa-solid fa-trash"></i> Supprimer
+                      </button>
+                    </div>
+                  )}
+
+                  {msg.isMeetingMessage && (
+                    <div className="meeting-message-actions">
+                      <button
+                        className="cancel-meeting-button"
+                        onClick={() => handleCancelMeeting(msg.meetingId)}
+                      >
+                        Annuler le rendez-vous
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Zone de saisie */}
+          <form className="message-input-container" onSubmit={handleSendMessage}>
+            <button type="button" className="input-action-button">
+              <i className="fa-solid fa-paperclip"></i>
+            </button>
+            <div className="message-input-wrapper">
+              <input
+                type="text"
+                className="message-input"
+                placeholder={editingMessage ? "Modifier votre message..." : "Écrivez votre message..."}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              {editingMessage && (
+                <div className="editing-indicator">
+                  <span>Modification en cours</span>
+                  <button type="button" onClick={handleCancelEdit} className="cancel-edit-button">
+                    <i className="fa-solid fa-times"></i>
+                  </button>
+                </div>
+              )}
+            </div>
+            <button type="submit" className="send-button" disabled={!message.trim()}>
+              <i className="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </>
+      ) : (
+        <div className="no-conversation-selected">
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              <i className="fa-regular fa-comments"></i>
+            </div>
+            <h2 className="empty-state-title">Vos messages</h2>
+            <p className="empty-state-subtitle">
+              Sélectionnez une conversation ou créez un nouveau message.
+            </p>
+          </div>
         </div>
       )}
     </div>
-  );
-};
 
+    {/* Notification */}
+    {notification.show && (
+      <div className={`notification ${notification.type}`}>
+        <i className={`fa-solid ${notification.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i> {notification.message}
+      </div>
+    )}
+  </div>
+);
+}
 export default CliniqueMessagerie;

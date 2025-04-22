@@ -107,9 +107,37 @@ const getOffresProches = async (req, res) => {
     res.status(500).json({ message: "Erreur serveur." });
   }
 };
+const getCandidaturesParOffre = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const candidatures = await Candidature.findAll({
+      where: { offre_id: id },
+      include: [
+        {
+          model: Utilisateur,
+          as: 'candidat',
+          attributes: ['id_utilisateur', 'nom', 'prenom', 'email']
+        }
+      ]
+    });
+
+    const candidats = candidatures.map(c => ({
+      id_utilisateur: c.candidat.id_utilisateur,
+      nom: `${c.candidat.prenom} ${c.candidat.nom}`,
+      email: c.candidat.email
+    }));
+
+    res.json(candidats);
+  } catch (error) {
+    console.error("Erreur récupération candidats:", error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
 
 
 module.exports = {
   getFilteredOffres,
-  getOffresProches
+  getOffresProches, 
+  getCandidaturesParOffre
 };

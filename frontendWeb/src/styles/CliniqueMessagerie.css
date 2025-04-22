@@ -1613,3 +1613,75 @@
     justify-content: space-between;
   }
 }
+
+.badge-entretien-inline {
+  margin-left: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0a66c2;
+}
+
+.badge-entretien-prevu {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0a66c2;
+  margin-top: 2px;
+}
+
+.cancel-new-message-button {
+  background-color: transparent;
+  border: none;
+  color: #34607d;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem;
+  transition: color 0.3s;
+}
+
+.cancel-new-message-button:hover {
+  color: #0056b3;
+}
+
+.new-message-form {
+  padding: 20px;
+  font-family: var(--font-base);
+}
+
+.new-message-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.new-message-form label {
+  font-weight: 600;
+  margin-top: 10px;
+  display: block;
+}
+
+.new-message-form select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin-bottom: 15px;
+  border-radius: 5px;
+}
+
+.cancel-new-message-button {
+  background-color: #1f496e;
+  color: white;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  border: none;
+  margin-left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+

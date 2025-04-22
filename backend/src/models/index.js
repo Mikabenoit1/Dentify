@@ -79,6 +79,27 @@ const Document = require('./Document')(sequelize, require('sequelize').DataTypes
     as: 'destinataire'
   });
 
+  // 🔗 Message → Offre (N:1)
+Offre.hasMany(Message, {
+  foreignKey: 'offre_id',
+  onDelete: 'CASCADE'
+});
+Message.belongsTo(Offre, {
+  foreignKey: 'offre_id',
+  as: 'offre'
+});
+
+// 🔗 Message → Entretien (N:1)
+Entretien.hasMany(Message, {
+  foreignKey: 'id_entretien',
+  onDelete: 'SET NULL'
+});
+Message.belongsTo(Entretien, {
+  foreignKey: 'id_entretien',
+  as: 'entretien'
+});
+
+
   // 🔐 Utilisateur → ResetToken (1:N)
   User.hasMany(ResetToken, {
     foreignKey: 'id_utilisateur',

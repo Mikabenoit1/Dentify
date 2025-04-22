@@ -634,3 +634,34 @@
     height: 35px;
   }
 }
+
+.badge-entretien-prevu {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0a66c2;
+  margin-top: 4px;
+}
+
+.badge-entretien-inline {
+  margin-top: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0a66c2;
+}
+.cancel-new-message-button {
+  background-color: transparent;
+  border: none;
+  color: #34607d; /* ou la couleur principale de ton thème */
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem;
+  transition: color 0.3s;
+}
+
+.cancel-new-message-button:hover {
+  color: #0056b3;
+}
+

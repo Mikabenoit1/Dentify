@@ -10,7 +10,7 @@ const {
 } = require('../models');
 const protect = require('../middlewares/authMiddleware');
 const { creerNotification } = require('../controllers/notificationController');
-const { getOffresProches } = require('../controllers/OffreController');
+const { getOffresProches, getCandidaturesParOffre } = require('../controllers/OffreController');
 
 
 // Fonction de calcul de distance en km
@@ -507,6 +507,10 @@ router.delete('/candidatures/:id', protect, async (req, res) => {
     res.status(500).json({ message: "Erreur serveur lors du retrait de la candidature." });
   }
 });
+
+router.get('/offre/:id_offre/candidatures', getCandidaturesParOffre);
+
+
 
 
 module.exports = router;
