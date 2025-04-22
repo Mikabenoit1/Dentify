@@ -500,6 +500,7 @@
 .clinique-offre-container {
   max-width: 1200px;
   margin: 0 auto;
+  margin-top: 300px;
   padding: 20px;
   height: 100%;
   max-height: 100vh;

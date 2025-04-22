@@ -13,7 +13,9 @@ const protect = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 const uploadPhoto = require('../middlewares/photoUploadMiddleware');
 
-
+// Ajouter après les autres routes dans userRoutes.js
+const { getProfessionnelById } = require('../controllers/userController');
+router.get('/professionnels/:id', getProfessionnelById);
 
 
 // ✅ Créer un utilisateur (clinique ou professionnel)

@@ -38,14 +38,15 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/reset', resetRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use("/api/documents", documentRoutes);
-app.use("/uploads", express.static("uploads"));
+//app.use("/uploads", express.static("uploads"));
 app.use('/api/evaluations', evaluationRoutes);
 app.use('/api/entretiens', entretienRoutes);
 app.use('/api/professionels', professionelRoutes);
 // Servir les fichiers statiques depuis le dossier documents
-app.use('/documents', express.static(path.resolve(__dirname, 'documents')));
+//app.use('/documents', express.static(path.resolve(__dirname, 'documents')));
 app.use('/uploads/photos', express.static(path.join(__dirname, 'uploads/photos')));
 app.use('/uploads/logos', express.static(path.join(__dirname, 'uploads/logos')));
+// Sert correctement le dossier documents
 
 // ✅ Route de test
 app.get('/test', (req, res) => {
@@ -54,6 +55,8 @@ app.get('/test', (req, res) => {
 
 // 🚀 Lancement du serveur
 const PORT = process.env.PORT || 4000;
+
+app.use('/uploads/documents', express.static(path.resolve(__dirname, 'src/uploads/documents')));
 
 app.listen(PORT, async () => {
   console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);

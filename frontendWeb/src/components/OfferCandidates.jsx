@@ -94,6 +94,7 @@ const OfferCandidates = () => {
   // Naviguer vers le profil du candidat
   const navigateToProfile = (professionnel) => {
     if (professionnel?.id_professionnel) {
+      // Utilisez le chemin correct pour accéder au profil du professionnel
       navigate(`/profil-professionnel/${professionnel.id_professionnel}`);
     }
   };
@@ -219,30 +220,29 @@ const OfferCandidates = () => {
   };
 
   // Forcer un rechargement des candidatures
-// Forcer un rechargement des candidatures
-const handleReloadCandidatures = async () => {
-  try {
-    setLoading(true);
-    setError(null);
-    
-    const candidaturesData = await fetchCandidaturesByOffre(id);
-    console.log("📊 Rechargement des candidatures:", candidaturesData);
-    
-    if (Array.isArray(candidaturesData)) {
-      setCandidatures(candidaturesData);
-      alert(`✅ ${candidaturesData.length} candidatures chargées`);
-    } else {
-      setCandidatures([]);
-      setError("Format de données inattendu");
+  const handleReloadCandidatures = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const candidaturesData = await fetchCandidaturesByOffre(id);
+      console.log("📊 Rechargement des candidatures:", candidaturesData);
+      
+      if (Array.isArray(candidaturesData)) {
+        setCandidatures(candidaturesData);
+        alert(`✅ ${candidaturesData.length} candidatures chargées`);
+      } else {
+        setCandidatures([]);
+        setError("Format de données inattendu");
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      console.error("❌ Erreur lors du rechargement:", err);
+      setError(`Échec du rechargement: ${err.message}`);
+      setLoading(false);
     }
-    
-    setLoading(false);
-  } catch (err) {
-    console.error("❌ Erreur lors du rechargement:", err);
-    setError(`Échec du rechargement: ${err.message}`);
-    setLoading(false);
-  }
-};
+  };
 
   if (loading && !offer) {
     return (
@@ -489,7 +489,9 @@ const handleReloadCandidatures = async () => {
             <div className="modal-content">
               <p>
                 Vous êtes sur le point d'accepter la candidature de 
-                <strong> {selectedCandidate.ProfessionnelDentaire?.nom_complet || 'ce candidat'}</strong>.
+                <strong> {selectedCandidate.ProfessionnelDentaire?.nom_complet || 
+                          `${selectedCandidate.ProfessionnelDentaire?.User?.prenom || ''} ${selectedCandidate.ProfessionnelDentaire?.User?.nom || ''}` || 
+                          'ce candidat'}</strong>.
               </p>
               
               {acceptedCandidature && (
@@ -544,7 +546,9 @@ const handleReloadCandidatures = async () => {
             <div className="modal-content">
               <p>
                 Vous êtes sur le point de refuser la candidature de 
-                <strong> {candidateToReject.ProfessionnelDentaire?.nom_complet || 'ce candidat'}</strong>.
+                <strong> {candidateToReject.ProfessionnelDentaire?.nom_complet || 
+                           `${candidateToReject.ProfessionnelDentaire?.User?.prenom || ''} ${candidateToReject.ProfessionnelDentaire?.User?.nom || ''}` || 
+                           'ce candidat'}</strong>.
               </p>
               
               <div className="form-group">

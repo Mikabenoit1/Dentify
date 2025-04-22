@@ -11,38 +11,53 @@ const ProfessionnelApplique = () => {
   const [sortBy, setSortBy] = useState('date_desc');
   const [candidatures, setCandidatures] = useState([]);
   const [filteredCandidatures, setFilteredCandidatures] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadCandidatures = async () => {
       try {
+        setLoading(true);
+        console.log("🔍 Chargement des candidatures de l'utilisateur...");
         const response = await fetchUserCandidatures();
+        console.log("📊 Réponse API:", response);
 
+        // Transformation des données pour l'affichage
         const candidaturesList = response.map((c) => ({
           id: c.id_candidature,
+          id_offre: c.id_offre,
           titre: c.Offre?.titre || 'Offre non disponible',
-          clinique: c.Offre?.Clinique?.nom || 'Clinique inconnue',
+          clinique: c.Offre?.CliniqueDentaire?.nom_clinique || 'Clinique inconnue',
           lieu: c.Offre?.adresse_complete || '',
-          logo: c.Offre?.Clinique?.nom?.charAt(0) || 'X',
+          logo: c.Offre?.CliniqueDentaire?.nom_clinique?.charAt(0) || 'X',
           dateCandidature: c.date_candidature,
-          statut: c.statut || 'reçue',
-          statutLabel: c.statut === 'accepted' ? 'Offre acceptée'
-                      : c.statut === 'selected' ? 'Entretien prévu'
-                      : c.statut === 'rejected' ? 'Non retenu'
-                      : c.statut === 'pending' ? 'En cours d\'examen'
-                      : 'Candidature reçue',
+          dateReponse: c.date_reponse || null,
+          // Normalisation du statut pour un affichage cohérent
+          statut: c.statut === 'accepted' || c.statut === 'acceptee' ? 'acceptee' :
+                 c.statut === 'rejected' || c.statut === 'refusee' ? 'refusee' :
+                 c.statut === 'pending' || c.statut === 'en_attente' ? 'en_attente' : 'reçue',
+          statutLabel: c.statut === 'accepted' || c.statut === 'acceptee' ? 'Candidature acceptée' :
+                      c.statut === 'rejected' || c.statut === 'refusee' ? 'Candidature refusée' :
+                      c.statut === 'pending' || c.statut === 'en_attente' ? 'En cours d\'examen' : 'Candidature reçue',
           dateDébut: c.Offre?.date_debut,
           dateFin: c.Offre?.date_fin,
           salaire: c.Offre?.remuneration,
+          message_personnalise: c.message_personnalise || '',
+          message_reponse: c.message_reponse || '',
           dateEntretien: '',
           heureEntretien: '',
           typeEntretien: '',
           notes: c.notes || ''
         }));
 
+        console.log("🔄 Candidatures transformées:", candidaturesList);
         setCandidatures(candidaturesList);
         setFilteredCandidatures(candidaturesList);
+        setLoading(false);
       } catch (error) {
-        console.error('Erreur lors du chargement des candidatures:', error);
+        console.error('❌ Erreur lors du chargement des candidatures:', error);
+        setError('Impossible de charger vos candidatures. Veuillez réessayer plus tard.');
+        setLoading(false);
       }
     };
 
@@ -70,11 +85,10 @@ const ProfessionnelApplique = () => {
       result.sort((a, b) => new Date(a.dateCandidature) - new Date(b.dateCandidature));
     } else if (sortBy === 'statut') {
       const ordreStatuts = {
-        'entretien': 1,
-        'acceptée': 2,
-        'examen': 3,
-        'reçue': 4,
-        'refusée': 5
+        'acceptee': 1,
+        'en_attente': 2,
+        'reçue': 3,
+        'refusee': 4
       };
 
       result.sort((a, b) => ordreStatuts[a.statut] - ordreStatuts[b.statut]);
@@ -89,8 +103,8 @@ const ProfessionnelApplique = () => {
     return new Date(dateString).toLocaleDateString('fr-CA', options);
   };
 
-  const navigateToDetail = (id) => {
-    navigate(`/applique/${id}`);
+  const navigateToDetail = (offerId) => {
+    navigate(`/offres/${offerId}`);
   };
 
   const retirerCandidature = async (id, e) => {
@@ -107,19 +121,23 @@ const ProfessionnelApplique = () => {
     }
   };
 
-  const preparerEntretien = (id, e) => {
-    e.stopPropagation();
-    navigate(`/preparer-entretien/${id}`);
-  };
-
   const getStatusColor = (statut) => {
     switch (statut) {
-      case 'entretien': return 'status-interview';
-      case 'acceptée': return 'status-accepted';
-      case 'examen': return 'status-review';
+      case 'acceptee': return 'status-accepted';
+      case 'en_attente': return 'status-review';
       case 'reçue': return 'status-received';
-      case 'refusée': return 'status-rejected';
+      case 'refusee': return 'status-rejected';
       default: return '';
+    }
+  };
+
+  const getStatusIcon = (statut) => {
+    switch (statut) {
+      case 'acceptee': return <i className="fa-solid fa-check-circle"></i>;
+      case 'en_attente': return <i className="fa-solid fa-hourglass-half"></i>;
+      case 'reçue': return <i className="fa-solid fa-envelope-open"></i>;
+      case 'refusee': return <i className="fa-solid fa-times-circle"></i>;
+      default: return <i className="fa-solid fa-question-circle"></i>;
     }
   };
   
@@ -157,11 +175,10 @@ const ProfessionnelApplique = () => {
               onChange={(e) => setFilterStatus(e.target.value)}
             >
               <option value="all">Tous</option>
-              <option value="entretien">Entretien prévu</option>
-              <option value="acceptée">Offre acceptée</option>
-              <option value="examen">En cours d'examen</option>
+              <option value="acceptee">Candidature acceptée</option>
+              <option value="en_attente">En cours d'examen</option>
               <option value="reçue">Candidature reçue</option>
-              <option value="refusée">Non retenu</option>
+              <option value="refusee">Candidature refusée</option>
             </select>
           </div>
           
@@ -180,103 +197,135 @@ const ProfessionnelApplique = () => {
       </div>
 
       <div className="candidatures-results">
-      <p className="results-count">
-  {filteredCandidatures.length} candidature(s) trouvée(s)
-</p>
-        
-{filteredCandidatures.length === 0 ? (
-  <div className="no-results">
-    <i className="fa-solid fa-folder-open"></i>
-    <h3>Aucune candidature pour le moment</h3>
-    <p>Commencez à postuler à des offres pour voir vos candidatures ici</p>
-    <button 
-      className="explore-button"
-      onClick={() => navigate('/offres')}
-    >
-      <i className="fa-solid fa-search"></i> Explorer les offres
-    </button>
-  </div>
-) : (
-          <div className="candidatures-list">
-            {filteredCandidatures.map(candidature => (
-              <div 
-                key={candidature.id} 
-                className="candidature-card"
-                onClick={() => navigateToDetail(candidature.id)}
-              >
-                <div className="candidature-left">
-                  <div className={`candidature-logo ${candidature.statut}`}>
-                    {candidature.logo}
-                  </div>
-                  <div className="candidature-info">
-                    <h3>{candidature.titre}</h3>
-                    <p className="candidature-clinique">
-                      <i className="fa-solid fa-hospital"></i> {candidature.clinique}
-                    </p>
-                    <p className="candidature-lieu">
-                      <i className="fa-solid fa-location-dot"></i> {candidature.lieu}
-                    </p>
-                    <p className="candidature-date">
-                      <i className="fa-solid fa-calendar"></i> Du {formatDate(candidature.dateDébut)} au {formatDate(candidature.dateFin)}
-                    </p>
-                    {candidature.salaire && (
-                      <p className="candidature-salaire">
-                        <i className="fa-solid fa-money-bill-wave"></i> {candidature.salaire}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="candidature-right">
-                  <div className="candidature-meta">
-                    <p className="candidature-applied">
-                      <i className="fa-solid fa-paper-plane"></i> Candidature envoyée le {formatDate(candidature.dateCandidature)}
-                    </p>
-                    <div className={`candidature-status ${getStatusColor(candidature.statut)}`}>
-                      {candidature.statut === 'entretien' && <i className="fa-solid fa-calendar-check"></i>}
-                      {candidature.statut === 'acceptée' && <i className="fa-solid fa-check-circle"></i>}
-                      {candidature.statut === 'examen' && <i className="fa-solid fa-hourglass-half"></i>}
-                      {candidature.statut === 'reçue' && <i className="fa-solid fa-envelope-open"></i>}
-                      {candidature.statut === 'refusée' && <i className="fa-solid fa-times-circle"></i>}
-                      <span>{candidature.statutLabel}</span>
+        {loading ? (
+          <div className="loading">
+            <div className="loading-spinner"></div>
+            <p>Chargement de vos candidatures...</p>
+          </div>
+        ) : error ? (
+          <div className="error-message">
+            <i className="fa-solid fa-exclamation-triangle"></i>
+            <p>{error}</p>
+          </div>
+        ) : (
+          <>
+            <p className="results-count">
+              {filteredCandidatures.length} candidature(s) trouvée(s)
+            </p>
+            
+            {filteredCandidatures.length === 0 ? (
+              <div className="no-results">
+                <i className="fa-solid fa-folder-open"></i>
+                <h3>Aucune candidature pour le moment</h3>
+                <p>Commencez à postuler à des offres pour voir vos candidatures ici</p>
+                <button 
+                  className="explore-button"
+                  onClick={() => navigate('/offres')}
+                >
+                  <i className="fa-solid fa-search"></i> Explorer les offres
+                </button>
+              </div>
+            ) : (
+              <div className="candidatures-list">
+                {filteredCandidatures.map(candidature => (
+                  <div 
+                    key={candidature.id} 
+                    className="candidature-card"
+                    onClick={() => navigateToDetail(candidature.id_offre)}
+                  >
+                    <div className="candidature-left">
+                      <div className={`candidature-logo ${candidature.statut}`}>
+                        {candidature.logo}
+                      </div>
+                      <div className="candidature-info">
+                        <h3>{candidature.titre}</h3>
+                        <p className="candidature-clinique">
+                          <i className="fa-solid fa-hospital"></i> {candidature.clinique}
+                        </p>
+                        <p className="candidature-lieu">
+                          <i className="fa-solid fa-location-dot"></i> {candidature.lieu}
+                        </p>
+                        <p className="candidature-date">
+                          <i className="fa-solid fa-calendar"></i> Du {formatDate(candidature.dateDébut)} au {formatDate(candidature.dateFin)}
+                        </p>
+                        {candidature.salaire && (
+                          <p className="candidature-salaire">
+                            <i className="fa-solid fa-money-bill-wave"></i> {candidature.salaire} $/h
+                          </p>
+                        )}
+                      </div>
                     </div>
                     
-                    {candidature.statut === 'entretien' && candidature.dateEntretien && (
-                      <div className="entretien-details">
-                        <i className="fa-solid fa-video"></i>
-                        <span>Entretien le {formatDate(candidature.dateEntretien)} à {candidature.heureEntretien}</span>
+                    <div className="candidature-right">
+                      <div className="candidature-meta">
+                        <p className="candidature-applied">
+                          <i className="fa-solid fa-paper-plane"></i> Candidature envoyée le {formatDate(candidature.dateCandidature)}
+                        </p>
+                        <div className={`candidature-status ${getStatusColor(candidature.statut)}`}>
+                          {getStatusIcon(candidature.statut)}
+                          <span>{candidature.statutLabel}</span>
+                          {candidature.dateReponse && (
+                            <span className="response-date">
+                              {" "}(le {formatDate(candidature.dateReponse)})
+                            </span>
+                          )}
+                        </div>
+                        
+                        {candidature.message_personnalise && (
+                          <div className="message-container">
+                            <div className="message-sent">
+                              <p className="message-label">Votre message :</p>
+                              <p className="message-content">{candidature.message_personnalise}</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {candidature.message_reponse && candidature.statut === 'refusee' && (
+                          <div className="message-container">
+                            <div className="message-response">
+                              <p className="message-label">Réponse de la clinique :</p>
+                              <p className="message-content">{candidature.message_reponse}</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
+                      
+                      <div className="candidature-actions">
+                        {candidature.statut === 'acceptee' && (
+                          <button 
+                            className="contact-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/messagerie/${candidature.id_offre}`);
+                            }}
+                          >
+                            <i className="fa-solid fa-comment"></i> Contacter la clinique
+                          </button>
+                        )}
+                        {(candidature.statut === 'en_attente' || candidature.statut === 'reçue') && (
+                          <button 
+                            className="withdraw-button"
+                            onClick={(e) => retirerCandidature(candidature.id, e)}
+                          >
+                            <i className="fa-solid fa-ban"></i> Retirer
+                          </button>
+                        )}
+                        <button 
+                          className="details-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigateToDetail(candidature.id_offre);
+                          }}
+                        >
+                          <i className="fa-solid fa-eye"></i> Voir l'offre
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="candidature-actions">
-                    {candidature.statut === 'entretien' && (
-                      <button 
-                        className="prepare-button"
-                        onClick={(e) => preparerEntretien(candidature.id, e)}
-                      >
-                        <i className="fa-solid fa-clipboard-check"></i> Préparer
-                      </button>
-                    )}
-                    {candidature.statut !== 'acceptée' && candidature.statut !== 'refusée' && (
-                      <button 
-                        className="withdraw-button"
-                        onClick={(e) => retirerCandidature(candidature.id, e)}
-                      >
-                        <i className="fa-solid fa-ban"></i> Retirer
-                      </button>
-                    )}
-                  </div>
-                </div>
-                
-                {candidature.notes && (
-                  <div className="candidature-notes">
-                    <i className="fa-solid fa-sticky-note"></i> Notes: {candidature.notes}
-                  </div>
-                )}
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>

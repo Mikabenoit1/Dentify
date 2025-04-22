@@ -4,6 +4,7 @@ import { OffersProvider } from "./components/OffersContext";
 import CliniqueOffreDetail from './components/CliniqueOffreDetail';
 import ProfessionnelOffreDetail from './components/ProfessionnelOffreDetail';
 import OfferCandidates from './components/OfferCandidates';
+import ProfilProfessionnel from './components/ProfilProfessionnel'; // Importer le nouveau composant
 import Header from "./components/Header"; // Le Header original pour les pages publiques
 import CliniqueHeader from "./components/CliniqueHeader"; // Header pour les pages clinique et pro
 import Sidebar from "./components/Sidebar";
@@ -52,6 +53,7 @@ function App() {
     "/clinique-messagerie",
     "/clinique-profile",
     "/candidats/", // Pour la page des candidats
+    "/profil-professionnel/", // Pour la page de profil professionnel
     "/pages/Connecte/Principale", 
     "/pages/Connecte/PrincipaleClinique",
     "/mon-compte",
@@ -91,6 +93,7 @@ function App() {
     "/clinique-messagerie",
     "/clinique-profile",
     "/candidats/", 
+    "/profil-professionnel/", // Ajouter la nouvelle route
     "/pages/Connecte/PrincipaleClinique",
     "/parametres", // Ajouter paramètres aux routes avec SidebarCli
     "/notifications" // Ajouter notifications aux routes avec SidebarCli
@@ -183,6 +186,7 @@ function App() {
           <Route path="/clinique-offres" element={<CliniqueOffre />} />
           <Route path="/clinique-offres/:id" element={<CliniqueOffreDetail />} />
           <Route path="/candidats/:id" element={<OfferCandidates />} />
+          <Route path="/profil-professionnel/:id" element={<ProfilProfessionnel />} /> {/* Nouvelle route */}
           <Route path="/clinique-calendrier" element={<CliniqueCalendrier />} />
           <Route path="/clinique-messagerie" element={<CliniqueMessagerie />} />
           <Route path="/clinique-messagerie/:conversationId" element={<CliniqueMessagerie />} />
