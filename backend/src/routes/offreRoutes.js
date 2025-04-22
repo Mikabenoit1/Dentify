@@ -343,6 +343,8 @@ router.get('/mes-offres', protect, async (req, res) => {
       return offreJson;
     });
 
+    console.dir(offresAvecProfessionnel, { depth: null });
+
     res.json(offresAvecProfessionnel);
   } catch (error) {
     console.error('❌ Erreur récupération mes offres :', error);

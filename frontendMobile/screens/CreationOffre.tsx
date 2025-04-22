@@ -43,11 +43,12 @@ export default function CreationOffre({ navigation }) {
       const [h, m] = heure.split(":");
       const clone = new Date(date);
       clone.setHours(parseInt(h), parseInt(m), 0);
-      return clone.toISOString();
+      return clone.toLocaleString("sv-SE").replace(" ", "T"); 
     } catch (err) {
       return null;
     }
   };
+  
 
   const handlePublier = () => {
     if (

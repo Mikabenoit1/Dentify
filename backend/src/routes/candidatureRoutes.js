@@ -185,5 +185,29 @@ router.get('/horaire', protect, async (req, res) => {
   }
 });
 
+router.put('/refuser/:id', protect, async (req, res) => {
+  try {
+    const id_candidature = req.params.id;
+    const { message_reponse } = req.body;
+
+    const candidature = await Candidature.findByPk(id_candidature);
+
+    if (!candidature) {
+      return res.status(404).json({ message: "Candidature introuvable" });
+    }
+
+    candidature.statut = "refusee";
+    candidature.message_reponse = message_reponse || "Votre candidature a été refusée.";
+    candidature.date_reponse = new Date();
+
+    await candidature.save();
+
+    res.json({ message: "Candidature refusée avec succès", candidature });
+  } catch (error) {
+    console.error("❌ Erreur refus candidature :", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
 
 module.exports = router;

@@ -128,8 +128,14 @@ Evaluation.belongsTo(User, {
 });
 
 
+// 🔗 ProfessionnelDentaire → User (1:1 inverse pour les includes imbriqués)
+Candidature.belongsTo(ProfessionnelDentaire, {
+  foreignKey: 'id_professionnel'
+});
+ProfessionnelDentaire.belongsTo(User, {
+  foreignKey: 'id_utilisateur'
+});
 
-  // Ajout d'une vérification supplémentaire pour s'assurer que l'alias n'est pas dupliqué dans d'autres associations
 
 module.exports = {
   sequelize,

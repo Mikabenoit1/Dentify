@@ -14,8 +14,8 @@ if (Platform.OS === "web") {
     ? "http://localhost:4000/api/candidatures"
     : "https://371b-142-137-176-156.ngrok-free.app/api/candidatures";
 } else {
-  BASE_URL_OFFRES = "http://172.16.8.102:4000/api/offres";
-  BASE_URL_CANDIDATURES = "http://172.16.8.102:4000/api/candidatures";
+  BASE_URL_OFFRES = "http://192.168.1.190:4000/api/offres";
+  BASE_URL_CANDIDATURES = "http://192.168.1.190:4000/api/candidatures";
 }
 
 // === FONCTION GÉNÉRIQUE POUR LES OFFRES ===
@@ -123,6 +123,36 @@ export const annulerCandidature = async (id_offre) => {
   if (!response.ok) throw new Error(data.message || "Erreur annulation candidature");
   return data;
 };
+
+// Refuser une candidature (clinique)
+export const refuserCandidature = async (idCandidature, message = "") => {
+  const token = await AsyncStorage.getItem("token");
+
+  const response = await fetch(
+    `${BASE_URL_CANDIDATURES}/refuser/${idCandidature}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ message_reponse: message }),
+    }
+  );
+
+  const raw = await response.text(); // lire brut
+
+  try {
+    const data = JSON.parse(raw); // essayer de parser
+    if (!response.ok) throw new Error(data.message || "Erreur refus candidature");
+    return data;
+  } catch (e) {
+    console.error("❌ Erreur parsing JSON refus :", e);
+    console.error("↩️ Réponse brute :", raw);
+    throw new Error("Erreur serveur (HTML reçu au lieu de JSON)");
+  }
+};
+
 
 export const getHorairePro = async () => {
   const token = await AsyncStorage.getItem("token");

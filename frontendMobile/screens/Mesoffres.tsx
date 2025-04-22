@@ -1,10 +1,25 @@
 
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, StyleSheet, Alert } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  Image,
+  StyleSheet,
+  Alert,
+  TextInput
+} from "react-native";
 import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { getMesOffres, supprimerOffre, archiverOffre } from "../api/offreApi";
 import { useFocusEffect } from '@react-navigation/native';
 import moment from "moment";
+
+import {
+  getMesOffres,
+  supprimerOffre,
+  archiverOffre,
+  refuserCandidature
+} from "../api/offreApi";
 
 export default function Mesoffres({ navigation }) {
   const [activePage, setActivePage] = useState("Mesoffres");
@@ -15,7 +30,7 @@ export default function Mesoffres({ navigation }) {
       const data = await getMesOffres();
       setOffres(data);
     } catch (error) {
-      console.error("Erreur chargement offres :", error);
+      console.error("Erreur chargement offres :", error);
       Alert.alert("Erreur", "Impossible de charger les offres");
     }
   };
@@ -35,7 +50,7 @@ export default function Mesoffres({ navigation }) {
     try {
       await supprimerOffre(id);
       fetchOffres();
-    } catch (error) {
+    } catch {
       Alert.alert("Erreur", "Échec de la suppression.");
     }
   };
@@ -44,8 +59,20 @@ export default function Mesoffres({ navigation }) {
     try {
       await archiverOffre(id);
       fetchOffres();
-    } catch (error) {
+    } catch {
       Alert.alert("Erreur", "Échec du masquage.");
+    }
+  };
+
+  // === NOUVEAU HANDLER ===
+  const handleRefuser = async (idCandidature) => {
+    try {
+      await refuserCandidature(idCandidature);
+      Alert.alert("Succès", "Candidature refusée.");
+      fetchOffres();
+    } catch (err) {
+      console.error("Erreur refus candidature :", err);
+      Alert.alert("Erreur", err.message || "Échec du refus");
     }
   };
 
@@ -63,8 +90,8 @@ export default function Mesoffres({ navigation }) {
           {
             text: "Supprimer",
             style: "destructive",
-            onPress: () => handleSupprimer(item.id_offre)
-          }
+            onPress: () => handleSupprimer(item.id_offre),
+          },
         ]
       );
     };
@@ -75,13 +102,15 @@ export default function Mesoffres({ navigation }) {
         "Cette offre sera masquée de votre liste. Continuer ?",
         [
           { text: "Annuler", style: "cancel" },
-          {
-            text: "Masquer",
-            onPress: () => handleMasquer(item.id_offre)
-          }
+          { text: "Masquer", onPress: () => handleMasquer(item.id_offre) },
         ]
       );
     };
+  
+    // 🔥 ICI : corriger le nom exact du champ (Utilisateur et pas User)
+    const candidature = item.Candidatures?.[0];
+    const professionnel = candidature?.ProfessionnelDentaire;
+    const userPro = professionnel?.Utilisateur;
   
     return (
       <View style={styles.offreCard}>
@@ -93,13 +122,21 @@ export default function Mesoffres({ navigation }) {
         <Text>Description : {item.descript}</Text>
         <Text>Exigences : {item.competences_requises}</Text>
         <Text>Salaire : {item.remuneration} $</Text>
-        {item.acceptedBy && (
-          <Text style={{ fontWeight: "bold", marginTop: 5 }}>
-            Acceptée par {item.acceptedBy}
-          </Text>
+  
+        {userPro && (
+          <View style={styles.candidatureContainer}>
+            <Text style={styles.proInfo}>
+              Acceptée par : {userPro.prenom} {userPro.nom} ({professionnel.type_profession})
+            </Text>
+            <TouchableOpacity
+              style={styles.refuserButton}
+              onPress={() => handleRefuser(candidature.id_candidature)}
+            >
+              <Text style={styles.refuserText}>Refuser la candidature</Text>
+            </TouchableOpacity>
+          </View>
         )}
   
-        {/* Bouton Supprimer */}
         <TouchableOpacity
           onPress={confirmerSuppression}
           style={styles.supprimeroffre}
@@ -107,8 +144,7 @@ export default function Mesoffres({ navigation }) {
           <Text style={styles.supprimeroffreText}>Supprimer</Text>
         </TouchableOpacity>
   
-        {/* Bouton Masquer si passé + acceptée */}
-        {item.acceptedBy && isPasse && (
+        {userPro && isPasse && (
           <TouchableOpacity
             onPress={confirmerMasquage}
             style={[styles.supprimeroffre, { backgroundColor: "#888", marginTop: 5 }]}
@@ -120,33 +156,51 @@ export default function Mesoffres({ navigation }) {
     );
   };
   
+  
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
+        <Image
+          source={require("../assets/dentify_logo_noir.png")}
+          style={styles.logo}
+        />
         <View style={styles.rightIcons}>
-          <TextInput style={styles.searchInput} placeholder="Recherche..." placeholderTextColor="#999" />
-          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('MessageListeScreen')}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Recherche..."
+            placeholderTextColor="#999"
+          />
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigation.navigate("MessageListeScreen")}
+          >
             <AntDesign style={styles.iconText} name="message1" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate("ProfilCli")}>
-            <MaterialCommunityIcons style={styles.iconText} name="account-circle-outline" />
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigation.navigate("ProfilCli")}
+          >
+            <MaterialCommunityIcons
+              style={styles.iconText}
+              name="account-circle-outline"
+            />
           </TouchableOpacity>
         </View>
       </View>
 
+      {/* Contenu */}
       <View style={styles.container2}>
         <Text style={styles.titleoffre}>Mes Offres</Text>
-
         <FlatList
           data={offres}
           keyExtractor={(item) => item.id_offre.toString()}
           renderItem={renderOffre}
-          ListEmptyComponent={<Text style={styles.emptyText}>Aucune offre pour le moment.</Text>}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>Aucune offre pour le moment.</Text>
+          }
         />
-
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => navigation.navigate("CreationOffre")}
@@ -158,23 +212,45 @@ export default function Mesoffres({ navigation }) {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("Mesoffres")}>
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => handleNavigation("Mesoffres")}
+        >
           <AntDesign name="calendar" size={24} color="black" />
-          <Text style={[styles.footerTextClick, activePage === "Mesoffres" && styles.activeButtonText]}>
+          <Text
+            style={[
+              styles.footerTextClick,
+              activePage === "Mesoffres" && styles.activeButtonText
+            ]}
+          >
             Mes offres
           </Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("CreationOffre")}>
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => handleNavigation("CreationOffre")}
+        >
           <Ionicons style={styles.footerIcon} name="create-outline" />
-          <Text style={[styles.footerText, activePage === "CreationOffre" && styles.activeButtonText]}>
+          <Text
+            style={[
+              styles.footerText,
+              activePage === "CreationOffre" && styles.activeButtonText
+            ]}
+          >
             Création d'une offre
           </Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("AccueilMoreCli")}>
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => handleNavigation("AccueilMoreCli")}
+        >
           <AntDesign style={styles.footerIcon} name="ellipsis1" />
-          <Text style={[styles.footerText, activePage === "AccueilMore" && styles.activeButtonText]}>
+          <Text
+            style={[
+              styles.footerText,
+              activePage === "AccueilMore" && styles.activeButtonText
+            ]}
+          >
             More
           </Text>
         </TouchableOpacity>
@@ -309,6 +385,30 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   supprimeroffreText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+
+
+
+  /* === NOUVEAUX STYLES === */
+  candidatureContainer: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: "#f8f8f8",
+    borderRadius: 8,
+  },
+  proInfo: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  refuserButton: {
+    backgroundColor: "#d9534f",
+    paddingVertical: 8,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  refuserText: {
     color: "white",
     fontWeight: "bold",
   },
