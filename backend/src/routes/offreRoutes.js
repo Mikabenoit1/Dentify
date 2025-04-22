@@ -299,25 +299,32 @@ router.put('/refuser/:id', protect, async (req, res) => {
 router.get('/:id/candidatures', protect, async (req, res) => {
   try {
     const utilisateur = await User.findByPk(req.user.id_utilisateur);
-    
+    console.log("✅ Utilisateur chargé :", utilisateur?.id_utilisateur, utilisateur?.type_utilisateur);
+
     if (!utilisateur || utilisateur.type_utilisateur !== 'clinique') {
+      console.log("❌ Utilisateur pas autorisé.");
       return res.status(403).json({ message: "Seules les cliniques peuvent voir les candidatures de leurs offres." });
     }
-    
+
     const offre = await Offre.findByPk(req.params.id);
+    console.log("✅ Offre chargée :", offre?.id_offre, offre?.titre);
+
     if (!offre) {
+      console.log("❌ Offre introuvable.");
       return res.status(404).json({ message: "Offre non trouvée." });
     }
-    
+
     const clinique = await CliniqueDentaire.findOne({
       where: { id_utilisateur: utilisateur.id_utilisateur }
     });
-    
+
+    console.log("✅ Clinique trouvée :", clinique?.id_clinique);
+
     if (!clinique || offre.id_clinique !== clinique.id_clinique) {
+      console.log("❌ Cette clinique ne peut pas accéder à cette offre.");
       return res.status(403).json({ message: "Vous ne pouvez pas accéder aux candidatures de cette offre." });
     }
-    
-    // Récupérer les candidatures avec les informations du professionnel
+
     const candidatures = await Candidature.findAll({
       where: { id_offre: offre.id_offre },
       include: [
@@ -327,6 +334,7 @@ router.get('/:id/candidatures', protect, async (req, res) => {
           include: [
             {
               model: User,
+              as: 'User',
               attributes: ['id_utilisateur', 'nom', 'prenom', 'courriel', 'telephone', 'photo_profil']
             }
           ]
@@ -334,28 +342,23 @@ router.get('/:id/candidatures', protect, async (req, res) => {
       ],
       order: [['date_candidature', 'DESC']]
     });
-    
-    // Formater les données pour inclure le nom complet du professionnel
-    const formattedCandidatures = candidatures.map(candidature => {
-      const candiData = candidature.toJSON();
-      
-      // Si le professionnel existe, ajouter le nom complet
-      if (candiData.ProfessionnelDentaire && candiData.ProfessionnelDentaire.User) {
-        candiData.ProfessionnelDentaire.nom_complet = 
-          `${candiData.ProfessionnelDentaire.User.prenom} ${candiData.ProfessionnelDentaire.User.nom}`;
-        
-        candiData.ProfessionnelDentaire.email = candiData.ProfessionnelDentaire.User.courriel;
-        candiData.ProfessionnelDentaire.telephone = candiData.ProfessionnelDentaire.User.telephone;
+
+    console.log("📨 Candidatures récupérées :", candidatures.length);
+
+    const formatted = candidatures.map(candidature => {
+      const c = candidature.toJSON();
+      if (c.ProfessionnelDentaire && c.ProfessionnelDentaire.User) {
+        c.ProfessionnelDentaire.nom_complet = `${c.ProfessionnelDentaire.User.prenom} ${c.ProfessionnelDentaire.User.nom}`;
+        c.ProfessionnelDentaire.email = c.ProfessionnelDentaire.User.courriel;
+        c.ProfessionnelDentaire.telephone = c.ProfessionnelDentaire.User.telephone;
       }
-      
-      return candiData;
+      return c;
     });
-    
-    res.json(formattedCandidatures);
-    
+
+    res.json(formatted);
   } catch (error) {
-    console.error("Erreur lors de la récupération des candidatures:", error);
-    res.status(500).json({ message: "Erreur serveur" });
+    console.error("❌ Erreur finale lors de la récupération des candidatures:", error);
+    res.status(500).json({ message: "Erreur serveur", error: error.message });
   }
 });
 

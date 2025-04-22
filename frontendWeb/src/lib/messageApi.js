@@ -7,15 +7,20 @@ export const fetchConversations = async () => {
 };
 
 // ✅ Récupérer les messages d'une conversation spécifique
-export const fetchMessagesByConversation = async (conversationId) => {
-  return await apiFetch(`/messages/conversations/${conversationId}`);
+export const fetchMessagesByConversation = async (candidatId, offreId) => {
+  return await apiFetch(`/messages/${candidatId}/offre/${offreId}`);
 };
 
-// ✅ Envoyer un nouveau message
-export const sendMessage = async (data) => {
+
+export const sendMessage = async ({ contenu, offre_id, destinataire_id, expediteur_id }) => {
   return await apiFetch('/messages', {
     method: 'POST',
-    body: data
+    body: {
+      contenu,
+      offre_id,
+      destinataire_id,
+      expediteur_id
+    }
   });
 };
 

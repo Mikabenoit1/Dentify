@@ -27,8 +27,10 @@ const Document = require('./Document')(sequelize, require('sequelize').DataTypes
     onDelete: 'CASCADE'
   });
   ProfessionnelDentaire.belongsTo(User, {
-    foreignKey: 'id_utilisateur'
+    foreignKey: 'id_utilisateur',
+    as: 'User' 
   });
+  
 
   // 🔗 CliniqueDentaire → Offre (1:N)
   CliniqueDentaire.hasMany(Offre, {

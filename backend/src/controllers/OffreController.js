@@ -112,14 +112,20 @@ const getCandidaturesParOffre = async (req, res) => {
     const { id } = req.params;
 
     const candidatures = await Candidature.findAll({
-      where: { offre_id: id },
+      where: { id_offre: id }, // ← attention ici c’est bien `id_offre`, pas `offre_id`
       include: [
         {
-          model: Utilisateur,
-          as: 'candidat',
-          attributes: ['id_utilisateur', 'nom', 'prenom', 'email']
+          model: ProfessionnelDentaire,
+          attributes: ['id_professionnel', 'type_profession', 'annees_experience'],
+          include: [
+            {
+              model: User, // ← ton modèle Utilisateur
+              attributes: ['id_utilisateur', 'nom', 'prenom', 'courriel']
+            }
+          ]
         }
-      ]
+      ],
+      order: [['date_candidature', 'DESC']]
     });
 
     const candidats = candidatures.map(c => ({

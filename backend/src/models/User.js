@@ -15,6 +15,10 @@ const User = sequelize.define('Utilisateur', {  // ⬅️ Utilisation du bon nom
     mot_de_passe: { type: DataTypes.STRING, allowNull: false },
     type_utilisateur: { type: DataTypes.STRING, allowNull: false },
     photo_profil: { type: DataTypes.STRING },
+    telephone: {
+        type: DataTypes.STRING, 
+        allowNull: true
+      },
     derniere_connexion: { type: DataTypes.DATE },
     compte_verifie: { type: DataTypes.CHAR(1), defaultValue: 'N' },
     date_verification: { type: DataTypes.DATE },

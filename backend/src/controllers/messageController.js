@@ -5,14 +5,21 @@ const { Op } = require('sequelize');
 // Créer un nouveau message
 exports.createMessage = async (req, res) => {
   try {
-    const { expediteur_id, destinataire_id, contenu, offre_id, meetingId, fichier_joint } = req.body;
+    const {
+      expediteur_id,
+      destinataire_id,
+      contenu,
+      offre_id,
+      meeting_id,        // ✅ corriger ici
+      fichier_joint
+    } = req.body;
 
     const message = await Message.create({
       expediteur_id,
       destinataire_id,
       contenu,
-      offre_id,
-      meeting_id: meetingId || null,
+      id_offre: offre_id,        // ✅ mapping correct vers la colonne SQL
+      id_entretien: meeting_id || null, // ✅ nom correct pour la colonne DB
       fichier_joint: fichier_joint || null,
       date_envoi: new Date(),
       est_lu: false
@@ -20,10 +27,11 @@ exports.createMessage = async (req, res) => {
 
     res.status(201).json(message);
   } catch (error) {
-    console.error('Erreur lors de la création du message :', error);
+    console.error('❌ Erreur lors de la création du message :', error);
     res.status(500).json({ error: 'Erreur lors de la création du message.' });
   }
 };
+
 
 // Récupérer toutes les conversations pour l'utilisateur connecté
 exports.getConversations = async (req, res) => {
@@ -38,6 +46,7 @@ exports.getConversations = async (req, res) => {
         ]
       },
       include: [
+        {model : Message, as: 'messages',},
         { model: Utilisateur, as: 'expediteur', attributes: ['id_utilisateur', 'nom', 'prenom'] },
         { model: Utilisateur, as: 'destinataire', attributes: ['id_utilisateur', 'nom', 'prenom'] },
         { model: Offre, as: 'offre', attributes: ['id_offre', 'titre'] }

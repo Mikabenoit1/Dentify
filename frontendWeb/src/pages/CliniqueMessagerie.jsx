@@ -33,6 +33,9 @@ function CliniqueMessagerie() {
   const { offers } = useOffers();
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState(null);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  
+
 
 
   const messagesEndRef = useRef(null);
@@ -56,7 +59,8 @@ function CliniqueMessagerie() {
   useEffect(() => {
     const loadConversations = async () => {
       try {
-        const data = await fetchConversations(); // conversations côté clinique
+        const data = await fetchConversations();
+        console.log("📨 Conversations rechargées :", data); // conversations côté clinique
         setConversations(data);
 
         if (conversationId) {
@@ -73,31 +77,31 @@ function CliniqueMessagerie() {
 
   // Charger les messages pour la conversation active
   useEffect(() => {
+    if (!activeConversationId || !currentUserId) return;
+  
     const loadMessages = async () => {
-      if (!activeConversationId || !currentUserId) return;
-
       const conv = conversations.find(c => c.id === activeConversationId);
       if (!conv) return;
-
-      try {
-        const messages = await fetchMessagesByConversation(conv.candidatId, conv.offreId);
-        setConversations(prev =>
-          prev.map(c =>
-            c.id === activeConversationId ? { ...c, messages } : c
-          )
-        );
-
-        // Marquer les messages comme lus s’ils sont destinés à la clinique
-        await Promise.all(messages.map(msg =>
-          !msg.read && msg.destinataire_id === currentUserId ? markAsRead(msg.id) : null
-        ));
-      } catch (err) {
-        console.error("Erreur lors du chargement des messages :", err);
-      }
+  
+      const messages = await fetchMessagesByConversation(conv.candidatId, conv.offreId);
+  
+      setConversations(prev =>
+        prev.map(c =>
+          c.id === activeConversationId
+            ? {
+                ...c,
+                messages,
+                lastMessage: messages.at(-1)?.contenu || '',
+                lastMessageDate: messages.at(-1)?.date_envoi || ''
+              }
+            : c
+        )
+      );
     };
-
+  
     loadMessages();
   }, [activeConversationId, currentUserId]);
+  
 
   // Scroll automatique vers le bas des messages
   useEffect(() => {
@@ -106,45 +110,57 @@ function CliniqueMessagerie() {
     }
   }, [activeConversation?.messages]);
 
-    // Envoyer un nouveau message ou modifier un message existant
-    const handleSendMessage = async (e) => {
-      e.preventDefault();
-      if (!message.trim() || !activeConversation) return;
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
   
-      try {
-        if (editingMessage) {
-          await updateMessage(editingMessage.id, message);
-        } else {
-          await sendMessage({
-            contenu: message,
-            offre_id: activeConversation.offreId,
-            destinataire_id: activeConversation.candidatId // 👈 la clinique écrit au professionnel
-          });
-        }
+    if (!message.trim() || !activeConversation) {
+      console.warn("⛔ Message vide ou conversation inactive");
+      return;
+    }
   
-        const updatedMessages = await fetchMessagesByConversation(activeConversation.candidatId, activeConversation.offreId);
-  
-        setConversations(prev =>
-          prev.map(c =>
-            c.id === activeConversationId
-              ? {
-                  ...c,
-                  messages: updatedMessages,
-                  lastMessage: updatedMessages.at(-1)?.contenu || '',
-                  lastMessageDate: updatedMessages.at(-1)?.date_envoi || ''
-                }
-              : c
-          )
-        );
-  
-        setMessage('');
-        setEditingMessage(null);
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  
-      } catch (error) {
-        console.error("Erreur lors de l'envoi ou de l'édition du message :", error);
+    try {
+      if (editingMessage) {
+        console.log("✏️ Mise à jour du message :", editingMessage.id);
+        await updateMessage(editingMessage.id, message);
+      } else {
+        console.log("📤 Envoi d'un nouveau message...");
+        await sendMessage({
+          contenu: message,
+          offre_id: activeConversation.offreId,
+          destinataire_id: activeConversation.candidatId
+        });
       }
-    };
+  
+      console.log("🔁 Rechargement des messages...");
+      const updatedMessages = await fetchMessagesByConversation(
+        activeConversation.candidatId,
+        activeConversation.offreId
+      );
+      console.log("📨 Messages reçus :", updatedMessages);
+  
+      setConversations(prev =>
+        prev.map(c =>
+          c.id === activeConversationId
+            ? {
+                ...c,
+                messages: updatedMessages,
+                lastMessage: updatedMessages.at(-1)?.contenu || '',
+                lastMessageDate: updatedMessages.at(-1)?.date_envoi || ''
+              }
+            : c
+        )
+      );
+      console.log("✅ Conversations mises à jour");
+  
+      setMessage('');
+      setEditingMessage(null);
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      console.log("⬇️ Scroll automatique effectué");
+  
+    } catch (error) {
+      console.error("❌ Erreur lors de l'envoi ou de l'édition du message :", error);
+    }
+  };
   
     // Passer un message en mode édition
     const handleEditMessage = (msg) => {
@@ -301,6 +317,76 @@ useEffect(() => {
   }
 }, [selectedOfferId]);
 
+const handleSendNewMessage = async (e) => {
+  e.preventDefault();
+
+  if (!selectedCandidateId || !message.trim()) return;
+
+  try {
+    // 📨 1. Envoi du message
+    await sendMessage({
+      contenu: message,
+      offre_id: selectedOfferId,
+      destinataire_id: selectedCandidateId,
+      expediteur_id: currentUserId
+    });
+
+    // 🔄 2. Recharge les conversations
+    const updatedConversations = await fetchConversations();
+    setConversations(updatedConversations);
+
+    // 🔍 3. Trouve la nouvelle conversation correspondante
+    const newConv = updatedConversations.find(conv =>
+      (conv.destinataire_id === selectedCandidateId || conv.expediteur_id === selectedCandidateId) &&
+      conv.id_offre === selectedOfferId
+    );
+
+    if (newConv) {
+      // ✅ 4. Recharge les messages de cette conversation
+      const messages = await fetchMessagesByConversation(selectedCandidateId, selectedOfferId);
+
+      // 🧠 5. Mets à jour la conversation avec les messages
+      setConversations(prev =>
+        prev.map(c =>
+          c.id === newConv.id
+            ? {
+                ...c,
+                messages,
+                lastMessage: messages.at(-1)?.contenu || '',
+                lastMessageDate: messages.at(-1)?.date_envoi || ''
+              }
+            : c
+        )
+      );
+
+      // 🎯 6. Affiche cette conversation immédiatement
+      setActiveConversationId(newConv.id);
+    }
+
+    // 🧼 7. Nettoyage des champs
+    setMessage('');
+    setSelectedOfferId(null);
+    setSelectedCandidateId(null);
+    setNewMessageMode(false);
+
+    // ✅ 8. Notification de succès
+    setNotification({
+      show: true,
+      message: 'Message envoyé avec succès',
+      type: 'success'
+    });
+    setTimeout(() => setNotification({ show: false, message: '', type: 'success' }), 3000);
+
+  } catch (err) {
+    console.error("❌ Erreur lors de l'envoi du nouveau message :", err);
+    setNotification({
+      show: true,
+      message: 'Échec de l’envoi du message',
+      type: 'error'
+    });
+    setTimeout(() => setNotification({ show: false, message: '', type: 'error' }), 3000);
+  }
+};
 
 
 return (
@@ -422,38 +508,55 @@ return (
             <>
               <label htmlFor="candidate-select">Candidat :</label>
               <select
-                id="candidate-select"
-                value={selectedCandidateId || ''}
-                onChange={(e) => setSelectedCandidateId(parseInt(e.target.value))}
-              >
-                <option value="">-- Sélectionner un candidat --</option>
-                {Array.isArray(applicants) &&
-  applicants.map(applicant => (
-    <option key={applicant.id_utilisateur} value={applicant.id_utilisateur}>
-      {applicant.nom}
-    </option>
-))}
+  value={selectedCandidateId || ''}
+  onChange={(e) => setSelectedCandidateId(parseInt(e.target.value))}
+>
+<option value="">-- Sélectionner un candidat --</option>
+{Array.isArray(applicants) &&
+  applicants.map(applicant => {
+    console.log("🧪 applicant brut :", applicant);
+    console.log("🔍 ProfessionnelDentaire :", applicant.ProfessionnelDentaire);
+    console.log("👤 User :", applicant.ProfessionnelDentaire?.User);
 
-              </select>
+    const user = applicant.ProfessionnelDentaire?.User;
+    const fullName = user ? `${user.prenom} ${user.nom}` : 'Inconnu';
+
+    return (
+      <option key={user?.id_utilisateur || applicant.id_professionnel} value={user?.id_utilisateur}>
+        {fullName}
+      </option>
+    );
+  })}
+
+
+
+</select>
+
             </>
           )}
 
           {/* Champ de message */}
           {selectedCandidateId && (
-            <form className="message-input-container" onSubmit={handleSendNewMessage}>
-              <div className="message-input-wrapper">
-                <input
-                  type="text"
-                  className="message-input"
-                  placeholder="Écrivez votre message..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                />
-              </div>
-              <button type="submit" className="send-button" disabled={!message.trim()}>
-                <i className="fa-solid fa-paper-plane"></i>
-              </button>
-            </form>
+         <form className="message-input-container" onSubmit={handleSendNewMessage}>
+         <div className="message-input-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
+           <input
+             type="text"
+             className="message-input"
+             placeholder="Écrivez votre message..."
+             value={message}
+             onChange={(e) => setMessage(e.target.value)}
+             style={{ flex: 1 }}
+           />
+           <button
+             type="submit"
+             className="send-button"
+             disabled={!message.trim()}
+             style={{ marginLeft: '8px' }}
+           >
+             <i className="fa-solid fa-paper-plane"></i>
+           </button>
+         </div>
+       </form>       
           )}
         </div>
       ) : activeConversation ? (
@@ -486,21 +589,22 @@ return (
 
               <div
                 key={msg.id}
-                className={`message ${msg.senderId === 'clinic' ? 'sent' : 'received'} ${msg.isMeetingMessage ? 'meeting-message' : ''} ${msg.isCancellationMessage ? 'cancellation-message' : ''}`}
+                className={`message ${msg.expediteur_id === currentUserId ? 'sent' : 'received'} ${msg.isMeetingMessage ? 'meeting-message' : ''} ${msg.isCancellationMessage ? 'cancellation-message' : ''}`}
               >
                 <div className="message-bubble">
                   {msg.content}
                   {msg.edited && <span className="message-edited">(modifié)</span>}
                   <div className="message-time">{formatMessageDate(msg.timestamp)}</div>
 
-                  {msg.senderId === 'clinic' && !msg.isMeetingMessage && !msg.isCancellationMessage && (
-                    <button className="message-options-button" onClick={(e) => {
-                      e.stopPropagation();
-                      toggleMessageActions(msg.id);
-                    }}>
-                      <i className="fa-solid fa-ellipsis-vertical"></i>
-                    </button>
-                  )}
+                  {msg.expediteur_id === currentUserId && !msg.isMeetingMessage && !msg.isCancellationMessage && (
+  <button className="message-options-button" onClick={(e) => {
+    e.stopPropagation();
+    toggleMessageActions(msg.id);
+  }}>
+    <i className="fa-solid fa-ellipsis-vertical"></i>
+  </button>
+)}
+
 
                   {messageActionsOpen === msg.id && (
                     <div className="message-actions-menu">
