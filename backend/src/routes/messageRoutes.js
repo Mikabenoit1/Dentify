@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Message, User } = require('../models');
+const { Message, User, Offre } = require('../models');
 const protect = require('../middlewares/authMiddleware');
 const { Op } = require('sequelize');
 const messageController = require('../controllers/messageController');
@@ -10,6 +10,13 @@ const { creerNotification } = require('../controllers/notificationController');
 router.post('/', protect, async (req, res) => {
   try {
     const { destinataire_id, contenu, type_message, id_offre, fichier_joint } = req.body;
+    console.log("📨 Création d'un nouveau message:", {
+      expediteur_id: req.user.id_utilisateur,
+      destinataire_id,
+      contenu,
+      type_message,
+      id_offre
+    });
 
     const nouveauMessage = await Message.create({
       expediteur_id: req.user.id_utilisateur,
@@ -20,21 +27,43 @@ router.post('/', protect, async (req, res) => {
       fichier_joint
     });
 
+    // Fetch the complete message with associations
+    const messageComplet = await Message.findByPk(nouveauMessage.id_message, {
+      include: [
+        {
+          model: User,
+          as: 'expediteur',
+          attributes: ['id_utilisateur', 'nom', 'prenom']
+        },
+        {
+          model: User,
+          as: 'destinataire',
+          attributes: ['id_utilisateur', 'nom', 'prenom']
+        },
+        {
+          model: Offre,
+          as: 'offre',
+          attributes: ['id_offre', 'titre']
+        }
+      ]
+    });
+
     // 📬 Créer une notification uniquement pour les messages "normaux"
     if ((type_message || 'normal') === 'normal') {
       const expediteur = await User.findByPk(req.user.id_utilisateur);
 
       await creerNotification({
-        id_destinataire : destinataire_id,
+        id_destinataire: destinataire_id,
         type_notification: 'message',
         contenu: `Nouveau message de ${expediteur.prenom} ${expediteur.nom}`
       });
     }
 
-    res.status(201).json(nouveauMessage);
+    console.log("✅ Message créé:", messageComplet);
+    res.status(201).json(messageComplet);
   } catch (error) {
-    console.error('Erreur lors de l’envoi du message :', error);
-    res.status(500).json({ message: 'Erreur serveur' });
+    console.error("❌ Erreur lors de l'envoi du message:", error);
+    res.status(500).json({ message: "Erreur serveur", error: error.message });
   }
 });
 
@@ -74,8 +103,22 @@ router.get('/conversations', protect, async (req, res) => {
 // ✅ Obtenir les messages avec un utilisateur donné pour une offre précise
 router.get('/:id_utilisateur/offre/:id_offre', protect, async (req, res) => {
   try {
-    const { id_utilisateur, id_offre } = req.params;
+    const id_utilisateur = parseInt(req.params.id_utilisateur);
+    const id_offre = parseInt(req.params.id_offre);
     const monId = req.user.id_utilisateur;
+
+    console.log("🔍 Recherche des messages avec paramètres:", {
+      id_utilisateur,
+      id_offre,
+      monId
+    });
+
+    if (isNaN(id_utilisateur) || isNaN(id_offre)) {
+      return res.status(400).json({ 
+        message: "Les identifiants doivent être des nombres",
+        params: { id_utilisateur: req.params.id_utilisateur, id_offre: req.params.id_offre }
+      });
+    }
 
     const messages = await Message.findAll({
       where: {
@@ -89,13 +132,35 @@ router.get('/:id_utilisateur/offre/:id_offre', protect, async (req, res) => {
           { id_offre }
         ]
       },
-      order: [['date_envoi', 'ASC']]
+      order: [['date_envoi', 'ASC']],
+      include: [
+        {
+          model: User,
+          as: 'expediteur',
+          attributes: ['id_utilisateur', 'nom', 'prenom']
+        },
+        {
+          model: User,
+          as: 'destinataire',
+          attributes: ['id_utilisateur', 'nom', 'prenom']
+        },
+        {
+          model: Offre,
+          as: 'offre',
+          attributes: ['id_offre', 'titre']
+        }
+      ]
     });
 
+    console.log(`✅ ${messages.length} messages trouvés:`, JSON.stringify(messages, null, 2));
     res.json(messages);
   } catch (error) {
-    console.error("Erreur lors de la récupération des messages filtrés :", error);
-    res.status(500).json({ message: "Erreur serveur" });
+    console.error("❌ Erreur lors de la récupération des messages filtrés :", error);
+    res.status(500).json({ 
+      message: "Erreur serveur", 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

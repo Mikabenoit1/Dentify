@@ -1,16 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import ScheduleMeeting from '../components/ScheduleMeeting';
 import {
   fetchConversations,
   fetchMessagesByConversation,
   sendMessage,
-  deleteMessage,
-  updateMessage,
-  markAsRead
+  deleteMessage
 } from '../lib/messageApi';
-import { fetchUserProfile } from '../lib/userApi'; // 👈 remplace clinicProfile
-import '../styles/ProfessionnelMessagerie.css'; // 👈 remplace CliniqueMessagerie.css
+import { fetchUserProfile } from '../lib/userApi';
+import '../styles/ProfessionnelMessagerie.css';
 
 function ProfessionnelMessagerie() {
   const { conversationId } = useParams();
@@ -19,18 +16,14 @@ function ProfessionnelMessagerie() {
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [message, setMessage] = useState('');
-  const [editingMessage, setEditingMessage] = useState(null);
   const [messageActionsOpen, setMessageActionsOpen] = useState(null);
-  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
   const [currentUserId, setCurrentUserId] = useState(null);
   const [newMessageMode, setNewMessageMode] = useState(false);
-  
-
 
   const messagesEndRef = useRef(null);
 
-  const activeConversation = conversations.find(c => c.id === activeConversationId);
+  const activeConversation = conversations.find(c => c.id === activeConversationId) || { messages: [] };
 
   // Charger le profil du professionnel connecté
   useEffect(() => {
@@ -45,21 +38,58 @@ function ProfessionnelMessagerie() {
     loadCurrentUser();
   }, []);
 
-
   // Charger les conversations du professionnel connecté
   useEffect(() => {
     const loadConversations = async () => {
       try {
-        const data = await fetchConversations(); // backend doit retourner les conversations du professionnel
-        setConversations(data);
+        const conversationsData = await fetchConversations();
+        console.log("📨 Conversations brutes :", conversationsData);
 
+        // Transform the conversations data
+        const transformedConversations = [];
+        
+        // Only process if we have valid data
+        if (Array.isArray(conversationsData) && conversationsData.length > 0) {
+          for (const conv of conversationsData) {
+            // Skip if essential data is missing
+            if (!conv.id_utilisateur) {
+              console.warn("⚠️ Skipping conversation without id_utilisateur:", conv);
+              continue;
+            }
+
+            // Create a valid conversation object
+            const conversation = {
+              id: `${conv.id_utilisateur}`, // Use just the user ID as the conversation ID
+              cliniqueId: conv.id_utilisateur, // For professionals, this is the clinic's ID
+              offreId: 20, // Hardcode to 20 for now since that's the offer ID we're using
+              cliniqueName: `${conv.prenom} ${conv.nom}`.trim() || 'Clinique',
+              offerTitle: 'Nouvelle discussion',
+              lastMessage: '',
+              lastMessageDate: new Date().toISOString(),
+              unread: false,
+              messages: []
+            };
+
+            transformedConversations.push(conversation);
+          }
+        }
+
+        console.log("📨 Conversations transformées :", transformedConversations);
+        setConversations(transformedConversations);
+
+        // Set active conversation if we have a conversationId or default to first conversation
         if (conversationId) {
-          setActiveConversationId(parseInt(conversationId));
-        } else if (data.length > 0) {
-          setActiveConversationId(data[0].id); // ou id de conversation réel
+          setActiveConversationId(conversationId);
+        } else if (transformedConversations.length > 0) {
+          setActiveConversationId(transformedConversations[0].id);
         }
       } catch (err) {
         console.error("Erreur lors du chargement des conversations :", err);
+        setNotification({
+          show: true,
+          message: "Erreur lors du chargement des conversations",
+          type: 'error'
+        });
       }
     };
 
@@ -69,23 +99,42 @@ function ProfessionnelMessagerie() {
   // Charger les messages liés à la conversation active
   useEffect(() => {
     const loadMessages = async () => {
-      if (!activeConversationId || !currentUserId) return;
+      if (!activeConversationId || !currentUserId) {
+        console.log("⏳ En attente de l'ID de conversation et de l'utilisateur");
+        return;
+      }
 
       const conv = conversations.find(c => c.id === activeConversationId);
-      if (!conv) return;
+      if (!conv) {
+        console.log("❌ Conversation non trouvée:", activeConversationId);
+        return;
+      }
 
       try {
-        const messages = await fetchMessagesByConversation(conv.cliniqueId, conv.offreId);
-        setConversations(prev =>
-          prev.map(c =>
-            c.id === activeConversationId ? { ...c, messages } : c
-          )
-        );
+        console.log("🔄 Chargement des messages pour:", {
+          currentUserId,
+          offreId: conv.offreId
+        });
+        
+        const messages = await fetchMessagesByConversation(currentUserId, conv.offreId);
+        console.log("📨 Messages reçus:", messages);
 
-        // Marquer comme lus les messages non lus destinés au professionnel
-        await Promise.all(messages.map(msg =>
-          !msg.read && msg.destinataire_id === currentUserId ? markAsRead(msg.id) : null
-        ));
+        if (Array.isArray(messages)) {
+          setConversations(prev =>
+            prev.map(c =>
+              c.id === activeConversationId
+                ? {
+                    ...c,
+                    messages,
+                    lastMessage: messages.length > 0 ? messages[messages.length - 1].contenu : '',
+                    lastMessageDate: messages.length > 0 ? messages[messages.length - 1].date_envoi : new Date().toISOString()
+                  }
+                : c
+            )
+          );
+        } else {
+          console.warn("⚠️ Les messages reçus ne sont pas un tableau:", messages);
+        }
       } catch (err) {
         console.error("Erreur lors du chargement des messages :", err);
       }
@@ -101,130 +150,154 @@ function ProfessionnelMessagerie() {
     }
   }, [activeConversation?.messages]);
 
+  // Envoyer un message ou modifier un message existant
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!message.trim() || !activeConversationId) {
+      console.warn("⛔ Message vide ou aucune conversation active");
+      return;
+    }
 
-    // Envoyer un message ou modifier un message existant
-    const handleSendMessage = async (e) => {
-      e.preventDefault();
-      if (!message.trim() || !activeConversation) return;
-  
-      try {
-        if (editingMessage) {
-          await updateMessage(editingMessage.id, message);
-        } else {
-          await sendMessage({
-            contenu: message,
-            offre_id: activeConversation.offreId,
-            destinataire_id: activeConversation.cliniqueId // 👈 professionnel envoie à la clinique
-          });
-        }
-  
-        const updatedMessages = await fetchMessagesByConversation(activeConversation.cliniqueId, activeConversation.offreId);
-  
-        setConversations(prev =>
-          prev.map(c =>
-            c.id === activeConversationId
-              ? {
-                  ...c,
-                  messages: updatedMessages,
-                  lastMessage: updatedMessages.at(-1)?.contenu || '',
-                  lastMessageDate: updatedMessages.at(-1)?.date_envoi || ''
-                }
-              : c
-          )
-        );
-  
-        setMessage('');
-        setEditingMessage(null);
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  
-      } catch (error) {
-        console.error("Erreur lors de l'envoi ou de l'édition du message :", error);
+    try {
+      const activeConv = conversations.find(c => c.id === activeConversationId);
+      if (!activeConv) {
+        console.error("❌ Conversation active non trouvée");
+        return;
       }
-    };
-  
-    // Passer un message en mode édition
-    const handleEditMessage = (msg) => {
-      setEditingMessage(msg);
-      setMessage(msg.contenu);
-      setMessageActionsOpen(null);
-    };
-  
-    // Supprimer un message
-    const handleDeleteMessage = async (messageId) => {
-      if (!window.confirm("Supprimer ce message ?")) return;
-  
-      try {
-        await deleteMessage(messageId);
-  
-        const updatedMessages = await fetchMessagesByConversation(
-          activeConversation.cliniqueId,
-          activeConversation.offreId
-        );
-  
-        setConversations(prev =>
-          prev.map(c =>
-            c.id === activeConversationId
-              ? {
-                  ...c,
-                  messages: updatedMessages,
-                  lastMessage: updatedMessages.at(-1)?.contenu || '',
-                  lastMessageDate: updatedMessages.at(-1)?.date_envoi || ''
-                }
-              : c
-          )
-        );
-  
-        setNotification({ show: true, message: 'Message supprimé', type: 'warning' });
-        setTimeout(() => setNotification({ show: false, message: '', type: 'warning' }), 3000);
-  
-      } catch (error) {
-        console.error("Erreur lors de la suppression du message :", error);
-      }
-  
-      setMessageActionsOpen(null);
-    };
-  
-    // Annuler l'édition
-    const handleCancelEdit = () => {
-      setEditingMessage(null);
+
+      console.log("📤 Envoi du message avec paramètres:", {
+        destinataire_id: activeConv.cliniqueId,
+        offre_id: activeConv.offreId,
+        contenu: message,
+        type_message: 'normal'
+      });
+
+      // Send the message with the correct parameters
+      const sentMessage = await sendMessage({
+        contenu: message,
+        destinataire_id: activeConv.cliniqueId,
+        offre_id: activeConv.offreId,
+        expediteur_id: currentUserId,
+        type_message: 'normal'
+      });
+
+      console.log("📨 Message envoyé:", sentMessage);
+
+      // Reload messages with the correct parameters
+      const updatedMessages = await fetchMessagesByConversation(
+        currentUserId,
+        activeConv.offreId
+      );
+
+      console.log("📨 Messages mis à jour après envoi:", updatedMessages);
+
+      // Update conversations state with the new messages
+      setConversations(prev =>
+        prev.map(c =>
+          c.id === activeConversationId
+            ? {
+                ...c,
+                messages: updatedMessages,
+                lastMessage: message,
+                lastMessageDate: new Date().toISOString()
+              }
+            : c
+        )
+      );
+
+      // Clear message input
       setMessage('');
-    };
-  
-    // Ouvrir/fermer le menu d'options d’un message
-    const toggleMessageActions = (id) => {
-      setMessageActionsOpen(prev => (prev === id ? null : id));
-    };
-  
-    // Ouvrir la modal de planification (facultatif)
-    const handleOpenScheduleModal = () => {
-      setIsScheduleModalOpen(true);
-    };
-  
+      
+      // Scroll to bottom
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+
+    } catch (error) {
+      console.error("❌ Erreur lors de l'envoi du message:", error);
+      setNotification({
+        show: true,
+        message: "Erreur lors de l'envoi du message",
+        type: 'error'
+      });
+    }
+  };
+
+  // Supprimer un message existant
+  const handleDeleteMessage = async (messageId) => {
+    if (!window.confirm("Supprimer ce message ?")) return;
+
+    try {
+      await deleteMessage(messageId);
+
+      const updatedMessages = await fetchMessagesByConversation(
+        activeConversation.cliniqueId,
+        currentUserId
+      );
+
+      setConversations(prev =>
+        prev.map(c =>
+          c.id === activeConversationId
+            ? {
+                ...c,
+                messages: updatedMessages,
+                lastMessage: updatedMessages.at(-1)?.contenu || '',
+                lastMessageDate: updatedMessages.at(-1)?.date_envoi || ''
+              }
+            : c
+        )
+      );
+
+      setNotification({ show: true, message: 'Message supprimé', type: 'warning' });
+      setTimeout(() => setNotification({ show: false, message: '', type: 'warning' }), 3000);
+
+    } catch (error) {
+      console.error("Erreur lors de la suppression du message :", error);
+    }
+
+    setMessageActionsOpen(null);
+  };
+
+  // Afficher ou cacher le menu d'actions pour un message donné
+  const toggleMessageActions = (id) => {
+    setMessageActionsOpen(prev => (prev === id ? null : id));
+  };
 
   // Formater la date d'un message de façon lisible
   const formatMessageDate = (dateString) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        console.warn("⚠️ Date invalide:", dateString);
+        return '';
+      }
 
-    if (date.toDateString() === today.toDateString()) {
-      return `${date.getHours()}h${String(date.getMinutes()).padStart(2, '0')}`;
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return "Hier";
-    } else {
-      return `${date.getDate()}/${date.getMonth() + 1}`;
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+
+      if (date.toDateString() === today.toDateString()) {
+        return `${date.getHours()}h${String(date.getMinutes()).padStart(2, '0')}`;
+      } else if (date.toDateString() === yesterday.toDateString()) {
+        return "Hier";
+      } else {
+        return `${date.getDate()}/${date.getMonth() + 1}`;
+      }
+    } catch (error) {
+      console.error("❌ Erreur de formatage de date:", error);
+      return '';
     }
   };
 
   // Filtrer les conversations avec le terme de recherche
   const filteredConversations = conversations.filter(conv =>
     conv.cliniqueName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conv.offreTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    conv.offerTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     conv.lastMessage?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  
   return (
     <div className="professionnel-messagerie-container">
       {/* Panneau des conversations */}
@@ -241,7 +314,7 @@ function ProfessionnelMessagerie() {
             </button>
           )}
         </div>
-  
+
         <div className="search-bar">
           <i className="fa-solid fa-search search-icon"></i>
           <input
@@ -256,7 +329,7 @@ function ProfessionnelMessagerie() {
             </button>
           )}
         </div>
-  
+
         <div className="conversations-list">
           {filteredConversations.map(conv => {
             const hasScheduledMeeting = conv.messages?.some(msg => msg.id_entretien);
@@ -272,21 +345,21 @@ function ProfessionnelMessagerie() {
                 <div className="conversation-avatar">
                   {conv.cliniqueAvatar?.charAt(0)?.toUpperCase() || '?'}
                 </div>
-  
+
                 <div className="conversation-info">
                   <div className="conversation-info-header">
                     <span className="conversation-name">{conv.cliniqueName}</span>
                     <span className="conversation-time">{formatMessageDate(conv.lastMessageDate)}</span>
                   </div>
-  
+
                   <div className="conversation-preview">
-                    <span className="conversation-offer-title">{conv.offreTitle}</span>
+                    <span className="conversation-offer-title">{conv.offerTitle}</span>
                   </div>
-  
+
                   {hasScheduledMeeting && (
                     <div className="badge-entretien-prevu">📅 Entretien prévu</div>
                   )}
-  
+
                   <div className="conversation-message">
                     {conv.lastMessage.length > 50
                       ? conv.lastMessage.substring(0, 50) + '...'
@@ -297,7 +370,7 @@ function ProfessionnelMessagerie() {
               </div>
             );
           })}
-  
+
           {filteredConversations.length === 0 && (
             <div className="no-conversations">
               <p>Aucune conversation trouvée</p>
@@ -305,7 +378,7 @@ function ProfessionnelMessagerie() {
           )}
         </div>
       </div>
-  
+
       {/* Panneau des messages */}
       <div className="messages-panel">
         {newMessageMode ? (
@@ -329,80 +402,67 @@ function ProfessionnelMessagerie() {
                 </div>
                 <div className="contact-details">
                   <h3 className="contact-name">{activeConversation.cliniqueName}</h3>
-                  <span className="contact-offer">{activeConversation.offreTitle}</span>
+                  <span className="contact-offer">{activeConversation.offerTitle}</span>
                   {activeConversation.messages?.some(msg => msg.id_entretien) && (
                     <span className="badge-entretien-inline">📅 Entretien prévu</span>
                   )}
                 </div>
               </div>
             </div>
-  
+
             <div className="messages-content">
-              {activeConversation.messages.map(msg => (
-                <div
-                  key={msg.id}
-                  className={`message ${msg.senderId === 'pro' ? 'sent' : 'received'}`}
-                >
-                  <div className="message-bubble">
-                    {msg.content}
-                    {msg.edited && <span className="message-edited">(modifié)</span>}
-                    <div className="message-time">{formatMessageDate(msg.timestamp)}</div>
-  
-                    {msg.senderId === 'pro' && (
-                      <button
-                        className="message-options-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleMessageActions(msg.id);
-                        }}
-                      >
-                        <i className="fa-solid fa-ellipsis-vertical"></i>
-                      </button>
-                    )}
-  
-                    {messageActionsOpen === msg.id && (
-                      <div className="message-actions-menu">
-                        <button onClick={() => handleEditMessage(msg)}>
-                          <i className="fa-solid fa-edit"></i> Modifier
+              {Array.isArray(activeConversation?.messages) ? (
+                activeConversation.messages.map(msg => (
+                  <div
+                    key={msg.id_message}
+                    className={`message ${msg.expediteur_id === currentUserId ? 'sent' : 'received'}`}
+                  >
+                    <div className="message-bubble">
+                      <div className="message-content">{msg.contenu}</div>
+                      <div className="message-time">{formatMessageDate(msg.date_envoi)}</div>
+
+                      {msg.expediteur_id === currentUserId && (
+                        <button
+                          className="message-options-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleMessageActions(msg.id_message);
+                          }}
+                        >
+                          <i className="fa-solid fa-ellipsis-vertical"></i>
                         </button>
-                        <button onClick={() => handleDeleteMessage(msg.id)}>
-                          <i className="fa-solid fa-trash"></i> Supprimer
-                        </button>
-                      </div>
-                    )}
+                      )}
+
+                      {messageActionsOpen === msg.id_message && (
+                        <div className="message-actions-menu">
+                          <button onClick={() => handleDeleteMessage(msg.id_message)}>
+                            <i className="fa-solid fa-trash"></i> Supprimer
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="no-messages">
+                  <p>Aucun message dans cette conversation</p>
                 </div>
-              ))}
-              <div ref={messagesEndRef}></div>
+              )}
+              <div ref={messagesEndRef} />
             </div>
-  
+
+            {/* Zone de saisie */}
             <form className="message-input-container" onSubmit={handleSendMessage}>
               <div className="message-input-wrapper">
                 <input
                   type="text"
                   className="message-input"
-                  placeholder={editingMessage ? "Modifier votre message..." : "Écrivez votre message..."}
+                  placeholder="Écrivez votre message..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                 />
-                {editingMessage && (
-                  <div className="editing-indicator">
-                    <span>Modification en cours</span>
-                    <button
-                      type="button"
-                      onClick={handleCancelEdit}
-                      className="cancel-edit-button"
-                    >
-                      <i className="fa-solid fa-times"></i>
-                    </button>
-                  </div>
-                )}
               </div>
-              <button
-                type="submit"
-                className="send-button"
-                disabled={!message.trim()}
-              >
+              <button type="submit" className="send-button" disabled={!message.trim()}>
                 <i className="fa-solid fa-paper-plane"></i>
               </button>
             </form>
@@ -421,7 +481,7 @@ function ProfessionnelMessagerie() {
           </div>
         )}
       </div>
-  
+
       {/* Notification */}
       {notification.show && (
         <div className={`notification ${notification.type}`}>

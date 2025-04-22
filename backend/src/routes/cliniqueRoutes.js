@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const User = require('../models/User'); 
 const { CliniqueDentaire } = require('../models');
 const protect = require('../middlewares/authMiddleware');
 const uploadLogo = require('../middlewares/logoUploadMiddleware');// Unifié pour photos et logos
@@ -27,21 +28,33 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ✅ Récupérer la clinique liée à l'utilisateur connecté
 router.get('/profile', protect, async (req, res) => {
   try {
-    const clinique = await CliniqueDentaire.findOne({ where: { id_utilisateur: req.user.id_utilisateur } });
+    const clinique = await CliniqueDentaire.findOne({
+      where: { id_utilisateur: req.user.id_utilisateur },
+      include: {
+        model: User,
+        attributes: ['id_utilisateur']
+      }
+    });
 
     if (!clinique) {
       return res.status(404).json({ message: 'Clinique non trouvée' });
     }
 
-    res.status(200).json(clinique);
+    const cliniqueData = clinique.toJSON();
+
+    res.status(200).json({
+      ...cliniqueData,
+      id_utilisateur: cliniqueData.User?.id_utilisateur || req.user.id_utilisateur
+    });
+
   } catch (error) {
     console.error("💥 Erreur dans GET /cliniques/profile:", error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
 
 // ✅ Mettre à jour le profil de la clinique
 router.put('/profile', protect, async (req, res) => {

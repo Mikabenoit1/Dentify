@@ -4,7 +4,11 @@ const { Op } = require('sequelize');
 
 // Créer un nouveau message
 exports.createMessage = async (req, res) => {
+
+  
   try {
+    console.log("📨 createMessage appelé");
+    console.log("🧾 Corps reçu :", req.body);
     const {
       expediteur_id,
       destinataire_id,
@@ -33,7 +37,6 @@ exports.createMessage = async (req, res) => {
 };
 
 
-// Récupérer toutes les conversations pour l'utilisateur connecté
 exports.getConversations = async (req, res) => {
   try {
     const userId = req.user.id_utilisateur;
@@ -45,28 +48,39 @@ exports.getConversations = async (req, res) => {
           { destinataire_id: userId }
         ]
       },
-      include: [
-        {model : Message, as: 'messages',},
-        { model: Utilisateur, as: 'expediteur', attributes: ['id_utilisateur', 'nom', 'prenom'] },
-        { model: Utilisateur, as: 'destinataire', attributes: ['id_utilisateur', 'nom', 'prenom'] },
-        { model: Offre, as: 'offre', attributes: ['id_offre', 'titre'] }
-      ],
-      order: [['date_envoi', 'DESC']]
+      order: [['date_envoi', 'ASC']]
     });
 
-    // Organiser par conversation (groupe unique entre 2 utilisateurs et une offre)
-    const conversations = {};
-    for (const msg of messages) {
-      const key = [msg.expediteur_id, msg.destinataire_id, msg.offre_id].sort().join('-');
-      if (!conversations[key]) {
-        conversations[key] = msg;
-      }
-    }
+    const grouped = {};
 
-    res.json(Object.values(conversations));
-  } catch (error) {
-    console.error('Erreur lors de la récupération des conversations :', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération des conversations.' });
+    messages.forEach(msg => {
+      const key = `${msg.destinataire_id}-${msg.id_offre}`;
+      if (!grouped[key]) {
+        grouped[key] = {
+          id: key,
+          offreId: msg.id_offre,
+          candidatId: msg.expediteur_id === userId ? msg.destinataire_id : msg.expediteur_id,
+          messages: [],
+          lastMessage: '',
+          lastMessageDate: ''
+        };
+      }
+
+      grouped[key].messages.push(msg);
+
+      if (!grouped[key].lastMessageDate || new Date(msg.date_envoi) > new Date(grouped[key].lastMessageDate)) {
+        grouped[key].lastMessage = msg.contenu;
+        grouped[key].lastMessageDate = msg.date_envoi;
+      }
+    });
+
+    const result = Object.values(grouped);
+    console.log("🧩 Conversations regroupées :", result);
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("❌ Erreur getConversations :", err);
+    res.status(500).json({ error: "Erreur lors de la récupération des conversations." });
   }
 };
 

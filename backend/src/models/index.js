@@ -82,19 +82,19 @@ const Document = require('./Document')(sequelize, require('sequelize').DataTypes
   });
 
   // 🔗 Message → Offre (N:1)
-Offre.hasMany(Message, {
-  foreignKey: 'offre_id',
-  onDelete: 'CASCADE'
-});
-Message.belongsTo(Offre, {
-  foreignKey: 'offre_id',
-  as: 'offre'
-});
+  Offre.hasMany(Message, {
+    foreignKey: 'id_offre',
+    onDelete: 'CASCADE'
+  });
+  Message.belongsTo(Offre, {
+    foreignKey: 'id_offre',
+    as: 'offre'
+  });
 
-// 🔗 Message → Entretien (N:1)
-Entretien.hasMany(Message, {
-  foreignKey: 'id_entretien',
-  onDelete: 'SET NULL'
+  // 🔗 Message → Entretien (N:1)
+  Entretien.hasMany(Message, {
+    foreignKey: 'id_entretien',
+    onDelete: 'SET NULL'
 });
 Message.belongsTo(Entretien, {
   foreignKey: 'id_entretien',
