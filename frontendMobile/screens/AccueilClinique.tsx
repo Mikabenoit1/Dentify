@@ -2,11 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput } from 'react-native';
 import { AntDesign, MaterialCommunityIcons, MaterialIcons, Ionicons } from '@expo/vector-icons';
 
-
-
 const AccueilClinique = ({navigation}) => {
-  
-  
   return (
     <View style={styles.container}>
       {/* Header - Identique à l'original */}
@@ -18,11 +14,9 @@ const AccueilClinique = ({navigation}) => {
         />
         
         <View style={styles.rightIcons}>
-          <TextInput 
-            style={styles.searchInput} 
-            placeholder="Recherche..." 
-            placeholderTextColor="#999"
-          />
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('NotificationClinique')}>
+                        <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
+                  </TouchableOpacity>
           <TouchableOpacity 
             style={styles.iconButton}
             onPress={() => navigation.navigate('MessageListeScreen')}
@@ -52,13 +46,13 @@ const AccueilClinique = ({navigation}) => {
         </View>
       </View>
 
-      {/* Footer - Identique à l'original */}
+      {/* Footer - Modifié avec 4ème icône */}
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.footerButton}
           onPress={() => navigation.navigate('Mesoffres')}
         >
-          <AntDesign name="calendar" style={styles.footerIcon} />
+          <AntDesign name="profile" size={24} color="white" />
           <Text style={styles.footerText}>Offres publiés</Text>
         </TouchableOpacity>
         
@@ -72,7 +66,15 @@ const AccueilClinique = ({navigation}) => {
         
         <TouchableOpacity 
           style={styles.footerButton}
-          onPress={() => navigation.navigate('AccueilMore')}
+          onPress={() => navigation.navigate('CalendrierCli')}
+        >
+          <AntDesign name="calendar" style={styles.footerIcon} />
+          <Text style={styles.footerText}>Calendrier</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.footerButton}
+          onPress={() => navigation.navigate('AccueilMoreCli')}
         >
           <MaterialIcons name="more-horiz" size={24} color="white" />
           <Text style={styles.footerText}>Plus</Text>
@@ -161,7 +163,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  
+  // Styles du footer modifié
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -175,13 +177,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   footerIcon: {
-    fontSize: 24,
+    fontSize: 24, // Taille légèrement réduite
     color: 'white',
   },
   footerText: {
     fontSize: 12,
     color: 'white',
     marginTop: 5,
+    textAlign: 'center',
   },
 });
 

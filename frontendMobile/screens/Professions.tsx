@@ -1,74 +1,60 @@
 import React from 'react';
-import { Image, StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { ThemedText } from '../utils/ThemedText';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 
-
-export default function Professions({navigation}) {
-  
-  
+export default function Professions({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('Indexx')}>
-          <Image
-            source={require('../assets/dentify_logo_noir.png')}
-            style={{ width: 90, height: 50 }}
-            resizeMode="contain"
-          />
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <FontAwesome name="arrow-left" size={24} color="white" />
         </TouchableOpacity>
-        <View style={styles.linksContainer}>
-          <ThemedText variant="subtitle1">
-            <TouchableOpacity onPress={() => navigation.navigate('Connexions')}>
-              <ThemedText>Connexion</ThemedText>
-            </TouchableOpacity>
-          </ThemedText>
-          <ThemedText variant="subtitle1">
-            <TouchableOpacity onPress={() => navigation.navigate('menu')}>
-              <ThemedText>Menu</ThemedText>
-            </TouchableOpacity>
-          </ThemedText>
-        </View>
+        <Text style={styles.headerTitle}>Professions</Text>
+        <View style={styles.headerRight} />
       </View>
+
       <ScrollView style={styles.body}>
-        {/* Titre et sous-titre centrés */}
         <View style={styles.titleContainer}>
           <ThemedText variant="headline">
             Nos Professions
           </ThemedText>
         </View>
-        {/* Section pour les professions */}
+
         <View style={styles.iconSection}>
           {/* Dentistes */}
           <View style={styles.iconWrapper}>
-            <Icon name="tooth" size={48} color="#6a9174" />
+            <MaterialCommunityIcons name="tooth-outline" size={48} color="#6a9174" />
             <ThemedText variant="body2" style={styles.iconText}>
               Dentistes
             </ThemedText>
             <ThemedText variant="body2" style={styles.descriptionText}>
-              Des professionnels qualifiés pour vos soins dentaires.
+              Professionnels qualifiés pour les soins dentaires complets.
             </ThemedText>
           </View>
+
           {/* Hygiénistes Dentaires */}
           <View style={styles.iconWrapper}>
-            <Icon name="toothbrush" size={48} color="#6a9174" />
+            <MaterialCommunityIcons name="toothbrush" size={48} color="#6a9174" />
             <ThemedText variant="body2" style={styles.iconText}>
               Hygiénistes Dentaires
             </ThemedText>
             <ThemedText variant="body2" style={styles.descriptionText}>
-              Spécialistes de l'hygiène et de la prévention dentaire.
+              Spécialistes de l'hygiène et prévention dentaire.
             </ThemedText>
           </View>
+
           {/* Assistants Dentaires */}
           <View style={styles.iconWrapper}>
-            <Icon name="medical-bag" size={48} color="#6a9174" />
+            <MaterialCommunityIcons name="medical-bag" size={48} color="#6a9174" />
             <ThemedText variant="body2" style={styles.iconText}>
               Assistants Dentaires
             </ThemedText>
             <ThemedText variant="body2" style={styles.descriptionText}>
-              Soutien essentiel pour les soins dentaires au quotidien.
+              Soutien essentiel pour les soins dentaires quotidiens.
             </ThemedText>
           </View>
+
         </View>
       </ScrollView>
     </View>
@@ -82,14 +68,19 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
+    alignItems: 'center',
+    padding: 20,
     backgroundColor: '#6a9174',
+    paddingTop: 50,
   },
-  linksContainer: {
-    flexDirection: 'row',
-    gap: 16,
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  headerRight: {
+    width: 24,
   },
   body: {
     flex: 1,
@@ -98,11 +89,6 @@ const styles = StyleSheet.create({
   titleContainer: {
     alignItems: 'center',
     marginBottom: 24,
-  },
-  mainTitle: {
-    textAlign: 'center',
-    color: '#6a9174',
-    fontWeight: 'bold',
   },
   iconSection: {
     marginBottom: 24,
