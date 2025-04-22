@@ -172,7 +172,6 @@ export const fetchClinicOffers = async () => {
   return await apiFetch('/offres/mes-offres'); // ou autre selon ta route
 };
 
-export const fetchApplicantsByOffer = async (offreId) => {
-  return await apiFetch(`/offres/${offreId}/candidatures`);
+export const fetchApplicantsByOffer = async (offerId) => {
+  return await apiFetch(`/offres/${offerId}/candidatures`);
 };
-

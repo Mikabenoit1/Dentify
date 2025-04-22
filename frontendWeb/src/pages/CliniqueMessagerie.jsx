@@ -268,10 +268,11 @@ const handleScheduleMeeting = (meetingData) => {
 useEffect(() => {
   const fetchOffers = async () => {
     try {
-      const data = await fetchClinicOffers(); // <-- tu dois avoir cette fonction dans clinicApi.js
+      const data = await fetchClinicOffers(); // 👈 dans clinicApi.js
+      console.log("📦 Offres récupérées :", data);
       setClinicOffers(data);
     } catch (err) {
-      console.error("Erreur chargement des offres :", err);
+      console.error("❌ Erreur chargement des offres :", err);
     }
   };
 
@@ -286,9 +287,7 @@ useEffect(() => {
 useEffect(() => {
   const fetchApplicants = async () => {
     try {
-      // Appel de l'API pour fetch les postulants
-const data = await fetchApplicantsByOffer(selectedOffer?.id_offre || selectedOfferId);  // ✅ ici aussi
-// fonction à ajouter dans clinicApi.js
+      const data = await fetchApplicantsByOffer(selectedOfferId); 
       setApplicants(data);
     } catch (err) {
       console.error("Erreur chargement des candidats :", err);
@@ -301,6 +300,7 @@ const data = await fetchApplicantsByOffer(selectedOffer?.id_offre || selectedOff
     setApplicants([]);
   }
 }, [selectedOfferId]);
+
 
 
 return (
@@ -387,23 +387,35 @@ return (
           {/* Sélecteur d'offre */}
           <label htmlFor="offer-select">Offre :</label>
           <select
-            id="offer-select"
-            value={selectedOfferId || ''}
-            onChange={(e) => {
-              const offerId = parseInt(e.target.value);
-              const offer = offers.find(o => o.id_offre === offerId);
-              setSelectedOfferId(offerId);      // ✅ corriger ici
-              setSelectedOffer(offer);
-              setSelectedCandidateId(null);
-            }}
-          >
-            <option value="">-- Sélectionner une offre --</option>
-            {offers.map(offer => (
-              <option key={offer.id_offre} value={offer.id_offre}>
-              {offer.titre || "Offre sans titre"}
-            </option>
-            ))}
-          </select>
+  value={selectedOfferId || ''}
+  onChange={(e) => {
+    const rawValue = e.target.value;
+    if (!rawValue) return;
+
+    const offerId = parseInt(rawValue);
+    const offer = clinicOffers.find(o => o.id_offre === offerId);
+
+    console.log("➡️ offerId sélectionné:", offerId);
+    console.log("➡️ offer trouvé:", offer);
+
+    if (!offer) {
+      console.warn("⚠️ Offre non trouvée !");
+      return;
+    }
+
+    setSelectedOfferId(offerId);
+    setSelectedOffer(offer);
+    setSelectedCandidateId(null);
+  }}
+>
+  <option value="">-- Sélectionner une offre --</option>
+  {clinicOffers.map((offer) => (
+    <option key={offer.id_offre} value={offer.id_offre}>
+      {offer.titre}
+    </option>
+  ))}
+</select>
+
 
           {/* Sélecteur de candidat */}
           {selectedOffer && (
