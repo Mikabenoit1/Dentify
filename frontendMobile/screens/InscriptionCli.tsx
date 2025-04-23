@@ -12,7 +12,7 @@ import {
   Platform,
   Dimensions,
 } from "react-native";
-import { registerUser } from "../api/index";  // Importation de la méthode générique
+import { registerUser } from "../api/index";  
 
 export default function InscriptionCli({ navigation }) {
   const [nomClinique, setNomClinique] = useState("");

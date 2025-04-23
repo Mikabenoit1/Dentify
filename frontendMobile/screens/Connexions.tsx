@@ -122,6 +122,14 @@ export default function Connexions({ navigation }) {
               <Text style={styles.linkText}>Créer un compte</Text>
             </TouchableOpacity>
           </View>
+
+          <View style={styles.linkContainer}>
+        <Text style={styles.textNormal}>Mot de passe oublié ? </Text>
+        <TouchableOpacity onPress={() => navigation.navigate("ResetMdp")}>
+          <Text style={styles.linkText}>Réinitialisation du mot de passe</Text>
+        </TouchableOpacity>
+      </View>
+      
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

@@ -1,30 +1,41 @@
-// EmailVerificationScreen.tsx
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 
-const EmailVerification = ({ navigation }: any) => {
+const EmailVerification = ({ navigation, route }) => {
   const [verificationCode, setVerificationCode] = useState<string>('');
+  const { courriel } = route.params;
 
-  const handleVerifyCode = () => {
+  const handleVerifyCode = async () => {
     if (verificationCode.length !== 6) {
       Alert.alert('Erreur', 'Votre code ne contient pas 6 chiffres.');
       return;
     }
 
-    // Simuler la vérification du code
-    Alert.alert('Succès', 'Code vérifié avec succès!');
-    
-    // Naviguer vers la page NewPasswordScreen après la vérification du code
-    navigation.navigate('NewMdp');
+    try {
+      const response = await fetch('http://172.20.10.2:4000/api/reset/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courriel, code: verificationCode }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Succès', data.message);
+        navigation.navigate('NewMdp', { courriel, code: verificationCode });
+      } else {
+        Alert.alert('Erreur', data.message || 'Code invalide.');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Erreur', 'Impossible de contacter le serveur.');
+    }
   };
 
   return (
     <View style={styles.container}>
-
       <TouchableOpacity style={styles.buttonBack} onPress={() => navigation.navigate("Connexions")}>
-          <Text style={styles.buttonTextBack}> Annuler et revenir à la connexion </Text>
+        <Text style={styles.buttonTextBack}> Annuler et revenir à la connexion </Text>
       </TouchableOpacity>
-
 
       <Text style={styles.title}>Vérification du code</Text>
 
@@ -45,6 +56,8 @@ const EmailVerification = ({ navigation }: any) => {
 };
 
 export default EmailVerification;
+
+
 
 const styles = StyleSheet.create({
 container: {

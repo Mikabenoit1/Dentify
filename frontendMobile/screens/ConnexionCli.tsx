@@ -14,7 +14,7 @@ import {
   ScrollView,
   Platform
 } from "react-native";
-import { loginUser } from "../api"; // La même fonction que pour les pros
+import { loginUser } from "../api"; 
 
 export default function ConnexionCli({ navigation }) {
   const [email, setEmail] = useState("");

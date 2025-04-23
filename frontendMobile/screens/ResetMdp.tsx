@@ -1,33 +1,40 @@
-// ResetPasswordScreen.tsx
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 
 const ResetMdp = ({ navigation }) => {
   const [email, setEmail] = useState<string>('');
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     if (!email) {
       Alert.alert('Erreur', "Veuillez entrer votre adresse e-mail.");
       return;
     }
 
-    // Ici, on simule l'envoi du lien
-    Alert.alert(
-      'Lien envoyé',
-      `Un lien de réinitialisation a été envoyé à : ${email}`
-    );
-    setEmail('');
+    try {
+      const response = await fetch('http://172.20.10.2:4000/api/reset/request-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courriel: email }),
+      });
 
-    // Rediriger vers la page NewPasswordScreen après l'envoi
-    navigation.navigate('EmailVerification');
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Succès', data.message);
+        navigation.navigate('EmailVerification', { courriel: email });
+      } else {
+        Alert.alert('Erreur', data.message || 'Une erreur est survenue.');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Erreur', 'Impossible de contacter le serveur.');
+    }
   };
 
   return (
     <View style={styles.container}>
-
-        <TouchableOpacity style={styles.buttonBack} onPress={() => navigation.navigate("Connexions")}>
-            <Text style={styles.buttonTextBack}> Annuler et revenir à la connexion </Text>
-        </TouchableOpacity>
+      <TouchableOpacity style={styles.buttonBack} onPress={() => navigation.navigate("Connexions")}>
+        <Text style={styles.buttonTextBack}> Annuler et revenir à la connexion </Text>
+      </TouchableOpacity>
 
       <Text style={styles.title}>Réinitialiser le mot de passe</Text>
       
@@ -41,13 +48,15 @@ const ResetMdp = ({ navigation }) => {
       />
 
       <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
-        <Text style={styles.buttonText}>Envoyer le lien</Text>
+        <Text style={styles.buttonText}>Envoyer le code</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
 export default ResetMdp;
+
+
 
 const styles = StyleSheet.create({
   container: {

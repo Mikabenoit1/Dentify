@@ -35,7 +35,7 @@ const Profil = ({ navigation }) => {
   const handleSave = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const response = await fetch("http://172.20.10.6:4000/api/users/profile", {
+      const response = await fetch("http://172.20.10.2:4000/api/users/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

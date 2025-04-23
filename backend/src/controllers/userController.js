@@ -1,8 +1,9 @@
 const { User, ProfessionnelDentaire, CliniqueDentaire, Document } = require("../models");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
 
-// ✅ INSCRIPTION
+//  INSCRIPTION
 const registerUser = async (req, res) => {
   try {
     const { type_utilisateur, courriel, mot_de_passe } = req.body;
@@ -75,7 +76,7 @@ const registerUser = async (req, res) => {
   }
 };
 
-// ✅ MISE À JOUR DU PROFIL
+//  MISE À JOUR DU PROFIL
 const updateProfile = async (req, res) => {
   try {
     const id = req.user.id_utilisateur;
@@ -149,7 +150,7 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// ✅ CONNEXION
+//  CONNEXION
 const loginUser = async (req, res) => {
   try {
     const { courriel, mot_de_passe } = req.body;
@@ -178,7 +179,7 @@ const loginUser = async (req, res) => {
   }
 };
 
-// ✅ PROFIL UTILISATEUR
+//  PROFIL UTILISATEUR
 const getProfile = async (req, res) => {
   console.log("📥 Route /profile atteinte !");
   console.log("🧑‍💼 req.user :", req.user); // ça doit contenir id_utilisateur et type_utilisateur
@@ -209,7 +210,7 @@ const profil = {
 };
 
 
-    // ✅ Ajout des documents
+    //  Ajout des documents
     const documents = await Document.findAll({
       where: { id_utilisateur: user.id_utilisateur }
     });
@@ -220,7 +221,7 @@ const profil = {
     });
     profil.documents = docMap;
 
-    // ✅ Calcul du profil complet
+    //  Calcul du profil complet
     let profil_complet = false;
 
     if (user.type_utilisateur === 'professionnel') {
@@ -265,9 +266,29 @@ const profil = {
     res.status(500).json({ message: "Erreur serveur" });
   }
 };
+
+//  TOUS LES UTILISATEURS (SAUF SOI)
+const getAllUsers = async (req, res) => {
+  try {
+    const utilisateurs = await User.findAll({
+      where: {
+        id_utilisateur: {
+          [Op.ne]: req.user.id_utilisateur
+        }
+      },
+      attributes: ['id_utilisateur', 'prenom', 'nom', 'photo_profil', 'courriel', 'type_utilisateur']
+    });
+
+    res.json(utilisateurs);
+  } catch (error) {
+    console.error('Erreur getAllUsers:', error);
+    res.status(500).json({ message: 'Erreur lors de la récupération des utilisateurs' });
+  }
+};
 module.exports = {
   registerUser,
   loginUser,
   getProfile,
-  updateProfile
+  updateProfile,
+  getAllUsers
 };

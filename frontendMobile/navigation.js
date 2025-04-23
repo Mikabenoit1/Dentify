@@ -32,9 +32,7 @@ import ChatScreen from "./screens/ChatScreen";
 import Parametre from "./screens/Parametre";
 import NotificationClinique from "./screens/NotificationClinique";
 import ParametreClinique from "./screens/ParametreClinique";
-
-
-
+import NouvelleConversation from "./screens/NouvelleConversation";
 
 
 const Stack = createStackNavigator();
@@ -74,9 +72,7 @@ export default function Navigation() {
         <Stack.Screen name="NotificationClinique" component={NotificationClinique}/>
         <Stack.Screen name="Parametre" component={Parametre}/>
         <Stack.Screen name="ParametreClinique" component={ParametreClinique}/>
-
-
-
+        <Stack.Screen name="NouvelleConversation" component={NouvelleConversation}/>
 
       </Stack.Navigator>
     </NavigationContainer>

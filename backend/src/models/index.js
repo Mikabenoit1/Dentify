@@ -11,8 +11,9 @@ const Notification = require('./Notification');
 const Entretien = require('./Entretien');
 const Evaluation = require('./Evaluation');
 const Document = require('./Document')(sequelize, require('sequelize').DataTypes);
+const Conversation = require('./Conversation');
 
-  // 🔗 Utilisateur → CliniqueDentaire (1:1)
+  //  Utilisateur → CliniqueDentaire (1:1)
   User.hasOne(CliniqueDentaire, {
     foreignKey: 'id_utilisateur',
     onDelete: 'CASCADE'
@@ -21,7 +22,7 @@ const Document = require('./Document')(sequelize, require('sequelize').DataTypes
     foreignKey: 'id_utilisateur'
   });
 
-  // 🔗 Utilisateur → ProfessionnelDentaire (1:1)
+  //  Utilisateur → ProfessionnelDentaire (1:1)
   User.hasOne(ProfessionnelDentaire, {
     foreignKey: 'id_utilisateur',
     onDelete: 'CASCADE'
@@ -30,7 +31,7 @@ const Document = require('./Document')(sequelize, require('sequelize').DataTypes
     foreignKey: 'id_utilisateur'
   });
 
-  // 🔗 CliniqueDentaire → Offre (1:N)
+  //  CliniqueDentaire → Offre (1:N)
   CliniqueDentaire.hasMany(Offre, {
     foreignKey: 'id_clinique',
     onDelete: 'CASCADE'
@@ -39,7 +40,7 @@ const Document = require('./Document')(sequelize, require('sequelize').DataTypes
     foreignKey: 'id_clinique'
   });
 
-  // 🔗 Offre → Candidature (1:N)
+  //  Offre → Candidature (1:N)
   Offre.hasMany(Candidature, {
     foreignKey: 'id_offre',
     onDelete: 'CASCADE'
@@ -48,7 +49,7 @@ const Document = require('./Document')(sequelize, require('sequelize').DataTypes
     foreignKey: 'id_offre'
   });
 
-  // 🔗 ProfessionnelDentaire → Candidature (1:N)
+  //  ProfessionnelDentaire → Candidature (1:N)
   ProfessionnelDentaire.hasMany(Candidature, {
     foreignKey: 'id_professionnel',
     onDelete: 'CASCADE'
@@ -57,7 +58,7 @@ const Document = require('./Document')(sequelize, require('sequelize').DataTypes
     foreignKey: 'id_professionnel'
   });
 
-  // 🔗 Utilisateur → Messages envoyés
+  //  Utilisateur → Messages envoyés
   User.hasMany(Message, {
     foreignKey: 'expediteur_id',
     as: 'messages_envoyes',
@@ -68,7 +69,7 @@ const Document = require('./Document')(sequelize, require('sequelize').DataTypes
     as: 'expediteur'
   });
 
-  // 🔗 Utilisateur → Messages reçus
+  //  Utilisateur → Messages reçus
   User.hasMany(Message, {
     foreignKey: 'destinataire_id',
     as: 'messages_recus',
@@ -79,7 +80,7 @@ const Document = require('./Document')(sequelize, require('sequelize').DataTypes
     as: 'destinataire'
   });
 
-  // 🔐 Utilisateur → ResetToken (1:N)
+  //  Utilisateur → ResetToken (1:N)
   User.hasMany(ResetToken, {
     foreignKey: 'id_utilisateur',
     onDelete: 'CASCADE'
@@ -96,7 +97,7 @@ const Document = require('./Document')(sequelize, require('sequelize').DataTypes
     foreignKey: 'id_destinataire'
   });
 
-// 🔗 Utilisateur → Document (1:N)
+//  Utilisateur → Document (1:N)
 User.hasMany(Document, {
   foreignKey: 'id_utilisateur',
   onDelete: 'CASCADE'
@@ -105,7 +106,7 @@ Document.belongsTo(User, {
   foreignKey: 'id_utilisateur'
 });
 
-// 🔗 Evaluation → Utilisateur (1:N) - évaluateur
+//  Evaluation → Utilisateur (1:N) - évaluateur
 User.hasMany(Evaluation, {
   foreignKey: 'evaluateur_id',
   onDelete: 'CASCADE',
@@ -116,7 +117,7 @@ Evaluation.belongsTo(User, {
   as: 'auteur_evaluation'  // Changed to unique alias
 });
 
-// 🔗 Evaluation → Utilisateur (1:N) - évalué
+//  Evaluation → Utilisateur (1:N) - évalué
 User.hasMany(Evaluation, {
   foreignKey: 'evalue_id',
   onDelete: 'CASCADE',
@@ -128,13 +129,54 @@ Evaluation.belongsTo(User, {
 });
 
 
-// 🔗 ProfessionnelDentaire → User (1:1 inverse pour les includes imbriqués)
+//  ProfessionnelDentaire → User (1:1 inverse pour les includes imbriqués)
 Candidature.belongsTo(ProfessionnelDentaire, {
   foreignKey: 'id_professionnel'
 });
 ProfessionnelDentaire.belongsTo(User, {
   foreignKey: 'id_utilisateur'
 });
+
+
+  //  Conversation → Utilisateur 1
+  Conversation.belongsTo(User, {
+    foreignKey: 'utilisateur1_id',
+    as: 'utilisateur1'
+  });
+  User.hasMany(Conversation, {
+    foreignKey: 'utilisateur1_id',
+    as: 'conversations_envoyees'
+  });
+  
+  //  Conversation → Utilisateur 2
+  Conversation.belongsTo(User, {
+    foreignKey: 'utilisateur2_id',
+    as: 'utilisateur2'
+  });
+  User.hasMany(Conversation, {
+    foreignKey: 'utilisateur2_id',
+    as: 'conversations_recues'
+  });
+  
+  //  Conversation → Offre (facultatif)
+  Conversation.belongsTo(Offre, {
+    foreignKey: 'id_offre',
+    as: 'offre'
+  });
+  Offre.hasMany(Conversation, {
+    foreignKey: 'id_offre',
+    as: 'conversations'
+  });
+  
+  //  Conversation → Message (1:N)
+  Conversation.hasMany(Message, {
+    foreignKey: 'id_conversation',
+    as: 'messages'
+  });
+  Message.belongsTo(Conversation, {
+    foreignKey: 'id_conversation',
+    as: 'conversation_associe'
+  });
 
 
 module.exports = {
@@ -149,5 +191,6 @@ module.exports = {
   Notification,
   Document,
   Entretien,
-  Evaluation
+  Evaluation,
+  Conversation
 };

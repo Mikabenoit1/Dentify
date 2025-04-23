@@ -1,7 +1,7 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// 📦 Connexion à la base de données avec Sequelize
+//  Connexion à la base de données avec Sequelize
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
@@ -17,7 +17,7 @@ const sequelize = new Sequelize(
   }
 );
 
-// 🔁 Fonction de connexion à la base
+//  Fonction de connexion à la base
 const connectDB = async () => {
   try {
     await sequelize.authenticate();

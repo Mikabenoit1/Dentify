@@ -4,7 +4,8 @@ const {
   registerUser,
   loginUser,
   getProfile,
-  updateProfile
+  updateProfile,
+  getAllUsers
 } = require('../controllers/userController');
 
 const protect = require('../middlewares/authMiddleware');
@@ -21,5 +22,8 @@ router.get('/profile', protect, getProfile); // GET /api/users/profile
 
 // ✅ Mettre à jour son profil (auth requis)
 router.put('/profile', protect, updateProfile); // PUT /api/users/profile
+
+// ✅ Récupérer tous les utilisateurs sauf soi (auth requis)
+router.get('/all', protect, getAllUsers); // GET /api/users/all
 
 module.exports = router;

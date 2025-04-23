@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Message, User } = require('../models');
+const { Message, User, Conversation, Offre } = require('../models');
 const protect = require('../middlewares/authMiddleware');
 const { Op } = require('sequelize');
 const { creerNotification } = require('../controllers/notificationController');
@@ -10,13 +10,40 @@ router.post('/', protect, async (req, res) => {
   try {
     const { destinataire_id, contenu, type_message, id_offre, fichier_joint } = req.body;
 
+        // Vérifie si une conversation existe déjà entre les deux utilisateurs (pour l'offre donnée)
+let conversation = await Conversation.findOne({
+  where: {
+    [Op.or]: [
+      {
+        utilisateur1_id: req.user.id_utilisateur,
+        utilisateur2_id: destinataire_id
+      },
+      {
+        utilisateur1_id: destinataire_id,
+        utilisateur2_id: req.user.id_utilisateur
+      }
+    ],
+    id_offre: id_offre || null
+  }
+});
+
+// Si aucune conversation n'existe, on en crée une
+if (!conversation) {
+  conversation = await Conversation.create({
+    utilisateur1_id: req.user.id_utilisateur,
+    utilisateur2_id: destinataire_id,
+    id_offre: id_offre || null
+  });
+}
+
     const nouveauMessage = await Message.create({
       expediteur_id: req.user.id_utilisateur,
       destinataire_id,
       contenu,
       type_message: type_message || 'normal',
       id_offre,
-      fichier_joint
+      fichier_joint,
+      id_conversation: conversation.id_conversation
     });
 
     // 📬 Créer une notification uniquement pour les messages "normaux"
@@ -230,6 +257,146 @@ router.put('/lu/:id', protect, async (req, res) => {
   } catch (error) {
     console.error('Erreur lors de la mise à jour du message :', error);
     res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ✅ Liste des conversations réelles (avec table Conversation)
+router.get('/conversations/reelles', protect, async (req, res) => {
+  try {
+    const utilisateurId = req.user.id_utilisateur;
+
+    const conversations = await Conversation.findAll({
+      where: {
+        [Op.or]: [
+          { utilisateur1_id: utilisateurId },
+          { utilisateur2_id: utilisateurId }
+        ]
+      },
+      include: [
+        {
+          model: User,
+          as: 'utilisateur1',
+          attributes: ['id_utilisateur', 'prenom', 'nom', 'photo_profil']
+        },
+        {
+          model: User,
+          as: 'utilisateur2',
+          attributes: ['id_utilisateur', 'prenom', 'nom', 'photo_profil']
+        }
+      ],
+      order: [['updated_at', 'DESC']]
+    });
+
+    const formatted = conversations.map(conv => {
+      const isFirst = conv.utilisateur1_id === utilisateurId;
+      const other = isFirst ? conv.utilisateur2 : conv.utilisateur1;
+
+      return {
+        id_conversation: conv.id_conversation,
+        id_offre: conv.id_offre,
+        contact: {
+          id: other.id_utilisateur,
+          name: `${other.prenom} ${other.nom}`,
+          avatar: other.photo_profil || null
+        },
+        lastUpdated: conv.updated_at
+      };
+    });
+
+    res.json(formatted);
+  } catch (error) {
+    console.error("Erreur chargement des vraies conversations :", error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ✅ Liste des conversations enrichies avec dernier message
+router.get('/conversations/details', protect, async (req, res) => {
+  try {
+    const monId = req.user.id_utilisateur;
+
+    const conversations = await Conversation.findAll({
+      where: {
+        [Op.or]: [
+          { utilisateur1_id: monId },
+          { utilisateur2_id: monId }
+        ]
+      },
+      include: [
+        {
+          model: Message,
+          as: 'messages',
+          order: [['date_envoi', 'DESC']],
+          limit: 1 // dernier message seulement
+        },
+        {
+          model: User,
+          as: 'utilisateur1',
+          attributes: ['id_utilisateur', 'prenom', 'nom', 'photo_profil']
+        },
+        {
+          model: User,
+          as: 'utilisateur2',
+          attributes: ['id_utilisateur', 'prenom', 'nom', 'photo_profil']
+        },
+        {
+          model: Offre,
+          as: 'offre',
+          attributes: ['id_offre', 'titre']
+        }
+      ]
+    });
+
+    const data = conversations.map(conv => {
+      const isUser1 = conv.utilisateur1_id === monId;
+      const autre = isUser1 ? conv.utilisateur2 : conv.utilisateur1;
+      const unreadCount = conv.messages.filter(
+        m => m.destinataire_id === monId && m.est_lu !== true
+      ).length;
+    
+
+      return {
+        id_conversation: conv.id_conversation,
+        id_offre: conv.id_offre,
+        contact: {
+          id: autre.id_utilisateur,
+          nom: `${autre.prenom} ${autre.nom}`,
+          avatar: autre.photo_profil || null
+        },
+        dernier_message: conv.messages?.[0]?.contenu || null,
+        date: conv.messages?.[0]?.date_envoi || conv.created_at,
+        unreadCount
+      };
+    });
+
+    res.json(data);
+  } catch (error) {
+    console.error("Erreur conversations enrichies :", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+
+router.get('/conversations/:id/messages', protect, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const messages = await Message.findAll({
+      where: { id_conversation: id },
+      order: [['date_envoi', 'ASC']],
+      include: [
+        {
+          model: Conversation,
+          as: 'conversation',
+          attributes: ['id_conversation']
+        }
+      ]
+    });
+
+    res.json(messages);
+  } catch (error) {
+    console.error('❌ Erreur backend GET /conversations/:id/messages :', error);
+    res.status(500).json({ message: 'Erreur lors de la récupération des messages' });
   }
 });
 

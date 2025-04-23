@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
+const Conversation = require('./Conversation');
 
 const Message = sequelize.define('Message', {
   id_message: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
@@ -16,6 +17,11 @@ const Message = sequelize.define('Message', {
 }, {
   tableName: 'Message',
   timestamps: false
+});
+
+Message.belongsTo(Conversation, {
+  foreignKey: 'id_conversation',
+  as: 'conversation'
 });
 
 module.exports = Message;

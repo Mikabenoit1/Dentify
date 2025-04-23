@@ -1,42 +1,53 @@
-// NewPasswordScreen.tsx
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 
-const NewMdp = ({navigation}) => {
-  const [verificationCode, setVerificationMdp] = useState<string>('');
+const NewMdp = ({ navigation, route }) => {
   const [newPassword, setNewMdp] = useState<string>('');
   const [confirmPassword, setConfirmationMdp] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const { courriel, code } = route.params;
 
-  const handleSubmit = () => {
-
-    if (verificationCode.length <= 8) {
-          setError('Votre mot de passe doit contenir un minimum de 9 caractères.');
-          return;
-    }
-
-    if (!/[!@#$%&]/.test(newPassword)) {
-        setError("Le mot de passe doit contenir au moins un caractère spécial (@, #, $, %, &).");
-        return;
-      }
-
-    if (newPassword !== confirmPassword) {
-      setError('Le champ du mot de passe et de la confirmation ne sont pas identique.');
+  const handleSubmit = async () => {
+    if (newPassword.length <= 8) {
+      setError('Votre mot de passe doit contenir un minimum de 9 caractères.');
       return;
     }
 
-    alert('Votre nouveau mot de passe à été mis à jour avec succès!');
+    if (!/[!@#$%&]/.test(newPassword)) {
+      setError("Le mot de passe doit contenir au moins un caractère spécial (@, #, $, %, &).");
+      return;
+    }
 
-    navigation.navigate('Connexions');
+    if (newPassword !== confirmPassword) {
+      setError('Le champ du mot de passe et de la confirmation ne sont pas identiques.');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://172.20.10.2:4000/api/reset/confirm-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courriel, code, nouveauMotDePasse: newPassword }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Succès', data.message);
+        navigation.navigate('Connexions');
+      } else {
+        Alert.alert('Erreur', data.message || 'Échec de la réinitialisation.');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Erreur', 'Impossible de contacter le serveur.');
+    }
   };
 
   return (
     <View style={styles.container}>
-
       <TouchableOpacity style={styles.buttonBack} onPress={() => navigation.navigate("Connexions")}>
-          <Text style={styles.buttonTextBack}> Annuler et revenir à connexion </Text>
+        <Text style={styles.buttonTextBack}> Annuler et revenir à connexion </Text>
       </TouchableOpacity>
-
 
       <Text style={styles.title}>Nouveau mot de passe</Text>
 
@@ -45,11 +56,7 @@ const NewMdp = ({navigation}) => {
         secureTextEntry
         placeholder="Entrez votre nouveau mot de passe"
         value={newPassword}
-        onChangeText={(mdp) => {
-            setNewMdp(mdp);
-            setVerificationMdp(mdp);
-          }}
-          
+        onChangeText={setNewMdp}
       />
 
       <TextInput
@@ -57,14 +64,10 @@ const NewMdp = ({navigation}) => {
         secureTextEntry
         placeholder="Confirmez votre mot de passe"
         value={confirmPassword}
-        onChangeText={(mdp) => {
-            setConfirmationMdp(mdp);
-            setVerificationMdp(mdp);
-          }}
+        onChangeText={setConfirmationMdp}
       />
 
-    {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Continuer</Text>
@@ -74,6 +77,7 @@ const NewMdp = ({navigation}) => {
 };
 
 export default NewMdp;
+
 
 const styles = StyleSheet.create({
 container: {

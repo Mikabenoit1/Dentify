@@ -1,213 +1,161 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  StyleSheet,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  SafeAreaView,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-  Dimensions,
-  Alert
+  StyleSheet, View, Text, TextInput, TouchableOpacity,
+  SafeAreaView, FlatList, KeyboardAvoidingView, Platform,
+  Image, Dimensions, Alert
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
-
-// Types
-interface Message {
-  id: string;
-  text: string;
-  isFromMe: boolean;
-  timestamp: string;
-  status: 'sending' | 'sent' | 'delivered' | 'read' | 'error';
-}
-
-interface Contact {
-  id: string;
-  name: string;
-  avatar?: string;
-}
+import { Ionicons as Icon } from '@expo/vector-icons';
+import {
+  getMessagesForConversation,
+  sendMessage,
+  deleteMessage,
+  updateMessage
+} from '../api/messagesApi';
+import { getProfileDetails } from '../api';
 
 type RootStackParamList = {
-  ChatScreen: { 
-    conversationId: string;
-    contactId: string;
-    contactName: string;
-    avatar?: string;
+  ChatScreen: {
+    id_conversation: number;
+    contact: {
+      id: string;
+      name: string;
+      avatar?: string;
+    };
   };
 };
 
 type ChatScreenRouteProp = RouteProp<RootStackParamList, 'ChatScreen'>;
 
-const ChatScreen: React.FC = () => {
+const ChatScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<ChatScreenRouteProp>();
-  const [inputText, setInputText] = useState('');
+
   const flatListRef = useRef<FlatList>(null);
-  const { width } = Dimensions.get('window');
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
-  const [editMode, setEditMode] = useState(false);
+  const [inputText, setInputText] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [userId, setUserId] = useState(null);
+  const [selectedMessageId, setSelectedMessageId] = useState(null);
   const [editText, setEditText] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const { width } = Dimensions.get('window');
 
-  // Informations du contact basées sur les paramètres de navigation
-  const contact: Contact = {
-    id: route.params?.contactId || 'unknown',
-    name: route.params?.contactName || 'Contact',
-    avatar: route.params?.avatar
+  const idConversation = route.params.id_conversation;
+  const contact = route.params?.contact || {
+    id: null,
+    name: "Utilisateur inconnu",
+    avatar: null,
   };
+  
 
-  // Aucun message initial
-  const [messages, setMessages] = useState<Message[]>([]);
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const { user } = await getProfileDetails();
+        setUserId(user.id_utilisateur);
 
-  // Envoyer un nouveau message
-  const sendMessage = () => {
-    if (inputText.trim() === '') return;
+        console.log(" ID conversation à charger :", idConversation);
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText,
-      isFromMe: true,
-      timestamp: new Date().toISOString(),
-      status: 'read' // Statut direct à 'read' pour l'exemple
+        const msgs = await getMessagesForConversation(idConversation);
+        const formatted = msgs.map(msg => ({
+          id: msg.id_message.toString(),
+          text: msg.contenu,
+          isFromMe: msg.expediteur_id === user.id_utilisateur,
+          timestamp: msg.date_envoi,
+          originalId: msg.id_message
+        }));
+        setMessages(formatted);
+      } catch (e) {
+        console.error('Erreur chargement messages:', e);
+      }
     };
 
-    setMessages(prevMessages => [...prevMessages, newMessage]);
-    setInputText('');
+    init();
+  }, []);
 
-    // Faire défiler automatiquement vers le bas
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+  const handleSend = async () => {
+    if (!inputText.trim()) return;
+
+    try {
+      const newMsg = await sendMessage({
+        contenu: inputText,
+        destinataire_id: contact.id,
+        id_conversation: idConversation,
+        type_message: 'normal'
+      });
+
+      const toAdd = {
+        id: newMsg.id_message.toString(),
+        text: newMsg.contenu,
+        isFromMe: true,
+        timestamp: newMsg.date_envoi,
+        originalId: newMsg.id_message
+      };
+
+      setMessages(prev => [...prev, toAdd]);
+      setInputText('');
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    } catch (e) {
+      Alert.alert("Erreur", "Impossible d'envoyer le message.");
+    }
   };
 
-  // Formater l'heure pour l'affichage
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  // Gérer la modification du message
-  const handleEditMessage = () => {
-    if (!selectedMessageId || editText.trim() === '') return;
-
-    setMessages(prevMessages => 
-      prevMessages.map(msg => 
-        msg.id === selectedMessageId 
-          ? { ...msg, text: editText } 
-          : msg
-      )
-    );
-    
-    setEditMode(false);
-    setSelectedMessageId(null);
-  };
-
-  // Gérer la suppression du message
-  const handleDeleteMessage = () => {
-    if (!selectedMessageId) return;
-
-    Alert.alert(
-      "Supprimer le message",
-      "Êtes-vous sûr de vouloir supprimer ce message ?",
-      [
-        {
-          text: "Annuler",
-          style: "cancel"
-        },
-        { 
-          text: "Supprimer", 
-          onPress: () => {
-            setMessages(prevMessages => 
-              prevMessages.filter(msg => msg.id !== selectedMessageId)
-            );
+  const handleDelete = () => {
+    Alert.alert("Supprimer", "Confirmer la suppression ?", [
+      { text: "Annuler", style: "cancel" },
+      {
+        text: "Supprimer",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const id = messages.find(m => m.id === selectedMessageId)?.originalId;
+            await deleteMessage(id);
+            setMessages(prev => prev.filter(m => m.id !== selectedMessageId));
             setSelectedMessageId(null);
-          },
-          style: "destructive"
+          } catch {
+            Alert.alert("Erreur", "Suppression échouée.");
+          }
         }
-      ]
-    );
+      }
+    ]);
   };
 
-  // Gérer la sélection d'un message
-  const handleMessagePress = (message: Message) => {
-    if (!message.isFromMe) return;
-    
-    if (selectedMessageId === message.id) {
-      // Si c'est déjà sélectionné, désélectionner
+  const handleEdit = async () => {
+    if (!editText.trim()) return;
+    const id = messages.find(m => m.id === selectedMessageId)?.originalId;
+    try {
+      await updateMessage(id, editText);
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === selectedMessageId ? { ...m, text: editText } : m
+        )
+      );
+      setEditMode(false);
+      setSelectedMessageId(null);
+    } catch {
+      Alert.alert("Erreur", "Modification échouée.");
+    }
+  };
+
+  const handleMessagePress = (msg) => {
+    if (!msg.isFromMe) return;
+    if (selectedMessageId === msg.id) {
       setSelectedMessageId(null);
       setEditMode(false);
     } else {
-      // Sinon, sélectionner ce message
-      setSelectedMessageId(message.id);
-      setEditText(message.text);
+      setSelectedMessageId(msg.id);
+      setEditText(msg.text);
       setEditMode(false);
     }
   };
 
-  // Rendu des options pour un message
-  const renderMessageOptions = (messageId: string) => {
-    return (
-      <View style={styles.messageOptionsContainer}>
-        {editMode ? (
-          <View style={styles.editContainer}>
-            <TextInput
-              style={styles.editInput}
-              value={editText}
-              onChangeText={setEditText}
-              multiline
-              autoFocus
-            />
-            <View style={styles.editButtonsRow}>
-              <TouchableOpacity
-                style={[styles.editButton, styles.cancelButton]}
-                onPress={() => {
-                  setEditMode(false);
-                  setSelectedMessageId(null);
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Annuler</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.editButton, styles.saveButton]}
-                onPress={handleEditMessage}
-              >
-                <Text style={styles.saveButtonText}>Enregistrer</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.optionsRow}>
-            <TouchableOpacity
-              style={styles.optionButton}
-              onPress={() => setEditMode(true)}
-            >
-              <Icon name="create-outline" size={20} color="#007AFF" />
-              <Text style={styles.optionText}>Modifier</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.optionButton}
-              onPress={handleDeleteMessage}
-            >
-              <Icon name="trash-outline" size={20} color="#FF3B30" />
-              <Text style={[styles.optionText, styles.deleteText]}>Supprimer</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  // Rendu d'un élément de message
-  const renderMessageItem = ({ item }: { item: Message }) => {
+  const renderMessage = ({ item }) => {
     const isSelected = selectedMessageId === item.id;
-    
     return (
       <View>
         <TouchableOpacity
-          activeOpacity={item.isFromMe ? 0.7 : 1}
           onLongPress={() => handleMessagePress(item)}
           disabled={!item.isFromMe}
         >
@@ -220,24 +168,47 @@ const ChatScreen: React.FC = () => {
               item.isFromMe ? styles.myMessage : styles.theirMessage,
               { maxWidth: width * 0.7 }
             ]}>
-              <Text style={[
-                styles.messageText,
-                item.isFromMe ? styles.myMessageText : styles.theirMessageText
-              ]}>
+              <Text style={item.isFromMe ? styles.myMessageText : styles.theirMessageText}>
                 {item.text}
               </Text>
             </View>
           </View>
         </TouchableOpacity>
-        
-        {isSelected && renderMessageOptions(item.id)}
+        {isSelected && (
+          <View style={styles.messageOptionsContainer}>
+            {editMode ? (
+              <>
+                <TextInput
+                  style={styles.editInput}
+                  value={editText}
+                  onChangeText={setEditText}
+                  multiline
+                />
+                <View style={styles.editButtonsRow}>
+                  <TouchableOpacity onPress={() => { setEditMode(false); setSelectedMessageId(null); }}>
+                    <Text>Annuler</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleEdit}>
+                    <Text>Enregistrer</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <View style={styles.optionsRow}>
+                <TouchableOpacity onPress={() => setEditMode(true)}>
+                  <Icon name="create-outline" size={20} color="#007AFF" />
+                  <Text>Modifier</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleDelete}>
+                  <Icon name="trash-outline" size={20} color="red" />
+                  <Text style={{ color: 'red' }}>Supprimer</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
       </View>
     );
-  };
-
-  // Fonction vide pour le statut des messages (supprimé)
-  const renderMessageStatus = () => {
-    return null;
   };
 
   return (
@@ -247,83 +218,46 @@ const ChatScreen: React.FC = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Icon name="chevron-back" size={24} color="#007AFF" />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Icon name="chevron-back" size={24} color="#34607d" />
             <Text style={styles.backText}>Messages</Text>
           </TouchableOpacity>
-          
+
           <View style={styles.headerInfo}>
-            <TouchableOpacity style={styles.contactWrapper}>
+            <View style={styles.contactWrapper}>
               {contact.avatar ? (
-                <Image 
-                  source={{ uri: contact.avatar }} 
-                  style={styles.avatar}
-                />
+                <Image source={{ uri: contact.avatar }} style={styles.avatar} />
               ) : (
                 <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <Text style={styles.avatarText}>
-                    {contact.name.charAt(0)}
-                  </Text>
+                  <Text>{contact?.name?.charAt(0) || "?"}</Text>
                 </View>
               )}
-              <Text style={styles.contactName}>{contact.name}</Text>
-              <Icon name="chevron-forward" size={16} color="#8E8E93" />
-            </TouchableOpacity>
+              <Text style={styles.contactName}>{contact?.name || "Utilisateur inconnu"}</Text>
+
+            </View>
           </View>
         </View>
-        
-        {/* Messages List */}
+
         <FlatList
           ref={flatListRef}
           data={messages}
-          renderItem={renderMessageItem}
+          renderItem={renderMessage}
           keyExtractor={item => item.id}
-          style={styles.messagesList}
           contentContainerStyle={styles.messagesContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Pas de messages</Text>
-              <Text style={styles.emptySubText}>Envoyez votre premier message!</Text>
-            </View>
-          }
         />
-        
-        {renderMessageStatus()}
-        
-        {/* Input Area */}
+
         <View style={styles.inputContainer}>
-          <TouchableOpacity style={styles.attachButton}>
-            <Icon name="add-circle" size={24} color="#007AFF" />
+          <TextInput
+            style={styles.textInput}
+            placeholder="Écrire un message..."
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+          />
+          <TouchableOpacity onPress={handleSend}>
+            <Icon name="send" size={28} color="#34607d" />
           </TouchableOpacity>
-          
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="iMessage"
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-            />
-            <TouchableOpacity style={styles.micButton}>
-              <Icon name="mic" size={20} color="#8E8E93" />
-            </TouchableOpacity>
-          </View>
-          
-          {inputText.length > 0 ? (
-            <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-              <Icon name="arrow-up-circle-fill" size={32} color="#007AFF" />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={styles.cameraButton}>
-              <Icon name="camera" size={24} color="#007AFF" />
-            </TouchableOpacity>
-          )}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -331,224 +265,113 @@ const ChatScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
+  container: { 
+    flex: 1, 
+    backgroundColor: '#fbf2e8' 
   },
-  keyboardAvoid: {
-    flex: 1,
+  keyboardAvoid: { 
+    flex: 1 
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+  header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#ae9f86', 
+    padding: 10 
   },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  backButton: { 
+    flexDirection: 'row', 
+    alignItems: 'center' 
   },
-  backText: {
-    color: '#007AFF',
-    fontSize: 16,
-    marginLeft: 2,
+  backText: { 
+    color: '#34607d', 
+    fontSize: 16 
   },
-  headerInfo: {
-    flex: 1,
-    alignItems: 'center',
+  headerInfo: { 
+    flex: 1, 
+    alignItems: 'center' 
   },
-  contactWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  contactWrapper: { 
+    flexDirection: 'row', 
+    alignItems: 'center' 
   },
-  avatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 8,
+  avatar: { 
+    width: 30, 
+    height: 30, 
+    borderRadius: 15, 
+    marginRight: 8 
   },
-  avatarPlaceholder: {
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
+  avatarPlaceholder: { 
+    backgroundColor: '#007AFF', 
+    justifyContent: 'center', 
+    alignItems: 'center' 
   },
-  avatarText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
+  contactName: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    color: '#34607d'
   },
-  contactName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 4,
+  messagesContent: { 
+    padding: 10 
   },
-  messagesList: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
+  messageBubbleRow: { 
+    flexDirection: 'row', 
+    marginVertical: 3 
   },
-  messagesContent: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    flexGrow: 1,
+  myMessageRow: { 
+    justifyContent: 'flex-end' 
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    height: 300,
+  theirMessageRow: { 
+    justifyContent: 'flex-start' 
   },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#8E8E93',
-    marginBottom: 8,
+  messageBubble: { 
+    borderRadius: 18, 
+    paddingHorizontal: 14, 
+    paddingVertical: 8 
   },
-  emptySubText: {
-    fontSize: 16,
-    color: '#8E8E93',
+  myMessage: { 
+    backgroundColor: '#007AFF', 
+    marginLeft: 60 
   },
-  messageBubbleRow: {
-    flexDirection: 'row',
-    marginVertical: 3,
+  theirMessage: { 
+    backgroundColor: '#E5E5EA', 
+    marginRight: 60 
   },
-  myMessageRow: {
-    justifyContent: 'flex-end',
+  myMessageText: { 
+    color: '#FFFFFF' 
   },
-  theirMessageRow: {
-    justifyContent: 'flex-start',
+  theirMessageText: { 
+    color: '#000000' 
   },
-  messageBubble: {
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginVertical: 2,
+  messageOptionsContainer: { 
+    margin: 10 
   },
-  myMessage: {
-    backgroundColor: '#007AFF',
-    marginLeft: 60,
+  editInput: { 
+    backgroundColor: '#fff', 
+    padding: 8, 
+    borderRadius: 8 
   },
-  theirMessage: {
-    backgroundColor: '#E5E5EA',
-    marginRight: 60,
+  editButtonsRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    marginTop: 8 
   },
-  messageText: {
-    fontSize: 16,
+  optionsRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-around' 
   },
-  myMessageText: {
-    color: '#FFFFFF',
+  inputContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    padding: 10, 
+    borderTopWidth: 1, 
+    borderColor: '#ccc' 
   },
-  theirMessageText: {
-    color: '#000000',
-  },
-  // Styles pour les options et l'édition de message
-  messageOptionsContainer: {
-    backgroundColor: '#F2F2F7',
-    borderRadius: 50,
-    padding: 5,
-    marginHorizontal: 10,
-    marginBottom: 8,
-    marginTop: 4,
-    shadowColor: 'white',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-    elevation: 3,
-    width: '50%',
-    alignSelf: 'flex-end',
-  },
-  optionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 2,
-  },
-  optionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 2,
-  },
-  optionText: {
-    fontSize: 1,
-    marginLeft: 2,
-    color: '#007AFF',
-  },
-  deleteText: {
-    color: '#FF3B30',
-  },
-  editContainer: {
-    width: '100%',
-  },
-  editInput: {
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#FFFFFF',
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  editButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  editButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 5,
-    flex: 1,
-  },
-  cancelButton: {
-    backgroundColor: '#E5E5EA',
-  },
-  cancelButtonText: {
-    color: '#000000',
-    fontWeight: '500',
-  },
-  saveButton: {
-    backgroundColor: '#007AFF',
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    backgroundColor: '#F2F2F7',
-  },
-  attachButton: {
-    marginRight: 8,
-  },
-  inputWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 16,
-    maxHeight: 100,
-  },
-  micButton: {
-    marginLeft: 8,
-  },
-  sendButton: {
-    marginLeft: 8,
-  },
-  cameraButton: {
-    marginLeft: 8,
+  textInput: { 
+    flex: 1, 
+    backgroundColor: '#fff', 
+    padding: 10, 
+    borderRadius: 20, 
+    marginRight: 10 
   },
 });
 

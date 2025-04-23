@@ -4,7 +4,7 @@ import { MaterialIcons, MaterialCommunityIcons, Feather } from '@expo/vector-ico
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
-// Définissez les types pour vos routes de navigation
+
 type RootStackParamList = {
   Profil: undefined;
   NewMdp: undefined;
@@ -12,8 +12,7 @@ type RootStackParamList = {
   Horaire: undefined;
   Fonctionnalite: undefined;
   Contact: undefined;
-  // Connexions a été retiré
-  // Ajoutez ici toutes vos autres routes
+
 };
 
 type ParametreScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Profil'>;
