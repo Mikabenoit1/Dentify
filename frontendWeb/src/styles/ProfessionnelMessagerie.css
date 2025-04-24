@@ -37,6 +37,7 @@
   max-width: 1200px;
   height: calc(100vh - 100px);
   margin: 20px auto;
+  margin-top: 600px;
   background-color: var(--background-lighter);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);

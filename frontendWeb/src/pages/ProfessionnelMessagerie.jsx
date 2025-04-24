@@ -206,102 +206,77 @@ function ProfessionnelMessagerie() {
     }
   }, [activeConversation?.messages]);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-  
-    if (!message.trim() || !activeConversation) {
-      console.warn("⛔ Message vide ou aucune conversation active.");
-      return;
-    }
-  
-    try {
-      console.log("📝 Conversation active:", activeConversation);
-  
-      const offreId = parseInt(activeConversation.offreId);
-      if (!offreId) {
-        console.error("❌ Pas d'offre ID dans la conversation active");
-        setNotification({
-          show: true,
-          message: "Erreur: conversation invalide",
-          type: 'error'
-        });
-        return;
-      }
-  
-      const messageData = {
-        contenu: message.trim(),
-        destinataire_id: parseInt(activeConversation.cliniqueId),
-        offre_id: offreId,
-        type_message: 'normal',
-        expediteur_id: parseInt(currentUserId),
-        id_conversation: activeConversation.id
-      };
-  
-      console.log("📤 Message à envoyer:", messageData);
-  
-      const sentMessage = await sendMessage(messageData);
-      console.log("✅ Message envoyé:", sentMessage);
-  
-      // 🔄 Recharger les messages pour cette conversation
-      const updatedMessages = await fetchMessagesByConversation(
-        currentUserId,
-        offreId
-      );
-  
-      if (Array.isArray(updatedMessages)) {
-        // Grouper les messages par date
-        const groupedMessages = updatedMessages.reduce((groups, msg) => {
-          const date = new Date(msg.date_envoi).toLocaleDateString('fr-FR', {
-            year: 'numeric',
-            month: 'numeric',
-            day: 'numeric'
-          });
-  
-          if (!groups[date]) {
-            groups[date] = [];
-          }
-  
-          groups[date].push(msg);
-          return groups;
-        }, {});
-  
-        // Trier les messages dans chaque groupe
-        Object.keys(groupedMessages).forEach(date => {
-          groupedMessages[date].sort((a, b) => 
-            new Date(a.date_envoi) - new Date(b.date_envoi)
-          );
-        });
-  
-        setConversations(prev =>
-          prev.map(c =>
-            c.id === activeConversationId
-              ? {
-                  ...c,
-                  messages: updatedMessages,
-                  groupedMessages,
-                  lastMessage: updatedMessages[updatedMessages.length - 1]?.contenu || '',
-                  lastMessageDate: updatedMessages[updatedMessages.length - 1]?.date_envoi || new Date().toISOString()
-                }
-              : c
-          )
-        );
-  
-        // Scroll vers le bas
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      }
-  
-      setMessage('');
-    } catch (error) {
-      console.error("❌ Erreur lors de l'envoi du message:", error);
+const handleSendMessage = async (e) => {
+  e.preventDefault();
+
+  if (!message.trim() || !activeConversation) {
+    console.warn("⛔ Message vide ou aucune conversation active.");
+    return;
+  }
+
+  try {
+    const offreId = parseInt(activeConversation.offreId);
+    if (!offreId) {
       setNotification({
         show: true,
-        message: "Erreur lors de l'envoi du message",
+        message: "Erreur: conversation invalide",
         type: 'error'
       });
+      return;
     }
-  };
+
+    const messageData = {
+      contenu: message.trim(),
+      destinataire_id: parseInt(activeConversation.cliniqueId),
+      offre_id: offreId,
+      type_message: 'normal',
+      expediteur_id: parseInt(currentUserId),
+      id_conversation: activeConversation.id
+    };
+
+    const sentMessage = await sendMessage(messageData);
+    const now = new Date();
+    const today = now.toLocaleDateString('fr-FR');
+
+    const newMessage = {
+      ...sentMessage,
+      date_envoi: now.toISOString()
+    };
+
+    setConversations(prev =>
+      prev.map(c =>
+        c.id === activeConversationId
+          ? {
+              ...c,
+              messages: [...(c.messages || []), newMessage],
+              groupedMessages: {
+                ...c.groupedMessages,
+                [today]: [
+                  ...(c.groupedMessages[today] || []),
+                  newMessage
+                ]
+              },
+              lastMessage: newMessage.contenu,
+              lastMessageDate: newMessage.date_envoi
+            }
+          : c
+      )
+    );
+
+    setMessage('');
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  } catch (error) {
+    console.error("❌ Erreur lors de l'envoi du message:", error);
+    setNotification({
+      show: true,
+      message: "Erreur lors de l'envoi du message",
+      type: 'error'
+    });
+  }
+};
+
 
   // Supprimer un message existant
   const handleDeleteMessage = async (messageId) => {

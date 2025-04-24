@@ -1,25 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOffers } from '../components/OffersContext';
-import ScheduleMeeting from '../components/ScheduleMeeting'; // Import du composant pour planifier un RDV
+import ScheduleMeeting from '../components/ScheduleMeeting';
+import { fetchOffersForClinic } from '../lib/offerApi'; // Import de la fonction pour récupérer les offres
 import '../styles/CliniqueCalendrier.css';
 
 const CliniqueCalendrier = () => {
   const navigate = useNavigate();
-  const { offers, meetings, addMeeting, deleteMeeting } = useOffers();
+  const { meetings, addMeeting, deleteMeeting } = useOffers();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  // État pour la modal de planification de rendez-vous
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  // État pour afficher une notification
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+  // État pour stocker les offres depuis l'API
+  const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Générer le premier et dernier jour du mois
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
   
-  // Générer les jours du calendrier, y compris les jours du mois précédent et suivant pour compléter les semaines
+  // Générer les jours du calendrier
   const firstDayOfCalendar = new Date(firstDayOfMonth);
   firstDayOfCalendar.setDate(firstDayOfCalendar.getDate() - firstDayOfCalendar.getDay());
   
@@ -27,10 +29,8 @@ const CliniqueCalendrier = () => {
   const daysToAdd = 6 - lastDayOfCalendar.getDay();
   lastDayOfCalendar.setDate(lastDayOfCalendar.getDate() + daysToAdd);
   
-  // Générer les noms des jours de la semaine en français
+  // Noms des jours et des mois en français
   const weekDays = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-  
-  // Générer les noms des mois en français
   const months = [
     'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
     'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
@@ -72,51 +72,107 @@ const CliniqueCalendrier = () => {
     return d >= start && d <= end;
   };
 
+  // Charger les offres depuis l'API au chargement du composant et quand le mois change
+  useEffect(() => {
+    const loadOffers = async () => {
+      try {
+        setLoading(true);
+        const offersData = await fetchOffersForClinic();
+        console.log('Offres chargées depuis l\'API:', offersData);
+        setOffers(offersData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Erreur lors du chargement des offres:', error);
+        setLoading(false);
+      }
+    };
+
+    loadOffers();
+  }, [currentDate.getMonth(), currentDate.getFullYear()]);
+
+  // Fonction pour normaliser les états des offres pour la cohérence
+  const normalizeOfferStatus = (status) => {
+    if (!status) return 'pending';
+    
+    const statusLower = status.toLowerCase();
+    if (statusLower === 'active' || statusLower === 'actif' || statusLower === 'active') return 'active';
+    if (statusLower === 'pending' || statusLower === 'en attente' || statusLower === 'en_attente') return 'pending';
+    if (statusLower === 'expired' || statusLower === 'expirée' || statusLower === 'expiree') return 'expired';
+    
+    return 'pending'; // Par défaut
+  };
+
+  // Fonction pour formater les heures
+  const formatTime = (timeString) => {
+    if (!timeString) return '09:00';
+    
+    // Traiter les formats de temps différents
+    if (typeof timeString === 'string') {
+      // Format ISO
+      if (timeString.includes('T')) {
+        const timePart = timeString.split('T')[1];
+        return timePart.substring(0, 5);
+      }
+      
+      // Format simple HH:MM
+      if (timeString.includes(':')) {
+        return timeString.substring(0, 5);
+      }
+    }
+    
+    return '09:00'; // Valeur par défaut
+  };
+
   // Fonction pour convertir les offres en événements du calendrier
   const generateCalendarEvents = () => {
     let events = [];
     
     // Ajouter les offres comme événements
-    offers.forEach(offer => {
-      if (!offer.startDate || !offer.endDate) return;
-      
-      const startDate = new Date(offer.startDate);
-      const endDate = new Date(offer.endDate);
-      
-      // Définir la couleur en fonction du statut
-      let color;
-      switch (offer.status) {
-        case 'active':
-          color = '#6a9174'; // Vert
-          break;
-        case 'pending':
-          color = '#f0ad4e'; // Orange
-          break;
-        case 'expired':
-          color = '#888'; // Gris
-          break;
-        default:
-          color = '#6a9174';
-      }
-      
-      // Pour chaque jour du calendrier
-      calendarDays.forEach(day => {
-        // Vérifier si ce jour est dans la période de l'offre
-        if (isDateInRange(day, startDate, endDate)) {
-          events.push({
-            id: offer.id,
-            title: offer.title,
-            date: new Date(day),
-            startTime: offer.startTime,
-            endTime: offer.endTime,
-            status: offer.status,
-            color: color,
-            profession: offer.profession,
-            type: 'offer' // Marquer comme une offre
-          });
+    if (offers && offers.length > 0) {
+      offers.forEach(offer => {
+        // Récupérer les dates de début et de fin (en tenant compte des différents formats possibles)
+        const startDate = offer.date_debut ? new Date(offer.date_debut) : null;
+        const endDate = offer.date_fin ? new Date(offer.date_fin) : null;
+        
+        if (!startDate || !endDate) return;
+        
+        // Définir la couleur en fonction du statut
+        const status = normalizeOfferStatus(offer.statut || offer.status);
+        let color;
+        switch (status) {
+          case 'active':
+            color = '#6a9174'; // Vert
+            break;
+          case 'pending':
+            color = '#f0ad4e'; // Orange
+            break;
+          case 'expired':
+            color = '#888'; // Gris
+            break;
+          default:
+            color = '#6a9174';
         }
+        
+        // Pour chaque jour du calendrier
+        calendarDays.forEach(day => {
+          // Vérifier si ce jour est dans la période de l'offre
+          if (isDateInRange(day, startDate, endDate)) {
+            events.push({
+              id: offer.id_offre || offer.id,
+              title: offer.titre || offer.title,
+              date: new Date(day),
+              startTime: formatTime(offer.heure_debut || offer.startTime),
+              endTime: formatTime(offer.heure_fin || offer.endTime),
+              status: status,
+              color: color,
+              profession: offer.type_professionnel || offer.profession,
+              description: offer.descript || offer.description,
+              type: 'offer' // Marquer comme une offre
+            });
+          }
+        });
       });
-    });
+    }
     
     // Ajouter les rendez-vous comme événements
     if (meetings && meetings.length > 0) {
@@ -128,21 +184,25 @@ const CliniqueCalendrier = () => {
         // Définir une couleur pour les rendez-vous (bleu)
         const color = '#34a9d7';
         
-        events.push({
-          id: meeting.id,
-          title: meeting.title,
-          date: meetingDate,
-          startTime: meeting.startTime,
-          endTime: meeting.endTime,
-          status: meeting.status || 'scheduled',
-          color: color,
-          candidatName: meeting.candidatName,
-          candidatId: meeting.candidatId,
-          offerId: meeting.offerId,
-          meetingType: meeting.meetingType,
-          notes: meeting.notes,
-          type: 'meeting' // Marquer comme un rendez-vous
-        });
+        // Vérifier si le rendez-vous est dans le mois actuel
+        if (meetingDate.getMonth() === currentDate.getMonth() && 
+            meetingDate.getFullYear() === currentDate.getFullYear()) {
+          events.push({
+            id: meeting.id,
+            title: meeting.title,
+            date: meetingDate,
+            startTime: meeting.startTime,
+            endTime: meeting.endTime,
+            status: meeting.status || 'scheduled',
+            color: color,
+            candidatName: meeting.candidatName,
+            candidatId: meeting.candidatId,
+            offerId: meeting.offerId,
+            meetingType: meeting.meetingType,
+            notes: meeting.notes,
+            type: 'meeting' // Marquer comme un rendez-vous
+          });
+        }
       });
     }
     
@@ -235,9 +295,6 @@ const CliniqueCalendrier = () => {
     setTimeout(() => {
       setNotification({ show: false, message: '', type: 'success' });
     }, 3000);
-    
-    // Mettre à jour les événements du calendrier
-    setCalendarEvents(generateCalendarEvents());
   };
 
   return (
@@ -269,49 +326,56 @@ const CliniqueCalendrier = () => {
         </div>
       </div>
 
-      <div className="calendar">
-        <div className="calendar-weekdays">
-          {weekDays.map((day, index) => (
-            <div key={index} className="weekday">{day}</div>
-          ))}
+      {loading ? (
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Chargement du calendrier...</p>
         </div>
-        
-        <div className="calendar-days">
-          {calendarDays.map((day, index) => {
-            // Filtrer les événements pour ce jour
-            const dayEvents = calendarEvents.filter(event => 
-              event.date.getDate() === day.getDate() && 
-              event.date.getMonth() === day.getMonth() && 
-              event.date.getFullYear() === day.getFullYear()
-            );
-            
-            return (
-              <div 
-                key={index} 
-                className={`calendar-day ${!isCurrentMonth(day) ? 'other-month' : ''} ${isToday(day) ? 'today' : ''}`}
-              >
-                <div className="day-number">{day.getDate()}</div>
-                <div className="day-events">
-                  {dayEvents.map((event, eventIndex) => (
-                    <div 
-                      key={eventIndex} 
-                      className={`event ${event.type === 'meeting' ? 'meeting' : ''}`}
-                      style={{ backgroundColor: event.color }}
-                      onClick={() => handleEventClick(event)}
-                    >
-                      <div className="event-time">
-                        {event.type === 'meeting' && renderMeetingTypeIcon(event.meetingType)}
-                        {event.startTime} - {event.endTime}
+      ) : (
+        <div className="calendar">
+          <div className="calendar-weekdays">
+            {weekDays.map((day, index) => (
+              <div key={index} className="weekday">{day}</div>
+            ))}
+          </div>
+          
+          <div className="calendar-days">
+            {calendarDays.map((day, index) => {
+              // Filtrer les événements pour ce jour
+              const dayEvents = calendarEvents.filter(event => 
+                event.date.getDate() === day.getDate() && 
+                event.date.getMonth() === day.getMonth() && 
+                event.date.getFullYear() === day.getFullYear()
+              );
+              
+              return (
+                <div 
+                  key={index} 
+                  className={`calendar-day ${!isCurrentMonth(day) ? 'other-month' : ''} ${isToday(day) ? 'today' : ''}`}
+                >
+                  <div className="day-number">{day.getDate()}</div>
+                  <div className="day-events">
+                    {dayEvents.map((event, eventIndex) => (
+                      <div 
+                        key={eventIndex} 
+                        className={`event ${event.type === 'meeting' ? 'meeting' : ''}`}
+                        style={{ backgroundColor: event.color }}
+                        onClick={() => handleEventClick(event)}
+                      >
+                        <div className="event-time">
+                          {event.type === 'meeting' && renderMeetingTypeIcon(event.meetingType)}
+                          {event.startTime} - {event.endTime}
+                        </div>
+                        <div className="event-title">{event.title}</div>
                       </div>
-                      <div className="event-title">{event.title}</div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
       
       {/* Modal pour les détails d'un événement */}
       {selectedEvent && (
@@ -377,6 +441,11 @@ const CliniqueCalendrier = () => {
                                                   selectedEvent.profession === 'assistant' ? 'Assistant(e) dentaire' : 
                                                   'Hygiéniste dentaire'}
                   </p>
+                  {selectedEvent.description && (
+                    <p>
+                      <strong>Description:</strong> {selectedEvent.description}
+                    </p>
+                  )}
                   <div className="event-modal-buttons">
                     <button 
                       className="view-details-button"

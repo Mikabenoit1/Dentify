@@ -175,7 +175,7 @@ function App() {
           <Route path="/offres" element={<ProfessionnelOffres />} />
           <Route path="/offres/:id" element={<ProfessionnelOffreDetail />} />
           <Route path="/applique" element={<ProfessionnelApplique />} />
-          <Route path="/calendrier" element={<ProfessionnelCalendrier />} />
+          <Route path="/calendrier" element={<ProfessionnelCalendrier key={location.pathname} />} />
           <Route path="/messagerie" element={<ProfessionnelMessagerie />} />
           <Route path="/messagerie/:conversationId" element={<ProfessionnelMessagerie />} />
           
