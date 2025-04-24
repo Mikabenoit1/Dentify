@@ -8,8 +8,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: mma87cole
       MYSQL_DATABASE: Dentify
-      MYSQL_USER: root
-      MYSQL_PASSWORD: mma87cole
+      
     ports:
       - "3306:3306"
     volumes:

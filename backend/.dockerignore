@@ -1,0 +1,17 @@
+# Ne pas inclure les modules node installés
+node_modules
+npm-debug.log
+
+# Env et configs sensibles
+.env
+
+# Cache ou fichiers système
+.DS_Store
+
+# Éditeurs
+.vscode
+.idea
+
+# Tests ou mock (si présents)
+__tests__/
+coverage/
