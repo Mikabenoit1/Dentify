@@ -178,6 +178,28 @@ export const getHorairePro = async () => {
   }
 };
 
+export const getCalendrierClinique = async () => {
+  const token = await AsyncStorage.getItem("token");
+  const response = await fetch("http://192.168.1.190:4000/api/candidatures/calendrier-clinique", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const raw = await response.text();
+  try {
+    const data = JSON.parse(raw);
+    if (!response.ok) throw new Error(data.message || "Erreur API calendrier clinique");
+    return data;
+  } catch (e) {
+    console.error("Erreur parsing JSON calendrier clinique:", raw);
+    throw new Error("Réponse invalide du serveur");
+  }
+};
+
+
 
 
 

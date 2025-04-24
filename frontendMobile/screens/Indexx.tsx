@@ -3,17 +3,10 @@ import { Image, StyleSheet, Text, View, TouchableOpacity, ScrollView } from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "../utils/ThemedText";
 
-
-export default function Index({navigation}) {
-  
-
+export default function Index({ navigation }) {
   return (
     <View style={styles.container}>
-      {/* ScrollView pour permettre le défilement */}
-      <View
-        style={[styles.scrollContainer, styles.scrollView]} // Prend toute la hauteur disponible
-      >
-        {/* Header avec fond vert */}
+      <View style={[styles.scrollContainer, styles.scrollView]}>
         <View style={styles.header}>
           <Image
             source={require("../assets/dentify_logo_noir.png")}
@@ -21,36 +14,30 @@ export default function Index({navigation}) {
             resizeMode="contain"
           />
           <View style={styles.linksContainer}>
-            <ThemedText variant="subtitle1">
-              <TouchableOpacity onPress={() => navigation.navigate('Connexions')}>
-                <Text>Connexion</Text>
-              </TouchableOpacity>
-            </ThemedText>
-            <ThemedText variant="subtitle1">
-              <TouchableOpacity onPress={() => navigation.navigate('menu')}>
-                <Text>Menu</Text>
-              </TouchableOpacity>
-            </ThemedText>
+            <TouchableOpacity onPress={() => navigation.navigate('Connexions')}>
+              <ThemedText variant="subtitle1">Connexion</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('menu')}>
+              <ThemedText variant="subtitle1">Menu</ThemedText>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Body avec fond blanc */}
         <ScrollView style={styles.body}>
           <ThemedText variant="headline">Simplifiez.Engagez.</ThemedText>
           <ThemedText variant="headline">Remplacer</ThemedText>
-          <ThemedText variant="body3">Découvrez nos services et trouvez le professionnel de santé qui vous correspond.</ThemedText>
+          <ThemedText variant="body3">
+            Découvrez nos services et trouvez le professionnel de santé qui vous correspond.
+          </ThemedText>
 
-          {/* Bouton "Découvrir" */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.discoverButton}
             onPress={() => navigation.navigate('Fonctionnalite')}
           >
             <Text style={styles.discoverButtonText}>Découvrir</Text>
           </TouchableOpacity>
 
-          {/* Conteneur pour les flaques de fond et les images des médecins */}
           <View style={styles.imagesContainer}>
-            {/* Première flaque de fond avec 2 dentistes */}
             <View style={styles.flaqueContainer}>
               <Image
                 source={require("../assets/tachepistache.png")}
@@ -58,7 +45,7 @@ export default function Index({navigation}) {
                 resizeMode="cover"
               />
               <View style={styles.imagesWrapper}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.imageWrapper}
                   onPress={() => navigation.navigate('Fonctionnalite')}
                 >
@@ -69,7 +56,7 @@ export default function Index({navigation}) {
                   />
                   <ThemedText variant="body3" style={styles.subtitle}>Fonctionnalité</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.imageWrapper}
                   onPress={() => navigation.navigate('Professions')}
                 >
@@ -83,15 +70,14 @@ export default function Index({navigation}) {
               </View>
             </View>
 
-            {/* Deuxième flaque de fond avec 2 dentistes */}
-            <View style={[styles.flaqueContainer, { marginTop: 40 }]}> {/* Espace entre les flaques */}
+            <View style={[styles.flaqueContainer, { marginTop: 40 }]}>
               <Image
                 source={require("../assets/tachepistache.png")}
                 style={styles.backgroundImage}
                 resizeMode="cover"
               />
               <View style={styles.imagesWrapper}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.imageWrapper}
                   onPress={() => navigation.navigate('Contact')}
                 >
@@ -102,7 +88,7 @@ export default function Index({navigation}) {
                   />
                   <ThemedText variant="body3" style={styles.subtitle}>Contact</ThemedText>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.imageWrapper}
                   onPress={() => navigation.navigate('AboutUs')}
                 >
@@ -124,15 +110,9 @@ export default function Index({navigation}) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1, 
-  },
-  scrollContainer: {
-    flexGrow: 1, 
-  },
+  container: { flex: 1 },
+  scrollView: { flex: 1 },
+  scrollContainer: { flexGrow: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -168,7 +148,7 @@ const styles = StyleSheet.create({
   },
   flaqueContainer: {
     position: "relative",
-    height: 350, 
+    height: 350,
     marginBottom: 100,
   },
   backgroundImage: {
@@ -177,30 +157,29 @@ const styles = StyleSheet.create({
     left: 30,
     width: "90%",
     height: "90%",
-
-    zIndex: 1, 
+    zIndex: 1,
   },
   imagesWrapper: {
     position: "relative",
     zIndex: 2,
     flexDirection: "row",
-    justifyContent: "space-around", 
-    alignItems: "center", 
-    height: "100%", 
+    justifyContent: "space-around",
+    alignItems: "center",
+    height: "100%",
   },
   imageWrapper: {
     width: "45%",
-    aspectRatio: 1, 
-    alignItems: "center", 
+    aspectRatio: 1,
+    alignItems: "center",
   },
   image: {
-    width: "190%", 
-    height: "190%", 
+    width: "190%",
+    height: "190%",
   },
   subtitle: {
     marginTop: 8,
     textAlign: "center",
-    fontSize: 16, 
+    fontSize: 16,
     fontWeight: "bold",
   },
 });

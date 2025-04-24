@@ -9,7 +9,7 @@ import {
   Alert,
   Platform,
 } from "react-native";
-import { AntDesign, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
+import { AntDesign, MaterialCommunityIcons, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { publierOffre } from "../api/offreApi";
 import { ScrollView } from "react-native-gesture-handler";
@@ -113,36 +113,20 @@ export default function CreationOffre({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <Image
-          source={require("../assets/dentify_logo_noir.png")}
-          style={styles.logo}
-        />
+        <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
         <View style={styles.rightIcons}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Recherche..."
-            placeholderTextColor="#999"
-          />
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => navigation.navigate("MessageListeScreen")}
-          >
-            <AntDesign style={styles.iconText} name="message1" />
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('NotificationClinique')}>
+            <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => navigation.navigate("ProfilCli")}
-          >
-            <MaterialCommunityIcons
-              style={styles.iconText}
-              name="account-circle-outline"
-            />
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('MessageListeScreen')}>
+            <AntDesign name="message1" size={22} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('ProfilClinique')}>
+            <MaterialCommunityIcons name="account-circle-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
       </View>
-
       {/* Page content */}
       <ScrollView style={styles.container2}>
         <Text style={styles.titlecreation}>Création d'une Offre</Text>
@@ -248,49 +232,24 @@ export default function CreationOffre({ navigation }) {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("Mesoffres")}
-        >
-          <AntDesign style={styles.footerIcon} name="calendar" />
-          <Text
-            style={[
-              styles.footerText,
-              activePage === "Mesoffres" && styles.activeButtonText,
-            ]}
-          >
-            Mes offres
-          </Text>
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('Mesoffres')}>
+          <AntDesign name="profile" size={24} color="white" />
+          <Text style={styles.footerText}>Offres publiés</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("CreationOffre")}
-        >
-          <Ionicons name="create-outline" size={24} color="black" />
-          <Text
-            style={[
-              styles.footerTextClick,
-              activePage === "CreationOffre" && styles.activeButtonText,
-            ]}
-          >
-            Création d'une offre
-          </Text>
+        
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('CreationOffre')}>
+        <Ionicons name="create-outline" size={24} color="black" />
+          <Text style={styles.footerTextClick}>Création d'une offre</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("AccueilMoreCli")}
-        >
-          <AntDesign style={styles.footerIcon} name="ellipsis1" />
-          <Text
-            style={[
-              styles.footerText,
-              activePage === "AccueilMore" && styles.activeButtonText,
-            ]}
-          >
-            More
-          </Text>
+        
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('CalendrierCli')}>
+          <AntDesign name="calendar" size={24} color="white" />
+          <Text style={styles.footerText}>Calendrier</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('AccueilMoreCli')}>
+          <MaterialIcons name="more-horiz" size={24} color="white" />
+          <Text style={styles.footerText}>Plus</Text>
         </TouchableOpacity>
       </View>
     </View>

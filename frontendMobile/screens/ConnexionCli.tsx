@@ -128,6 +128,12 @@ export default function ConnexionCli({ navigation }) {
               <Text style={styles.linkText}>Inscription clinique</Text>
             </TouchableOpacity>
           </View>
+                    <View style={styles.linkContainer}>
+                  <Text style={styles.textNormal}>Mot de passe oublié ? </Text>
+                  <TouchableOpacity onPress={() => navigation.navigate("ResetMdp")}>
+                    <Text style={styles.linkText}>Réinitialisation du mot de passe</Text>
+                  </TouchableOpacity>
+                </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

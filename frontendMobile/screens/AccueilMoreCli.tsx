@@ -17,7 +17,7 @@ export default function AccueilMoreCli({ navigation }) {
         <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
 
         <View style={styles.rightIcons}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notification')}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('NotificationClinique')}>
             <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('MessageListeScreen')}>
@@ -110,37 +110,25 @@ export default function AccueilMoreCli({ navigation }) {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity 
-                  style={styles.footerButton}
-                  onPress={() => navigation.navigate('Mesoffres')}
-                >
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('Mesoffres')}>
           <AntDesign name="profile" size={24} color="white" />
-                  <Text style={styles.footerText}>Offres publiés</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.footerButton}
-                  onPress={() => navigation.navigate('CreationOffre')}
-                >
-                  <Ionicons name="create-outline" color={"white"} size={24} />
-                  <Text style={styles.footerText}>Création d'une offre</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.footerButton}
-                  onPress={() => navigation.navigate('CalendrierCli')}
-                >
-                  <AntDesign name="calendar" style={styles.footerIcon} />
-                  <Text style={styles.footerText}>Calendrier</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.footerButton}
-                  onPress={() => navigation.navigate('AccueilMoreCli')}
-                >
-                  <MaterialIcons name="more-horiz" size={24} color="black" />
-                  <Text style={styles.footerTextClick}>Plus</Text>
-                </TouchableOpacity>
+          <Text style={styles.footerText}>Offres publiés</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('CreationOffre')}>
+        <Ionicons name="create-outline" size={24} color="white" />
+          <Text style={styles.footerText}>Création d'une offre</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('CalendrierCli')}>
+          <AntDesign name="calendar" size={24} color="white" />
+          <Text style={styles.footerText}>Calendrier</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('AccueilMoreCli')}>
+          <MaterialIcons name="more-horiz" size={24} color="black" />
+          <Text style={styles.footerTextClick}>Plus</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

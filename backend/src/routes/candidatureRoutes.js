@@ -209,5 +209,51 @@ router.put('/refuser/:id', protect, async (req, res) => {
   }
 });
 
+// ✅ GET : Offres acceptées par date pour le calendrier de la clinique
+router.get('/calendrier-clinique', protect, async (req, res) => {
+  try {
+    const id_utilisateur = req.user.id_utilisateur;
+
+    // Trouver la clinique liée à l'utilisateur connecté
+    const clinique = await CliniqueDentaire.findOne({
+      where: { id_utilisateur }
+    });
+
+    if (!clinique) {
+      return res.status(403).json({ message: "Accès refusé : vous n'êtes pas une clinique." });
+    }
+
+    const candidatures = await Candidature.findAll({
+      where: {
+        statut: 'acceptee',
+        est_confirmee: 'Y'
+      },
+      include: [
+        {
+          model: Offre,
+          where: { id_clinique: clinique.id_clinique },
+          required: true,
+          attributes: ['id_offre', 'titre', 'date_mission', 'heure_debut', 'heure_fin']
+        },
+        {
+          model: ProfessionnelDentaire,
+          include: [
+            {
+              model: User,
+              attributes: ['prenom', 'nom']
+            }
+          ]
+        }
+      ]
+    });
+
+    res.status(200).json(candidatures);
+  } catch (error) {
+    console.error("❌ Erreur /calendrier-clinique :", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
+
+
 
 module.exports = router;
