@@ -14,8 +14,8 @@ if (Platform.OS === "web") {
     ? "http://localhost:4000/api/candidatures"
     : "https://371b-142-137-176-156.ngrok-free.app/api/candidatures";
 } else {
-  BASE_URL_OFFRES = "http://172.20.10.2:4000/api/offres";
-  BASE_URL_CANDIDATURES = "http://172.20.10.2:4000/api/candidatures";
+  BASE_URL_OFFRES = "http://192.168.1.190:4000/api/offres";
+  BASE_URL_CANDIDATURES = "http://192.168.1.190:4000/api/candidatures";
 }
 
 // === FONCTION GÉNÉRIQUE POUR LES OFFRES ===
