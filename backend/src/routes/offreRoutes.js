@@ -11,6 +11,8 @@ const {
 const protect = require('../middlewares/authMiddleware');
 const { creerNotification } = require('../controllers/notificationController');
 const { getOffresProches, getCandidaturesParOffre } = require('../controllers/OffreController');
+const systemMessages = require('../models/messageSysteme');
+ 
 
 
 // Fonction de calcul de distance en km
@@ -216,9 +218,8 @@ router.patch('/:id/archive', protect, async (req, res) => {
 router.put('/accepter/:id', protect, async (req, res) => {
   try {
     const id_candidature = req.params.id;
-
     const candidature = await Candidature.findByPk(id_candidature);
-    if (!candidature) return res.status(404).json({ message: 'introuvable' });
+    if (!candidature) return res.status(404).json({ message: "Candidature introuvable." });
 
     candidature.statut = 'acceptee';
     candidature.est_confirmee = 'Y';
@@ -233,13 +234,13 @@ router.put('/accepter/:id', protect, async (req, res) => {
       await creerNotification({
         id_destinataire: utilisateurPro.id_utilisateur,
         type: "offre",
-        contenu: `Votre candidature à l'offre "${offre.titre}" a été acceptée !`
+        contenu: systemMessages.candidatureAcceptée(offre.titre)
       });
 
       await Message.create({
         expediteur_id: req.user.id_utilisateur,
         destinataire_id: utilisateurPro.id_utilisateur,
-        contenu: `🎉 Votre candidature pour "${offre.titre}" a été acceptée.`,
+        contenu: systemMessages.candidatureAcceptée(offre.titre),
         id_offre: offre.id_offre,
         type_message: "systeme"
       });
@@ -247,10 +248,11 @@ router.put('/accepter/:id', protect, async (req, res) => {
 
     res.json({ message: 'Candidature acceptée avec succès', candidature });
   } catch (error) {
-    console.error("Erreur lors de l'acceptation de la candidature :", error);
+    console.error("❌ Erreur lors de l'acceptation :", error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
 
 // ✅ Refuser une candidature
 router.put('/refuser/:id', protect, async (req, res) => {
@@ -259,11 +261,11 @@ router.put('/refuser/:id', protect, async (req, res) => {
     const { message_reponse } = req.body;
 
     const candidature = await Candidature.findByPk(id_candidature);
-    if (!candidature) return res.status(404).json({ message: 'Candidature introuvable' });
+    if (!candidature) return res.status(404).json({ message: "Candidature introuvable." });
 
     candidature.statut = 'refusee';
     candidature.date_reponse = new Date();
-    candidature.message_reponse = message_reponse || "Votre candidature n'a malheureusement pas été retenue.";
+    candidature.message_reponse = message_reponse || null;
     await candidature.save();
 
     const professionnel = await ProfessionnelDentaire.findByPk(candidature.id_professionnel);
@@ -271,18 +273,18 @@ router.put('/refuser/:id', protect, async (req, res) => {
     const offre = await Offre.findByPk(candidature.id_offre);
 
     if (utilisateurPro && offre) {
-      const messageFinal = message_reponse || `Votre candidature à l'offre "${offre.titre}" n'a malheureusement pas été retenue.`;
+      const contenu = message_reponse || systemMessages.candidatureRefusée(offre.titre);
 
       await creerNotification({
         id_utilisateur: utilisateurPro.id_utilisateur,
         type: "offre",
-        contenu: messageFinal
+        contenu
       });
 
       await Message.create({
         expediteur_id: req.user.id_utilisateur,
         destinataire_id: utilisateurPro.id_utilisateur,
-        contenu: messageFinal,
+        contenu,
         id_offre: offre.id_offre,
         type_message: "systeme"
       });
@@ -290,8 +292,8 @@ router.put('/refuser/:id', protect, async (req, res) => {
 
     res.json({ message: 'Candidature refusée avec succès', candidature });
   } catch (error) {
-    console.error("Erreur lors du refus de la candidature :", error);
-    res.status(500).json({ message: 'Erreur serveur' });
+    console.error("❌ Erreur lors du refus de la candidature :", error);
+    res.status(500).json({ message: "Erreur serveur" });
   }
 });
 
@@ -464,7 +466,6 @@ router.post('/postuler/:id', protect, async (req, res) => {
     const professionnel = await ProfessionnelDentaire.findOne({
       where: { id_utilisateur: utilisateur.id_utilisateur }
     });
-
     if (!professionnel) {
       return res.status(403).json({ message: "Professionnel introuvable." });
     }
@@ -486,6 +487,24 @@ router.post('/postuler/:id', protect, async (req, res) => {
       date_candidature: new Date(),
       statut: 'pending'
     });
+
+    const clinique = await CliniqueDentaire.findByPk(offre.id_clinique);
+    if (clinique) {
+      const utilisateurClinique = await User.findByPk(clinique.id_utilisateur);
+
+      // 🔁 Générer un ID conversation unique (même logique que l'app mobile)
+      const ids = [utilisateur.id_utilisateur, utilisateurClinique.id_utilisateur].sort((a, b) => a - b);
+      const idConversation = `${offre.id_offre}_${ids[0]}_${ids[1]}`;
+
+      await Message.create({
+        expediteur_id: utilisateur.id_utilisateur,
+        destinataire_id: utilisateurClinique.id_utilisateur,
+        contenu: systemMessages.candidatureReçue,
+        id_offre: offre.id_offre,
+        type_message: "systeme",
+        id_conversation: idConversation
+      });
+    }
 
     res.status(201).json({ message: "✅ Candidature envoyée", candidature: nouvelleCandidature });
   } catch (error) {

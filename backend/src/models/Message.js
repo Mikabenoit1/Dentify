@@ -3,6 +3,11 @@ const { sequelize } = require('../config/db');
 
 const Message = sequelize.define('Message', {
   id_message: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  id_conversation: { 
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    allowNull: false
+  },
   expediteur_id: { type: DataTypes.INTEGER, allowNull: false },
   destinataire_id: { type: DataTypes.INTEGER, allowNull: false },
   contenu: { type: DataTypes.TEXT, allowNull: false },
@@ -25,7 +30,13 @@ const Message = sequelize.define('Message', {
   
 }, {
   tableName: 'Message',
-  timestamps: false
+  timestamps: false,
+  indexes: [
+    {
+      name: 'idx_conversation',
+      fields: ['id_conversation']
+    }
+  ]
 });
 
 module.exports = Message;

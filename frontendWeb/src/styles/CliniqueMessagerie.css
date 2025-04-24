@@ -224,6 +224,7 @@
   flex-direction: column;
   background-color: #ffffff;
   overflow: hidden;
+  max-width: 100%;
 }
 
 .messages-header {
@@ -334,140 +335,193 @@
   background-color: var(--background-light);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+}
+
+.message-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.message-date-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0;
+  position: relative;
+}
+
+.message-date-separator::before,
+.message-date-separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 0 12px;
+}
+
+.message-date-separator span {
+  background-color: var(--background-light);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  color: var(--text-light);
+  font-weight: 500;
 }
 
 .message {
   display: flex;
-  max-width: 70%;
-  margin: 2px 0;
+  margin-bottom: 2px;
+  position: relative;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* Alignement général des messages */
+.message.sent {
+  display: flex;
+  justify-content: flex-end;
+  margin-right: 8px;
 }
 
 .message.received {
-  align-self: flex-start;
+  display: flex;
+  justify-content: flex-start;
+  margin-left: 8px;
 }
 
-.message.sent {
-  align-self: flex-end;
-}
-
+/* Style des bulles de message */
 .message-bubble {
-  padding: 12px 16px;
+  max-width: 70%;
+  padding: 10px 14px;
   border-radius: 18px;
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
   position: relative;
-  font-size: 0.95rem;
+  display: inline-block;
+  min-width: 40px;
+  word-wrap: break-word;
+  margin: 4px 0;
+  font-size: 14px;
   line-height: 1.4;
-  box-shadow: var(--shadow-sm);
 }
 
-.message.received .message-bubble {
-  background-color: white;
-  color: var(--text-dark);
-  border-bottom-left-radius: 4px;
-}
-
+/* Messages envoyés (clinique/pro) */
 .message.sent .message-bubble {
-  background-color: var(--primary-color);
+  background-color: var(--primary-color); /* Bleu */
   color: white;
-  border-bottom-right-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+/* Messages reçus */
+.message.received .message-bubble {
+  background-color: var(--message-received-color); /* Gris clair */
+  color: var(--text-color);
+  border-top-left-radius: 4px;
 }
 
 .message-time {
-  font-size: 0.7rem;
-  margin-top: 4px;
-  text-align: right;
+  font-size: 11px;
+  margin-top: 2px;
   opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  line-height: 1;
 }
 
-.message.sent .message-time {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.message.received .message-time {
+.message-system {
+  text-align: center;
+  margin: 8px 0;
+  padding: 8px;
   color: var(--text-light);
+  font-size: 0.85rem;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: var(--radius-md);
+  max-width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.no-messages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message-input-container {
-  padding: 12px 16px;
+  padding: 16px;
+  background-color: var(--background-light);
   border-top: 1px solid var(--border-color);
   display: flex;
-  align-items: center;
-  gap: 10px;
-  background-color: white;
-}
-
-.message-input-wrapper {
-  flex: 1;
-  background-color: var(--background-light);
-  border-radius: var(--radius-full);
-  padding: 0 10px;
-  border: 1px solid var(--border-color);
-  transition: var(--transition);
-}
-
-.message-input-wrapper:focus-within {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px rgba(52, 169, 215, 0.1);
+  gap: 12px;
+  align-items: flex-end;
 }
 
 .message-input {
-  width: 100%;
-  border: none;
-  background: none;
-  font-size: 0.95rem;
-  padding: 10px;
-  min-height: 20px;
-  max-height: 80px;
-  resize: none;
-  outline: none;
-}
-
-.input-action-button {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
+  flex: 1;
+  min-height: 40px;
+  max-height: 120px;
+  padding: 8px 12px;
   border: 1px solid var(--border-color);
-  cursor: pointer;
-  color: var(--text-medium);
-  font-size: 1rem;
-  transition: var(--transition);
+  border-radius: var(--radius-md);
+  background-color: white;
+  resize: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 0.2s ease;
 }
 
-.input-action-button:hover {
-  background-color: var(--background-light);
-  color: var(--primary-color);
+.message-input:focus {
+  border-color: var(--primary-color);
+}
+
+.message-input::placeholder {
+  color: var(--text-light);
 }
 
 .send-button {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 500;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background-color: var(--primary-color);
-  border: none;
-  cursor: pointer;
-  color: white;
-  font-size: 0.95rem;
-  transition: var(--transition);
+  gap: 8px;
+  transition: background-color 0.2s ease;
 }
 
-.send-button:hover:not(:disabled) {
-  background-color: var(--accent-color);
-  transform: translateY(-1px);
+.send-button:hover {
+  background-color: var(--primary-dark);
 }
 
 .send-button:disabled {
-  background-color: #cccccc;
+  background-color: var(--border-color);
   cursor: not-allowed;
+}
+
+.send-button svg {
+  width: 20px;
+  height: 20px;
 }
 
 .no-conversation-selected {

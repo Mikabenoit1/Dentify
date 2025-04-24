@@ -10,6 +10,7 @@ const ResetToken = require('./ResetToken');
 const Notification = require('./Notification');
 const Entretien = require('./Entretien');
 const Evaluation = require('./Evaluation');
+const messageSysteme = require('./messageSysteme');
 const Document = require('./Document')(sequelize, require('sequelize').DataTypes);
 
   // 🔗 Utilisateur → CliniqueDentaire (1:1)
@@ -166,5 +167,5 @@ module.exports = {
   Notification,
   Document,
   Entretien,
-  Evaluation
+  messageSysteme
 };

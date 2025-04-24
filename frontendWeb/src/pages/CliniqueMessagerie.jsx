@@ -59,130 +59,177 @@ function CliniqueMessagerie() {
 
   // Charger les conversations disponibles
   useEffect(() => {
-    const transformConversations = (data) => {
-      console.log("🔄 Transforming conversations from:", data);
-      if (!Array.isArray(data)) {
-        console.error("❌ Invalid data format for conversations:", data);
-        return [];
-      }
-
-      return data.map(conv => {
-        // Log the entire conversation object to see its structure
-        console.log("🔍 Raw conversation data:", conv);
-
-        // For clinics, the candidatId is the professional's ID (id_utilisateur)
-        const candidatId = conv.id_utilisateur;
-        // For now, we're using a fixed offreId
-        const offreId = 20;
-
-        console.log("📝 Creating conversation:", { 
-          raw: conv,
-          candidatId,
-          offreId,
-          currentUserId,
-          nom: conv.nom,
-          prenom: conv.prenom
-        });
-
-        // Skip if we don't have a valid candidatId
-        if (!candidatId) {
-          console.warn("⚠️ Missing candidatId for conversation:", conv);
-          return null;
-        }
-
-        return {
-          id: `${offreId}-${candidatId}`,
-          candidatId: candidatId,
-          offreId: offreId,
-          name: `${conv.prenom || ''} ${conv.nom || ''}`.trim() || 'Utilisateur inconnu',
-          profession: conv.profession || 'Non spécifié',
-          lastMessage: conv.dernierMessage || 'Aucun message',
-          lastMessageDate: conv.dateMessage || new Date().toISOString(),
-          unreadCount: conv.nonLu || 0
-        };
-      }).filter(Boolean);
-    };
-
     const loadConversations = async () => {
       try {
         const data = await fetchConversations();
         console.log("📥 Raw conversations data:", data);
-        const transformed = transformConversations(data);
-        console.log("✨ Transformed conversations:", transformed);
-        
-        if (transformed.length === 0) {
-          console.warn("⚠️ No valid conversations were transformed");
+  
+        if (!Array.isArray(data)) {
+          console.error("❌ Format invalide des conversations :", data);
+          return;
         }
-        
-        setConversations(transformed);
+  
+        const grouped = {};
+  
+        for (const conv of data) {
+          const key = conv.id;
+          console.log("🔄 Processing conversation:", conv);
+  
+          if (!grouped[key] || new Date(conv.dateMessage) > new Date(grouped[key].lastMessageDate)) {
+            grouped[key] = {
+              id: key,
+              candidatId: conv.id_utilisateur,
+              offreId: parseInt(conv.id_offre), // Ensure offreId is a number
+              name: `${conv.prenom || ''} ${conv.nom || ''}`.trim() || 'Utilisateur inconnu',
+              titre_offre: conv.titre_offre || '',
+              lastMessage: conv.dernierMessage || '',
+              lastMessageDate: conv.dateMessage || new Date().toISOString(),
+              unreadCount: conv.nonLu || 0,
+              messages: [],
+              groupedMessages: {}
+            };
+            console.log("✅ Created/Updated conversation:", grouped[key]);
+          }
+        }
+  
+        const sortedConversations = Object.values(grouped).sort((a, b) =>
+          new Date(b.lastMessageDate) - new Date(a.lastMessageDate)
+        );
+  
+        console.log("✨ Final conversations:", sortedConversations);
+        setConversations(sortedConversations);
+  
+        // Si une conversation est active, charger ses messages
+        if (activeConversationId) {
+          const activeConv = sortedConversations.find(c => c.id === activeConversationId);
+          if (activeConv) {
+            console.log("🎯 Loading messages for active conversation:", activeConv);
+            const messages = await fetchMessagesByConversation(activeConv.candidatId, activeConv.offreId);
+            if (Array.isArray(messages)) {
+              // Grouper les messages par date
+              const groupedMessages = messages.reduce((groups, msg) => {
+                const date = new Date(msg.date_envoi).toLocaleDateString('fr-FR', {
+                  year: 'numeric',
+                  month: 'numeric',
+                  day: 'numeric'
+                });
+  
+                if (!groups[date]) {
+                  groups[date] = [];
+                }
+  
+                groups[date].push(msg);
+                return groups;
+              }, {});
+  
+              setConversations(prev =>
+                prev.map(c =>
+                  c.id === activeConversationId
+                    ? {
+                        ...c,
+                        messages,
+                        groupedMessages,
+                        lastMessage: messages[messages.length - 1]?.contenu || '',
+                        lastMessageDate: messages[messages.length - 1]?.date_envoi || new Date().toISOString()
+                      }
+                    : c
+                )
+              );
+            }
+          }
+        }
       } catch (error) {
-        console.error("❌ Error loading conversations:", error);
+        console.error("❌ Erreur lors du chargement des conversations :", error);
         setNotification({
           show: true,
           message: "Erreur lors du chargement des conversations",
           type: 'error'
         });
-        setTimeout(() => setNotification({ show: false, message: '', type: 'error' }), 3000);
       }
     };
-
+  
     loadConversations();
-  }, [currentUserId]);
+  }, [currentUserId, activeConversationId]);
+  
+  
+  
 
   // Charger les messages pour la conversation active
   useEffect(() => {
     const loadMessages = async (conversation) => {
       if (!conversation) {
-        console.warn("⚠️ No conversation provided to loadMessages");
+        console.warn("⚠️ Aucune conversation fournie à loadMessages");
         return;
       }
 
       try {
-        console.log("🔄 Loading messages for conversation:", conversation);
-        
-        // Extract IDs from conversation
-        const destinataireId = conversation.candidatId;
-        const offreId = conversation.offreId;
+        console.log("🔄 Chargement des messages pour la conversation :", conversation);
 
-        console.log("📤 Fetching messages with params:", {
-          destinataireId,
-          offreId,
-          currentUserId
-        });
+        const { candidatId, offreId } = conversation;
+        const messages = await fetchMessagesByConversation(candidatId, offreId);
 
-        const messages = await fetchMessagesByConversation(destinataireId, offreId);
-        
         if (!Array.isArray(messages)) {
-          console.warn("⚠️ Received invalid messages format:", messages);
+          console.warn("⚠️ Format de messages invalide :", messages);
           return;
         }
 
-        console.log("📨 Received messages:", messages);
+        console.log("📨 Messages reçus :", messages);
 
-        // Update only the messages for the active conversation
-        setConversations(prevConversations => {
-          return prevConversations.map(conv => {
-            if (conv.id === activeConversationId) {
-              return {
-                ...conv,
-                messages
-              };
-            }
-            return conv;
+        // Grouper les messages par date
+        const groupedMessages = messages.reduce((groups, message) => {
+          const date = new Date(message.date_envoi).toLocaleDateString('fr-FR', {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric'
           });
+
+          if (!groups[date]) {
+            groups[date] = [];
+          }
+
+          groups[date].push(message);
+          return groups;
+        }, {});
+
+        // Trier les messages dans chaque groupe
+        Object.keys(groupedMessages).forEach(date => {
+          groupedMessages[date].sort((a, b) => 
+            new Date(a.date_envoi) - new Date(b.date_envoi)
+          );
         });
+
+        console.log("📨 Messages groupés :", groupedMessages);
+
+        setConversations(prevConversations =>
+          prevConversations.map(conv =>
+            conv.id === activeConversationId
+              ? { 
+                  ...conv, 
+                  messages,
+                  groupedMessages,
+                  lastMessage: messages[messages.length - 1]?.contenu || conv.lastMessage,
+                  lastMessageDate: messages[messages.length - 1]?.date_envoi || conv.lastMessageDate
+                }
+              : conv
+          )
+        );
+
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
       } catch (error) {
-        console.error("❌ Error loading messages:", error);
+        console.error("❌ Erreur lors du chargement des messages :", error);
       }
     };
-  
+
     if (activeConversationId) {
       const activeConv = conversations.find(c => c.id === activeConversationId);
       if (activeConv) {
         loadMessages(activeConv);
       }
     }
-  }, [activeConversationId, currentUserId]);
+  }, [activeConversationId]);
+  
   
 
   // Scroll automatique vers le bas des messages
@@ -201,53 +248,86 @@ function CliniqueMessagerie() {
     }
   
     try {
-      console.log("📝 Sending message:", {
-        activeConversation,
-        currentUserId,
-        message: message.trim()
-      });
-
+      console.log("📝 Conversation active :", activeConversation);
+  
+      const offreId = parseInt(activeConversation.offreId);
+      if (!offreId) {
+        console.error("❌ Pas d'offre ID dans la conversation active");
+        setNotification({
+          show: true,
+          message: "Erreur : conversation invalide",
+          type: 'error'
+        });
+        return;
+      }
+  
       const messageData = {
         contenu: message.trim(),
-        destinataire_id: activeConversation.candidatId, // Send to the professional
-        offre_id: activeConversation.offreId,
-        type_message: 'normal'
+        destinataire_id: parseInt(activeConversation.candidatId),
+        offre_id: offreId,
+        type_message: 'normal',
+        expediteur_id: parseInt(currentUserId),
+        id_conversation: activeConversation.id
       };
-
-      console.log("📤 Message data:", messageData);
-
+  
+      console.log("📤 Message à envoyer :", messageData);
+  
       const sentMessage = await sendMessage(messageData);
-      console.log("✅ Message envoyé:", sentMessage);
-
-      // Reload messages
+      console.log("✅ Message envoyé :", sentMessage);
+  
+      // 🔄 Recharger les messages pour cette conversation
       const updatedMessages = await fetchMessagesByConversation(
         activeConversation.candidatId,
-        activeConversation.offreId
+        offreId
       );
-
+  
       if (Array.isArray(updatedMessages)) {
+        // Grouper les messages par date
+        const groupedMessages = updatedMessages.reduce((groups, msg) => {
+          const date = new Date(msg.date_envoi).toLocaleDateString('fr-FR', {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric'
+          });
+  
+          if (!groups[date]) {
+            groups[date] = [];
+          }
+  
+          groups[date].push(msg);
+          return groups;
+        }, {});
+  
+        // Trier les messages dans chaque groupe
+        Object.keys(groupedMessages).forEach(date => {
+          groupedMessages[date].sort((a, b) => 
+            new Date(a.date_envoi) - new Date(b.date_envoi)
+          );
+        });
+  
         setConversations(prev =>
           prev.map(c =>
             c.id === activeConversationId
               ? {
                   ...c,
                   messages: updatedMessages,
+                  groupedMessages,
                   lastMessage: updatedMessages[updatedMessages.length - 1]?.contenu || '',
                   lastMessageDate: updatedMessages[updatedMessages.length - 1]?.date_envoi || new Date().toISOString()
                 }
               : c
           )
         );
-
-        // Force scroll to bottom
+  
+        // Scroll vers le bas
         setTimeout(() => {
           messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
       }
-
+  
       setMessage('');
     } catch (error) {
-      console.error("❌ Erreur lors de l'envoi du message:", error);
+      console.error("❌ Erreur lors de l'envoi du message :", error);
       setNotification({
         show: true,
         message: "Erreur lors de l'envoi du message",
@@ -271,10 +351,9 @@ function CliniqueMessagerie() {
       try {
         await deleteMessage(messageId);
   
-        const updatedMessages = await fetchMessagesByConversation(
-          activeConversation.candidatId,
-          activeConversation.offreId
-        );
+        const [offreId, candidatId] = activeConversation.id.split('_');
+        const updatedMessages = await fetchMessagesByConversation(parseInt(candidatId), parseInt(offreId));
+        
   
         setConversations(prev =>
           prev.map(c =>
@@ -330,7 +409,7 @@ function CliniqueMessagerie() {
   // Filtrer les conversations selon la recherche clinique
   const filteredConversations = conversations.filter(conv =>
     conv.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conv.profession?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    conv.titre_offre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     conv.lastMessage?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -476,7 +555,7 @@ function CliniqueMessagerie() {
                   setNewMessageMode(false);
                 }}
               >
-                <div className={`conversation-avatar ${conv.profession}`}>
+                <div className={`conversation-avatar ${conv.titre_offre}`}>
                   {conv.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
 
@@ -611,7 +690,7 @@ function CliniqueMessagerie() {
             <div className="messages-header">
               <div className="messages-header-info">
                 <h3>{activeConversation?.name}</h3>
-                <span className="profession">{activeConversation?.profession}</span>
+                <span className="profession">{activeConversation?.titre_offre}</span>
               </div>
               <div className="messages-header-actions">
                 {/* Remove the schedule button since we're not implementing that functionality */}
@@ -619,53 +698,89 @@ function CliniqueMessagerie() {
             </div>
 
             <div className="offer-title-bar">
-              {activeConversation.profession}
+              {activeConversation.titre_offre}
               {activeConversation.messages?.some(msg => msg.id_entretien) && (
                 <span className="badge-entretien-inline">📅 Entretien prévu</span>
               )}
             </div>
 
             <div className="messages-content">
-            {activeConversation?.messages?.map(msg => (
-
-                <div
-                  key={msg.id_message}
-                  className={`message ${msg.expediteur_id === currentUserId ? 'sent' : 'received'}`}
-                >
-                  <div className="message-bubble">
-                    <div className="message-content">{msg.contenu}</div>
-                    <div className="message-time">
-                      {formatMessageDate(msg.date_envoi)}
-                      {msg.est_lu === 'Y' && msg.expediteur_id === currentUserId && (
-                        <span className="message-status">✓✓</span>
-                      )}
-                    </div>
-
-                    {msg.expediteur_id === currentUserId && !msg.isMeetingMessage && (
-                      <button
-                        className="message-options-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleMessageActions(msg.id_message);
-                        }}
-                      >
-                        <i className="fas fa-ellipsis-v"></i>
-                      </button>
-                    )}
-
-                    {messageActionsOpen === msg.id_message && (
-                      <div className="message-actions-menu">
-                        <button onClick={() => handleEditMessage(msg)}>
-                          <i className="fas fa-edit"></i> Modifier
-                        </button>
-                        <button onClick={() => handleDeleteMessage(msg.id_message)}>
-                          <i className="fas fa-trash"></i> Supprimer
-                        </button>
+              {activeConversation?.groupedMessages ? (
+                Object.entries(activeConversation.groupedMessages)
+                  .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB))
+                  .map(([date, messages]) => (
+                    <div key={date} className="message-group">
+                      <div className="message-date-separator">
+                        <span>{date}</span>
                       </div>
-                    )}
-                  </div>
+                      {messages.map(msg => {
+                        const isCandidatureMessage = msg.contenu?.toLowerCase().includes('candidature');
+                        const isClinic = msg.expediteur_id === currentUserId;
+                        
+                        return msg.type_message === 'systeme' ? (
+                          <div key={msg.id_message} className="message-system">
+                            <span>
+                              {isCandidatureMessage ? (
+                                isClinic ? 'Nouvelle candidature reçue' : 'Nouvelle candidature envoyée'
+                              ) : msg.contenu}
+                            </span>
+                            <small className="message-time">
+                              {new Date(msg.date_envoi).toLocaleTimeString('fr-FR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </small>
+                          </div>
+                        ) : (
+                          <div
+                            key={msg.id_message}
+                            className={`message ${msg.expediteur_id === currentUserId ? 'sent' : 'received'}`}
+                          >
+                            <div className="message-bubble">
+                              <div className="message-content">{msg.contenu}</div>
+                              <div className="message-time">
+                                {new Date(msg.date_envoi).toLocaleTimeString('fr-FR', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                                {msg.est_lu && msg.expediteur_id === currentUserId && (
+                                  <span className="message-status">✓✓</span>
+                                )}
+                              </div>
+
+                              {msg.expediteur_id === currentUserId && !msg.isMeetingMessage && (
+                                <button
+                                  className="message-options-button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleMessageActions(msg.id_message);
+                                  }}
+                                >
+                                  <i className="fas fa-ellipsis-v"></i>
+                                </button>
+                              )}
+
+                              {messageActionsOpen === msg.id_message && (
+                                <div className="message-actions-menu">
+                                  <button onClick={() => handleEditMessage(msg)}>
+                                    <i className="fas fa-edit"></i> Modifier
+                                  </button>
+                                  <button onClick={() => handleDeleteMessage(msg.id_message)}>
+                                    <i className="fas fa-trash"></i> Supprimer
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))
+              ) : (
+                <div className="no-messages">
+                  <p>Aucun message dans cette conversation</p>
                 </div>
-              ))}
+              )}
               <div ref={messagesEndRef} />
             </div>
 

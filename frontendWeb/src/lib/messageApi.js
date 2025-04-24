@@ -3,97 +3,138 @@ import { apiFetch } from './apiFetch';
 
 // ✅ Récupérer toutes les conversations (pour clinique ou professionnel)
 export const fetchConversations = async () => {
-  return await apiFetch('/messages/conversations');
+  try {
+    const response = await apiFetch('/messages/conversations');
+    console.log("📨 Conversations reçues:", response);
+    return response;
+  } catch (error) {
+    console.error("❌ Error fetching conversations:", error);
+    return [];
+  }
 };
 
-export const fetchMessagesByConversation = async (destinataireId, offreId) => {
-  if (!destinataireId) {
-    console.error("❌ destinataireId is required");
+export const fetchMessagesByConversation = async (candidatId, offreId) => {
+  if (!candidatId) {
+    console.error("❌ candidatId est requis");
     return [];
   }
 
   try {
-    // Parse IDs as integers
-    const parsedDestId = parseInt(destinataireId, 10);
-    const parsedOffreId = parseInt(offreId, 10);
+    console.log("🔄 Chargement des messages pour la conversation:", { candidatId, offreId });
 
-    console.log("🔄 Fetching messages with params:", {
-      destinataireId: parsedDestId,
-      offreId: parsedOffreId
-    });
+    // Construire l'URL en fonction de la présence de offreId
+    const url = offreId 
+      ? `/messages/${candidatId}/offre/${offreId}`
+      : `/messages/${candidatId}`;
 
-    // Construct the endpoint based on whether we have an offreId
-    const endpoint = `/messages/${parsedDestId}/offre/${parsedOffreId}`;
-    console.log("📤 Calling API endpoint:", endpoint);
-
-    const response = await apiFetch(endpoint);
-    console.log("📨 Messages response:", response);
+    const response = await apiFetch(url);
+    console.log("📨 Réponse API messages:", response);
 
     if (!Array.isArray(response)) {
-      console.warn("⚠️ Response is not an array:", response);
+      console.warn("⚠️ La réponse n'est pas un tableau:", response);
       return [];
     }
 
-    return response;
+    // Transformation des messages
+    const transformedMessages = response.map(msg => ({
+      id_message: msg.id_message,
+      contenu: msg.contenu,
+      date_envoi: msg.date_envoi,
+      expediteur_id: msg.expediteur_id,
+      destinataire_id: msg.destinataire_id,
+      est_lu: msg.est_lu,
+      type_message: msg.type_message || 'normal',
+      expediteur: msg.expediteur,
+      destinataire: msg.destinataire,
+      id_conversation: msg.id_conversation,
+      offre_id: msg.offre_id
+    }));
+
+    console.log("Messages transformés:", transformedMessages);
+    return transformedMessages;
   } catch (error) {
-    console.error("❌ Error fetching messages:", error);
+    console.error("❌ Erreur lors du chargement des messages:", error);
     return [];
   }
 };
 
-
-export const sendMessage = async ({ contenu, offre_id, destinataire_id, type_message = 'normal' }) => {
-  console.log("📦 sendMessage - Données envoyées à l'API :", {
+export const sendMessage = async ({ contenu, offre_id, destinataire_id, type_message = 'normal', expediteur_id, id_conversation }) => {
+  console.log("📦 sendMessage - Données à envoyer:", {
     contenu,
     offre_id,
     destinataire_id,
-    type_message
+    type_message,
+    expediteur_id,
+    id_conversation
   });
 
   if (!contenu || !destinataire_id) {
     console.error("❌ Paramètres requis manquants:", { contenu, destinataire_id });
-    throw new Error("Les paramètres contenu et destinataire_id sont requis");
+    throw new Error("Le contenu et l'ID du destinataire sont requis");
   }
 
   try {
+    const messageData = {
+      contenu: contenu.trim(),
+      id_offre: offre_id ? parseInt(offre_id) : null,
+      destinataire_id: parseInt(destinataire_id),
+      expediteur_id: parseInt(expediteur_id),
+      type_message,
+      id_conversation,
+      est_lu: false
+    };
+
+    console.log("📤 Données formatées:", messageData);
+
     const response = await apiFetch('/messages', {
       method: 'POST',
-      body: {
-        contenu: contenu.trim(),
-        offre_id,
-        destinataire_id,
-        type_message,
-        est_lu: 'N'
-      }
+      body: messageData
     });
 
-    console.log("✅ Message envoyé avec succès:", response);
+    console.log("✅ Message envoyé:", response);
     return response;
   } catch (error) {
-    console.error("❌ Erreur lors de l'envoi du message:", error);
+    console.error("❌ Erreur d'envoi:", error);
     throw error;
   }
 };
 
-
 // ✅ Supprimer un message
-export const deleteMessage = async (id) => {
-  return await apiFetch(`/messages/${id}`, {
-    method: 'DELETE'
-  });
+export const deleteMessage = async (messageId) => {
+  try {
+    await apiFetch(`/messages/${messageId}`, {
+      method: 'DELETE'
+    });
+    return true;
+  } catch (error) {
+    console.error("❌ Erreur de suppression:", error);
+    throw error;
+  }
 };
 
 // ✅ Marquer un message comme lu
-export const markAsRead = async (id) => {
-  return await apiFetch(`/messages/${id}/read`, {
-    method: 'PUT'
-  });
+export const markAsRead = async (messageId) => {
+  try {
+    await apiFetch(`/messages/lu/${messageId}`, {
+      method: 'PUT'
+    });
+    return true;
+  } catch (error) {
+    console.error("❌ Erreur de marquage comme lu:", error);
+    throw error;
+  }
 };
 
 // ✅ Modifier un message existant
-export const updateMessage = async (id, contenu) => {
-  return await apiFetch(`/messages/${id}`, {
-    method: 'PUT',
-    body: { contenu }
-  });
+export const updateMessage = async (messageId, newContent) => {
+  try {
+    const response = await apiFetch(`/messages/${messageId}`, {
+      method: 'PUT',
+      body: { contenu: newContent }
+    });
+    return response;
+  } catch (error) {
+    console.error("❌ Erreur de mise à jour:", error);
+    throw error;
+  }
 };
