@@ -21,7 +21,6 @@ import Fonctionnalite from "./screens/Fonctionnalite";
 import AccueilClinique from "./screens/AccueilClinique";
 import Offre from "./screens/Offre";
 import Horaire from "./screens/Horaire";
-import Calendrier from "./screens/Calendrier"; // Nouvel import
 import ResetMdp from "./screens/ResetMdp";
 import EmailVerification from "./screens/EmailVerification";
 import NewMdp from "./screens/NewMdp";
@@ -33,6 +32,9 @@ import Parametre from "./screens/Parametre";
 import NotificationClinique from "./screens/NotificationClinique";
 import ParametreClinique from "./screens/ParametreClinique";
 import NouvelleConversation from "./screens/NouvelleConversation";
+import Calendrier from "./screens/Calendrier";
+import CalendrierCli from "./screens/CalendrierCli";
+import AccueilMoreCli from "./screens/AccueilMoreCli";
 
 
 const Stack = createStackNavigator();
@@ -52,6 +54,7 @@ export default function Navigation() {
         <Stack.Screen name="Profil" component={Profil} />
         <Stack.Screen name="ProfilClinique" component={ProfilClinique} />
         <Stack.Screen name="AccueilMore" component={AccueilMore} />
+        <Stack.Screen name="AccueilMoreCli" component={AccueilMoreCli} />
         <Stack.Screen name="Mesoffres" component={Mesoffres} />
         <Stack.Screen name="CreationOffre" component={CreationOffre} />
         <Stack.Screen name="Indexx" component={Indexx} />
@@ -60,7 +63,6 @@ export default function Navigation() {
         <Stack.Screen name="AccueilClinique" component={AccueilClinique} />
         <Stack.Screen name="Offre" component={Offre} />
         <Stack.Screen name="Horaire" component={Horaire} />
-        <Stack.Screen name="Calendrier" component={Calendrier} />
         <Stack.Screen name="ResetMdp" component={ResetMdp} />
         <Stack.Screen name="EmailVerification" component={EmailVerification} />
         <Stack.Screen name="NewMdp" component={NewMdp} />
@@ -73,6 +75,8 @@ export default function Navigation() {
         <Stack.Screen name="Parametre" component={Parametre}/>
         <Stack.Screen name="ParametreClinique" component={ParametreClinique}/>
         <Stack.Screen name="NouvelleConversation" component={NouvelleConversation}/>
+        <Stack.Screen name="Calendrier" component={Calendrier}/>
+        <Stack.Screen name="CalendrierCli" component={CalendrierCli}/>
 
       </Stack.Navigator>
     </NavigationContainer>

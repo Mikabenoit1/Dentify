@@ -91,17 +91,17 @@ export default function Offre({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* HEADER */}
       <View style={styles.header}>
         <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
         <View style={styles.rightIcons}>
-          <TextInput style={styles.searchInput} placeholder="Recherche..." value={searchQuery} onChangeText={setSearchQuery} />
-          <TouchableOpacity onPress={() => navigation.navigate('Notification')}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notification')}>
             <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('MessageListeScreen')}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('MessageListeScreen')}>
             <AntDesign name="message1" size={22} color="white" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Profil')}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Profil')}>
             <MaterialCommunityIcons name="account-circle-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
@@ -170,12 +170,12 @@ export default function Offre({ navigation }) {
       {/* FOOTER */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("Horaire")}>
-          <AntDesign name="profile" size={24} color="black" />
-          <Text style={styles.footerTextClick}>Horaire</Text>
+          <AntDesign name="profile" size={24} color="white" />
+          <Text style={styles.footerText}>Horaire</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("Offre")}>
-          <MaterialIcons name="work-outline" size={24} color="white" />
-          <Text style={styles.footerText}>Offre</Text>
+          <MaterialIcons name="work-outline" size={24} color="black" />
+          <Text style={styles.footerTextClick}>Offre</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation("Calendrier")}>
           <AntDesign name="calendar" size={24} color="white" />
@@ -201,6 +201,7 @@ const styles = StyleSheet.create({
   },
   logo: { width: 100, height: 50 },
   rightIcons: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  iconButton: { marginLeft: 15 },
   searchInput: {
     width: 120,
     borderWidth: 1,

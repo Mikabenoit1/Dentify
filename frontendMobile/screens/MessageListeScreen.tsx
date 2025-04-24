@@ -7,6 +7,7 @@ import { Ionicons as Icon } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { getConversationsDetails } from '../api/messagesApi';
+import { FontAwesome } from '@expo/vector-icons';
 import { RootStackParamList } from '../Navigation'; 
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'MessageListeScreen'>;
@@ -88,6 +89,9 @@ const MessageListeScreen = () => {
       <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
         <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <FontAwesome name="arrow-left" size={24} color="#34607d" />
+        </TouchableOpacity>
           <Text style={styles.title}>Messages</Text>
           <TouchableOpacity onPress={goToNewConversation}>
             <Icon name="add-circle-outline" size={28} color="#34607d" />

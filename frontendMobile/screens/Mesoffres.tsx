@@ -10,7 +10,7 @@ import {
   Alert,
   TextInput
 } from "react-native";
-import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { AntDesign, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import moment from "moment";
 
@@ -160,32 +160,17 @@ export default function Mesoffres({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <Image
-          source={require("../assets/dentify_logo_noir.png")}
-          style={styles.logo}
-        />
+        <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
         <View style={styles.rightIcons}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Recherche..."
-            placeholderTextColor="#999"
-          />
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => navigation.navigate("MessageListeScreen")}
-          >
-            <AntDesign style={styles.iconText} name="message1" />
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notification')}>
+            <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => navigation.navigate("ProfilCli")}
-          >
-            <MaterialCommunityIcons
-              style={styles.iconText}
-              name="account-circle-outline"
-            />
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('MessageListeScreen')}>
+            <AntDesign name="message1" size={22} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Profil')}>
+            <MaterialCommunityIcons name="account-circle-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
       </View>
@@ -212,47 +197,24 @@ export default function Mesoffres({ navigation }) {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("Mesoffres")}
-        >
-          <AntDesign name="calendar" size={24} color="black" />
-          <Text
-            style={[
-              styles.footerTextClick,
-              activePage === "Mesoffres" && styles.activeButtonText
-            ]}
-          >
-            Mes offres
-          </Text>
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('Mesoffres')}>
+          <AntDesign name="profile" size={24} color="black" />
+          <Text style={styles.footerTextClick}>Offres publiés</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("CreationOffre")}
-        >
-          <Ionicons style={styles.footerIcon} name="create-outline" />
-          <Text
-            style={[
-              styles.footerText,
-              activePage === "CreationOffre" && styles.activeButtonText
-            ]}
-          >
-            Création d'une offre
-          </Text>
+        
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('CreationOffre')}>
+        <Ionicons name="create-outline" size={24} color="white" />
+          <Text style={styles.footerText}>Création d'une offre</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.footerButton}
-          onPress={() => handleNavigation("AccueilMoreCli")}
-        >
-          <AntDesign style={styles.footerIcon} name="ellipsis1" />
-          <Text
-            style={[
-              styles.footerText,
-              activePage === "AccueilMore" && styles.activeButtonText
-            ]}
-          >
-            More
-          </Text>
+        
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('CalendrierCli')}>
+          <AntDesign name="calendar" size={24} color="white" />
+          <Text style={styles.footerText}>Calendrier</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('AccueilMoreCli')}>
+          <MaterialIcons name="more-horiz" size={24} color="white" />
+          <Text style={styles.footerText}>Plus</Text>
         </TouchableOpacity>
       </View>
     </View>

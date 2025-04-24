@@ -8,7 +8,7 @@ if (Platform.OS === 'web') {
     ? 'http://localhost:4000/api/messages'
     : 'https://371b-142-137-176-156.ngrok-free.app/api/messages';
 } else {
-  BASE_URL = 'http://192.168.1.190:4000/api/messages';
+  BASE_URL = 'http://172.20.10.2:4000/api/messages';
 }
 
 const getToken = async () => {

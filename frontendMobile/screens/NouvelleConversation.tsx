@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { getAllUsers, sendMessage, getConversationsDetails } from '../api/messagesApi';
 import { getProfileDetails } from '../api';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { FontAwesome } from '@expo/vector-icons';
 import { RootStackParamList } from '../Navigation'; 
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'NouvelleConversation'>;
@@ -115,6 +116,9 @@ const NouvelleConversation = () => {
 
   return (
     <View style={styles.container}>
+              <TouchableOpacity onPress={() => navigation.goBack()}>
+          <FontAwesome name="arrow-left" size={24} color="#34607d" />
+        </TouchableOpacity>
       <TextInput
         style={styles.search}
         placeholder="Rechercher un utilisateur..."

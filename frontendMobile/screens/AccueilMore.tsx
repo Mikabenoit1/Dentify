@@ -12,10 +12,9 @@ export default function AccueilMore({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* HEADER */}
       <View style={styles.header}>
         <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
-
         <View style={styles.rightIcons}>
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notification')}>
             <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
@@ -23,10 +22,11 @@ export default function AccueilMore({ navigation }) {
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('MessageListeScreen')}>
             <AntDesign name="message1" size={22} color="white" />
           </TouchableOpacity>
-          {/* L'icône de profil a été retirée du header */}
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Profil')}>
+            <MaterialCommunityIcons name="account-circle-outline" size={24} color="white" />
+          </TouchableOpacity>
         </View>
       </View>
-
       {/* Contenu principal */}
       <ScrollView style={styles.content}>
         <View style={styles.section}>

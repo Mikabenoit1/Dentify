@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
-import { AntDesign, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { AntDesign, MaterialCommunityIcons, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useAppContext } from '../utils/AppContext';
 
 LocaleConfig.locales['fr'] = {
@@ -88,13 +88,13 @@ const Calendrier = ({ navigation }) => {
       <View style={styles.header}>
         <Image source={require("../assets/dentify_logo_noir.png")} style={styles.logo} />
         <View style={styles.rightIcons}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notification')}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('NotificationClinique')}>
             <MaterialCommunityIcons name="bell-outline" size={24} color="white" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('MessageListeScreen')}>
             <AntDesign name="message1" size={22} color="white" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Profil')}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('ProfilClinique')}>
             <MaterialCommunityIcons name="account-circle-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
@@ -158,22 +158,22 @@ const Calendrier = ({ navigation }) => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('Horaire')}>
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('Mesoffres')}>
           <AntDesign name="profile" size={24} color="white" />
-          <Text style={styles.footerText}>Horaire</Text>
+          <Text style={styles.footerText}>Offres publiés</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('Offre')}>
-          <MaterialIcons name="work-outline" size={24} color="white" />
-          <Text style={styles.footerText}>Offre</Text>
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('CreationOffre')}>
+        <Ionicons name="create-outline" size={24} color="white" />
+          <Text style={styles.footerText}>Création d'une offre</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('Calendrier')}>
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('CalendrierCli')}>
           <AntDesign name="calendar" size={24} color="black" />
           <Text style={styles.footerTextClick}>Calendrier</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('AccueilMore')}>
+        <TouchableOpacity style={styles.footerButton} onPress={() => navigation.navigate('AccueilMoreCli')}>
           <MaterialIcons name="more-horiz" size={24} color="white" />
           <Text style={styles.footerText}>Plus</Text>
         </TouchableOpacity>
