@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: dentify-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mma87cole
+      MYSQL_DATABASE: Dentify
+      MYSQL_USER: root
+      MYSQL_PASSWORD: mma87cole
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ./backend
+    container_name: dentify-backend
+    restart: always
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+    volumes:
+      - ./backend/uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontendWeb
+      dockerfile: Dockerfile
+    container_name: dentify-frontend
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+
+volumes:
+  mysql_data:
