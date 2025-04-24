@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import SignIn from "./Login/SignIn";
 import SignUp from "./Login/SignUp";
 import Overlay from "./Login/Overlay";
-import "../styles/container.css";
+import "../styles/Container.css";
 
 function Container() {
   const location = useLocation();
