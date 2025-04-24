@@ -1104,7 +1104,7 @@ const handleEdit = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="tarifJournalier">Tarif journalier (€)</label>
+                  <label htmlFor="tarifJournalier">Tarif journalier ($)</label>
                   <input
                     type="number"
                     id="tarifJournalier"

@@ -51,28 +51,9 @@ const PrincipaleClinique = () => {
           setMessages(messagesData);
         } catch (err) {
           console.log("Messages API non disponible ou erreur:", err);
-          // Utiliser des données temporaires pour la démonstration
-          setMessages([
-            {
-              id: 1,
-              sender: 'Dr. Leslie Labrecque',
-              avatar: 'D',
-              avatarType: 'dentiste',
-              content: 'Bonjour, je suis intéressée par votre offre de remplacement pour l\'été...',
-              unread: true,
-              conversationId: 1
-            },
-            {
-              id: 2,
-              sender: 'Thomas Simard',
-              avatar: 'T',
-              avatarType: 'assistant',
-              content: 'Merci pour les informations. Je voudrais savoir si le poste peut évoluer...',
-              unread: false,
-              conversationId: 2
-            }
-          ]);
+          setMessages([]); // Ne pas afficher de messages si erreur
         }
+        
         
         // 4. Essayer de charger les rendez-vous (si l'endpoint existe)
         try {
