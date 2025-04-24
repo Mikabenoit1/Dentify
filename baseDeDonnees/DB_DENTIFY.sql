@@ -296,6 +296,18 @@ CREATE TABLE `Message` (
   CONSTRAINT `message_ibfk_1` FOREIGN KEY (`expediteur_id`) REFERENCES `Utilisateur` (`id_utilisateur`) ON DELETE CASCADE,
   CONSTRAINT `message_ibfk_2` FOREIGN KEY (`destinataire_id`) REFERENCES `Utilisateur` (`id_utilisateur`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+ALTER TABLE Message
+ADD COLUMN est_modifie BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE Message
+ADD COLUMN type_message VARCHAR(50) DEFAULT 'normal';
+
+ALTER TABLE Message
+ADD COLUMN id_offre INT DEFAULT NULL,
+ADD CONSTRAINT fk_message_offre FOREIGN KEY (id_offre)
+REFERENCES Offre(id_offre)
+ON DELETE CASCADE;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -757,3 +769,111 @@ DELIMITER ;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2025-03-24 12:00:00
+
+
+ALTER TABLE CliniqueDentaire
+ADD CONSTRAINT fk_clinique_utilisateur
+FOREIGN KEY (id_utilisateur)
+REFERENCES Utilisateur(id_utilisateur)
+ON DELETE CASCADE
+ON UPDATE CASCADE;
+
+CREATE TABLE Entretien (
+  id_entretien INT AUTO_INCREMENT PRIMARY KEY,
+
+  id_offre INT NOT NULL,
+  id_clinique INT NOT NULL,
+  id_professionnel INT NOT NULL,
+
+  date DATE NOT NULL,
+  heure_debut TIME NOT NULL,
+  heure_fin TIME NOT NULL,
+
+  type ENUM('video', 'telephone', 'en_personne') NOT NULL,
+  lien_visio VARCHAR(255),
+  statut ENUM('prévu', 'confirmé', 'annulé') DEFAULT 'prévu',
+  notes TEXT,
+
+  CONSTRAINT fk_entretien_offre FOREIGN KEY (id_offre)
+    REFERENCES Offre(id_offre) ON DELETE CASCADE,
+
+  CONSTRAINT fk_entretien_clinique FOREIGN KEY (id_clinique)
+    REFERENCES Utilisateur(id_utilisateur) ON DELETE CASCADE,
+
+  CONSTRAINT fk_entretien_professionnel FOREIGN KEY (id_professionnel)
+    REFERENCES Utilisateur(id_utilisateur) ON DELETE CASCADE
+);
+
+ALTER TABLE Utilisateur ADD COLUMN date_verification DATETIME DEFAULT NULL;
+ALTER TABLE Utilisateur MODIFY COLUMN mot_de_passe VARCHAR(100);
+
+ALTER TABLE ProfessionnelDentaire
+  ADD COLUMN description TEXT,
+  ADD COLUMN telephone VARCHAR(20),
+  ADD COLUMN vehicule BOOLEAN DEFAULT false,
+  ADD COLUMN regions JSON,
+  ADD COLUMN date_debut_dispo DATE,
+  ADD COLUMN date_fin_dispo DATE,
+  ADD COLUMN jours_disponibles JSON,
+  ADD COLUMN competences JSON,
+  ADD COLUMN langues JSON,
+  ADD COLUMN specialites JSON;
+  
+  ALTER TABLE CliniqueDentaire
+ADD COLUMN ville VARCHAR(100),
+ADD COLUMN code_postal VARCHAR(10),
+ADD COLUMN telephone VARCHAR(20),
+ADD COLUMN email VARCHAR(100),
+ADD COLUMN specialites TEXT,
+ADD COLUMN services TEXT,
+ADD COLUMN description TEXT,
+ADD COLUMN equipement TEXT,
+ADD COLUMN equipe TEXT,
+ADD COLUMN logo VARCHAR(255),
+ADD COLUMN photos TEXT;
+
+ALTER TABLE CliniqueDentaire 
+MODIFY COLUMN specialites JSON,
+MODIFY COLUMN services JSON,
+MODIFY COLUMN equipement JSON,
+MODIFY COLUMN equipe JSON,
+MODIFY COLUMN photos JSON;
+
+ALTER TABLE CliniqueDentaire 
+ADD COLUMN horaires JSON;
+
+ALTER TABLE Message 
+ADD COLUMN id_conversation CHAR(36);
+
+SET SQL_SAFE_UPDATES = 0;
+
+UPDATE Message m1
+JOIN (
+  SELECT 
+    MIN(id_message) as first_message_id,
+    UUID() as new_conversation_id,
+    expediteur_id,
+    destinataire_id,
+    id_offre
+  FROM Message
+  GROUP BY expediteur_id, destinataire_id, id_offre
+) m2 ON m1.expediteur_id = m2.expediteur_id 
+  AND m1.destinataire_id = m2.destinataire_id
+  AND m1.id_offre = m2.id_offre
+SET m1.id_conversation = m2.new_conversation_id;
+
+SET SQL_SAFE_UPDATES = 1;  -- (facultatif) pour le réactiver après
+
+SELECT COUNT(*) FROM Message WHERE id_conversation IS NULL;
+
+SET SQL_SAFE_UPDATES = 0;
+
+UPDATE Message 
+SET id_conversation = UUID()  
+WHERE id_conversation IS NULL;
+
+ALTER TABLE Message 
+MODIFY COLUMN id_conversation CHAR(36) NOT NULL;
+
+ALTER TABLE Message
+ADD INDEX idx_conversation (id_conversation);
