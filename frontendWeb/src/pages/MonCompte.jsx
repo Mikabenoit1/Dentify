@@ -1042,7 +1042,7 @@ const handleEdit = () => {
                 
                 <div className="daily-rate">
                   <h4>Tarif journalier</h4>
-                  <p className="rate-amount">{profile.tarifJournalier || 0} €</p>
+                  <p className="rate-amount">{profile.tarifJournalier || 0} $</p>
                 </div>
               </div>
             ) : (
