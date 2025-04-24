@@ -12,7 +12,7 @@ const app = express();
 app.use(express.json());
 app.use(require('cookie-parser')()); // ← pour les tokens envoyés via cookie si besoin
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "http://20.121.64.21",
   credentials: true
 })); // Autoriser les requêtes du frontend (utile si backend = 4000, frontend = 5173)
 
