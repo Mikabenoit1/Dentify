@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fbf2e8',
   },
-  // Header seulement modifié
+  
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   headerRight: {
     width: 24,
   },
-  // Tout le reste strictement identique à votre original
+  
   content: {
     flex: 1,
     backgroundColor: '#fbf2e8',
