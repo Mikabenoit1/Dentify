@@ -63,7 +63,7 @@ export default function Mesoffres({ navigation }) {
     }
   };
 
-  // === NOUVEAU HANDLER ===
+  // === HANDLER ===
   const handleRefuser = async (idCandidature) => {
     try {
       await refuserCandidature(idCandidature);
@@ -106,7 +106,7 @@ export default function Mesoffres({ navigation }) {
       );
     };
   
-    // 🔥 ICI : corriger le nom exact du champ (Utilisateur et pas User)
+    
     const candidature = item.Candidatures?.[0];
     const professionnel = candidature?.ProfessionnelDentaire;
     const userPro = professionnel?.Utilisateur;
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
 
 
 
-  /* === NOUVEAUX STYLES === */
+  
   candidatureContainer: {
     marginTop: 12,
     padding: 12,
