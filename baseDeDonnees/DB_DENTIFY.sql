@@ -27,6 +27,7 @@ USE `dentify`;
 -- Table structure for table `Utilisateur`
 --
 
+
 DROP TABLE IF EXISTS `Utilisateur`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -40,7 +41,7 @@ CREATE TABLE `Utilisateur` (
   `province` varchar(25) DEFAULT NULL,
   `code_postal` varchar(10) DEFAULT NULL,
   `courriel` varchar(50) NOT NULL,
-  `mot_de_passe` varchar(25) NOT NULL,
+  `mot_de_passe` varchar(255) NOT NULL,
   `type_utilisateur` varchar(25) DEFAULT NULL,
   `photo_profil` varchar(100) DEFAULT NULL,
   `derniere_connexion` timestamp NULL DEFAULT NULL,
@@ -110,7 +111,7 @@ CREATE TABLE `CliniqueDentaire` (
   `longitude` decimal(10,6) DEFAULT NULL,
   `horaire_ouverture` varchar(500) DEFAULT NULL,
   `site_web` varchar(100) DEFAULT NULL,
-  `id_utilisateur` int DEFAULT NULL,
+  `id_utilisateur` int NOT NULL,
   `logiciels_utilises` varchar(255) DEFAULT NULL,
   `type_dossier` varchar(20) DEFAULT NULL,
   `type_radiographie` varchar(30) DEFAULT NULL,
@@ -124,6 +125,14 @@ CREATE TABLE `CliniqueDentaire` (
 --
 -- Dumping data for table `CliniqueDentaire`
 --
+
+
+ALTER TABLE CliniqueDentaire
+ADD CONSTRAINT fk_clinique_utilisateur
+FOREIGN KEY (id_utilisateur)
+REFERENCES Utilisateur(id_utilisateur)
+ON DELETE CASCADE
+ON UPDATE CASCADE;
 
 LOCK TABLES `CliniqueDentaire` WRITE;
 /*!40000 ALTER TABLE `CliniqueDentaire` DISABLE KEYS */;
@@ -296,6 +305,18 @@ CREATE TABLE `Message` (
   CONSTRAINT `message_ibfk_1` FOREIGN KEY (`expediteur_id`) REFERENCES `Utilisateur` (`id_utilisateur`) ON DELETE CASCADE,
   CONSTRAINT `message_ibfk_2` FOREIGN KEY (`destinataire_id`) REFERENCES `Utilisateur` (`id_utilisateur`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+ALTER TABLE Message
+ADD COLUMN est_modifie BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE Message
+ADD COLUMN type_message VARCHAR(50) DEFAULT 'normal';
+
+ALTER TABLE Message
+ADD COLUMN id_offre INT DEFAULT NULL,
+ADD CONSTRAINT fk_message_offre FOREIGN KEY (id_offre)
+REFERENCES Offre(id_offre)
+ON DELETE CASCADE;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -335,6 +356,30 @@ LOCK TABLES `Message_Archive` WRITE;
 /*!40000 ALTER TABLE `Message_Archive` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Message_Archive` ENABLE KEYS */;
 UNLOCK TABLES;
+
+
+
+--
+-- Table structure for table `Conversation`
+--
+CREATE TABLE Conversation (
+  id_conversation INT AUTO_INCREMENT PRIMARY KEY,
+  utilisateur1_id INT NOT NULL,
+  utilisateur2_id INT NOT NULL,
+  id_offre INT DEFAULT NULL,
+  date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_conversation (utilisateur1_id, utilisateur2_id, id_offre),
+  FOREIGN KEY (utilisateur1_id) REFERENCES Utilisateur(id_utilisateur) ON DELETE CASCADE,
+  FOREIGN KEY (utilisateur2_id) REFERENCES Utilisateur(id_utilisateur) ON DELETE CASCADE,
+  FOREIGN KEY (id_offre) REFERENCES Offre(id_offre) ON DELETE SET NULL
+);
+
+ALTER TABLE Message
+ADD COLUMN id_conversation INT,
+ADD CONSTRAINT fk_message_conversation FOREIGN KEY (id_conversation)
+REFERENCES Conversation(id_conversation)
+ON DELETE CASCADE;
+
 
 --
 -- Table structure for table `Evaluation`
@@ -757,3 +802,16 @@ DELIMITER ;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2025-03-24 12:00:00
+ALTER TABLE ProfessionnelDentaire
+  ADD COLUMN description TEXT,
+  ADD COLUMN telephone VARCHAR(20),
+  ADD COLUMN vehicule BOOLEAN DEFAULT false,
+  ADD COLUMN regions JSON,
+  ADD COLUMN date_debut_dispo DATE,
+  ADD COLUMN date_fin_dispo DATE,
+  ADD COLUMN jours_disponibles JSON,
+  ADD COLUMN competences JSON,
+  ADD COLUMN langues JSON,
+  ADD COLUMN specialites JSON;
+  
+ALTER TABLE Utilisateur ADD COLUMN date_verification DATETIME NULL;
