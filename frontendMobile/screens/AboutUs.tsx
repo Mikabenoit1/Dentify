@@ -14,7 +14,7 @@ export default function AboutScreen({ navigation }) {
         <View style={styles.headerRight} />
       </View>
 
-      {/* Contenu IDENTIQUE à votre version originale */}
+      
       <View style={styles.content}>
         <Image 
           source={require("../assets/vecteezy_ai-generated-manager-man-present-successful-group-business_39322995.png")} 
